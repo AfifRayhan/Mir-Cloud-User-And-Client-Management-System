@@ -22,3 +22,7 @@ php artisan migrate --seed
 npm run build
 
 php artisan serve
+
+
+## System Diagram
+![My Diagram](primary.drawio.png)

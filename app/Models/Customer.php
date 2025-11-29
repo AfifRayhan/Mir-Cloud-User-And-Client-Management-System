@@ -12,6 +12,8 @@ class Customer extends Model
         'customer_name',
         'activation_date',
         'customer_address',
+        'bin_number',
+        'po_number',
         'commercial_contact_name',
         'commercial_contact_designation',
         'commercial_contact_email',

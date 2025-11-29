@@ -23,7 +23,7 @@ class RoleSeeder extends Seeder
         ];
 
         foreach ($roles as $role) {
-            \App\Models\Role::create([
+            \App\Models\Role::firstOrCreate([
                 'role_name' => $role
             ]);
         }

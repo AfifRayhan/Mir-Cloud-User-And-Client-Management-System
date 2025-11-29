@@ -37,6 +37,8 @@ class CustomerController extends Controller
             'customer_name' => 'required|string|max:255',
             'activation_date' => 'required|date',
             'customer_address' => 'nullable|string',
+            'bin_number' => 'nullable|string|max:255',
+            'po_number' => 'nullable|string|max:255',
             'commercial_contact_name' => 'nullable|string|max:255',
             'commercial_contact_designation' => 'nullable|string|max:255',
             'commercial_contact_email' => 'nullable|email|max:255',
@@ -72,24 +74,56 @@ class CustomerController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(string $id)
+    public function edit(Customer $customer)
     {
-        //
+        $platforms = Platform::orderBy('platform_name')->get();
+        return view('customers.edit', compact('customer', 'platforms'));
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, string $id)
+    public function update(Request $request, Customer $customer)
     {
-        //
+        $validated = $request->validate([
+            'customer_name' => 'required|string|max:255',
+            'activation_date' => 'required|date',
+            'customer_address' => 'nullable|string',
+            'bin_number' => 'nullable|string|max:255',
+            'po_number' => 'nullable|string|max:255',
+            'commercial_contact_name' => 'nullable|string|max:255',
+            'commercial_contact_designation' => 'nullable|string|max:255',
+            'commercial_contact_email' => 'nullable|email|max:255',
+            'commercial_contact_phone' => 'nullable|string|max:255',
+            'technical_contact_name' => 'nullable|string|max:255',
+            'technical_contact_designation' => 'nullable|string|max:255',
+            'technical_contact_email' => 'nullable|email|max:255',
+            'technical_contact_phone' => 'nullable|string|max:255',
+            'optional_contact_name' => 'nullable|string|max:255',
+            'optional_contact_designation' => 'nullable|string|max:255',
+            'optional_contact_email' => 'nullable|email|max:255',
+            'optional_contact_phone' => 'nullable|string|max:255',
+            'platform_id' => 'nullable|exists:platforms,id',
+        ]);
+
+        $customer->update([
+            ...$validated,
+            'processed_by' => Auth::id(),
+        ]);
+
+        return redirect()->route('customers.index')
+            ->with('success', 'Customer updated successfully.');
     }
 
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(string $id)
+    public function destroy(Customer $customer)
     {
-        //
+        $customerName = $customer->customer_name;
+        $customer->delete();
+
+        return redirect()->route('customers.index')
+            ->with('success', "{$customerName} has been deleted successfully.");
     }
 }

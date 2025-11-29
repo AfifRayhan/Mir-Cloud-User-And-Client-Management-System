@@ -5,6 +5,8 @@
                 <div class="card shadow-lg border-0 rounded-4">
                     <div class="card-body p-5">
                         <div class="text-center mb-4">
+                            <!-- Logo -->
+                            <img src="{{ asset('Mir-Cloud-Logo.png') }}" alt="Logo" class="mb-3" style="width: auto; height: 200px;">
                             <h2 class="fw-bold mb-1">Welcome Back</h2>
                             <p class="text-muted">Sign in to your account</p>
                         </div>

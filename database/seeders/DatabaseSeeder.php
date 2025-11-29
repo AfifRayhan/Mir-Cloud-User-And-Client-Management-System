@@ -19,6 +19,9 @@ class DatabaseSeeder extends Seeder
         $this->call([
             RoleSeeder::class,
             PlatformSeeder::class,
+            ServiceSeeder::class,
+            CustomerStatusSeeder::class,
+            TaskStatusSeeder::class,
         ]);
 
         // Create admin user
@@ -27,6 +30,7 @@ class DatabaseSeeder extends Seeder
         if ($adminRole) {
             User::create([
                 'name' => 'Admin User',
+                'email' => 'admin@example.com',
                 'username' => 'admin',
                 'password' => \Illuminate\Support\Facades\Hash::make('password'),
                 'role_id' => $adminRole->id,

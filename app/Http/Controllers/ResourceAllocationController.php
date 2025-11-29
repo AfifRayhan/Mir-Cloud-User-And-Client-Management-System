@@ -16,36 +16,173 @@ class ResourceAllocationController extends Controller
             ->orderBy('customer_name')
             ->get();
 
-        return view('resource-allocation.index', compact('customers'));
+        $customerStatuses = \App\Models\CustomerStatus::all();
+
+        return view('resource-allocation.index', compact('customers', 'customerStatuses'));
     }
 
     public function process(Request $request): RedirectResponse
     {
         $validated = $request->validate([
             'customer_id' => ['required', 'exists:customers,id'],
-            'action_type' => ['required', Rule::in(['dismantle', 'rewrite'])],
+            'action_type' => ['required', Rule::in(['dismantle'])],
         ]);
 
         $customer = Customer::with('cloudDetail')->findOrFail($validated['customer_id']);
 
-        if ($validated['action_type'] === 'dismantle') {
-            if ($customer->cloudDetail) {
-                $customer->cloudDetail()->delete();
-
-                return redirect()
-                    ->route('resource-allocation.index')
-                    ->with('success', "{$customer->customer_name}'s resources have been dismantled.");
-            }
+        if ($customer->cloudDetail) {
+            $customer->cloudDetail()->delete();
 
             return redirect()
                 ->route('resource-allocation.index')
-                ->with('info', "{$customer->customer_name} does not have active cloud resources to dismantle.");
+                ->with('success', "{$customer->customer_name}'s resources have been dismantled.");
         }
 
-        // Rewrite action - redirect to cloud details form
         return redirect()
-            ->route('cloud-details.create', $customer->id)
-            ->with('info', "You can now rewrite the cloud details for {$customer->customer_name}.");
+            ->route('resource-allocation.index')
+            ->with('info', "{$customer->customer_name} does not have active cloud resources to dismantle.");
+    }
+
+    public function allocationForm(Request $request, Customer $customer)
+    {
+        $actionType = $request->query('action_type');
+        $statusId = $request->query('status_id');
+        
+        $services = \App\Models\Service::all();
+        
+        $statusName = null;
+        if ($statusId) {
+            $status = \App\Models\CustomerStatus::find($statusId);
+            $statusName = $status ? $status->name : null;
+        }
+        
+        $html = view('resource-allocation.partials.allocation-form', compact('customer', 'services', 'actionType', 'statusId', 'statusName'))->render();
+        
+        return response()->json(['html' => $html]);
+    }
+
+    public function storeAllocation(Request $request, Customer $customer)
+    {
+        $validated = $request->validate([
+            'action_type' => 'required|in:upgrade,downgrade',
+            'status_id' => $request->action_type === 'upgrade' ? 'required|exists:customer_statuses,id' : 'nullable|exists:customer_statuses,id',
+            'services' => 'nullable|array',
+            'services.*' => 'nullable|integer|min:0',
+        ]);
+
+        $actionType = $validated['action_type'];
+        $servicesInput = $validated['services'] ?? [];
+        
+        // Filter out null and zero values
+        $servicesInput = array_filter($servicesInput, function($value) {
+            return !is_null($value) && $value > 0;
+        });
+
+        if (empty($servicesInput)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Please specify at least one resource change with a value greater than 0.',
+                'errors' => ['services' => ['Please specify at least one resource change with a value greater than 0.']]
+            ], 422);
+        }
+
+        // Default task status (Pending)
+        $taskStatus = \App\Models\TaskStatus::firstOrCreate(['name' => 'Pending']);
+
+        if ($actionType === 'upgrade') {
+            $upgradation = \App\Models\ResourceUpgradation::create([
+                'customer_id' => $customer->id,
+                'status_id' => $validated['status_id'],
+                'activation_date' => now(),
+                'task_status_id' => $taskStatus->id,
+                'inserted_by' => \Illuminate\Support\Facades\Auth::id(),
+            ]);
+
+            foreach ($servicesInput as $serviceId => $newValue) {
+                $service = \App\Models\Service::find($serviceId);
+                if (!$service) continue;
+
+                // Get current value
+                $columnName = $this->getColumnNameForService($service->service_name);
+                $currentValue = 0;
+                if ($customer->cloudDetail && $columnName) {
+                    $currentValue = $customer->cloudDetail->{$columnName} ?? 0;
+                }
+
+                // Calculate the upgrade amount (difference)
+                $upgradeAmount = max(0, $newValue - $currentValue);
+                
+                if ($upgradeAmount > 0) {
+                    \App\Models\ResourceUpgradationDetail::create([
+                        'resource_upgradation_id' => $upgradation->id,
+                        'service_id' => $serviceId,
+                        'quantity' => $upgradeAmount,
+                    ]);
+                    
+                    // Update Cloud Details to new value
+                    $this->updateCloudDetails($customer, $serviceId, $newValue, 'set');
+                }
+            }
+        } else {
+            $downgradation = \App\Models\ResourceDowngradation::create([
+                'customer_id' => $customer->id,
+                'activation_date' => now(),
+                'task_status_id' => $taskStatus->id,
+                'inserted_by' => \Illuminate\Support\Facades\Auth::id(),
+            ]);
+
+            foreach ($servicesInput as $serviceId => $reductionAmount) {
+                \App\Models\ResourceDowngradationDetail::create([
+                    'resource_downgradation_id' => $downgradation->id,
+                    'service_id' => $serviceId,
+                    'quantity' => $reductionAmount,
+                ]);
+                
+                // Update Cloud Details by reducing
+                $this->updateCloudDetails($customer, $serviceId, $reductionAmount, 'subtract');
+            }
+        }
+
+        $actionName = $actionType === 'upgrade' ? 'upgraded' : 'downgraded';
+        return response()->json([
+            'success' => true,
+            'message' => "Resources {$actionName} successfully for {$customer->customer_name}."
+        ]);
+    }
+
+    private function updateCloudDetails($customer, $serviceId, $value, $operation)
+    {
+        $service = \App\Models\Service::find($serviceId);
+        if (!$service || !$customer->cloudDetail) return;
+
+        $columnName = $this->getColumnNameForService($service->service_name);
+        if (!$columnName) return;
+        
+        if ($operation == 'set') {
+            // For upgrade: set to new value
+            $customer->cloudDetail->{$columnName} = $value;
+        } else {
+            // For downgrade: subtract the reduction amount
+            $current = $customer->cloudDetail->{$columnName} ?? 0;
+            $customer->cloudDetail->{$columnName} = max(0, $current - $value);
+        }
+        
+        $customer->cloudDetail->save();
+    }
+
+    private function getColumnNameForService($serviceName)
+    {
+        $mapping = [
+            'vCPU' => 'vcpu',
+            'RAM' => 'ram',
+            'Storage' => 'storage',
+            'Internet' => 'internet',
+            'Real IP' => 'real_ip',
+            'VPN' => 'vpn',
+            'BDIX' => 'bdix',
+        ];
+
+        return $mapping[$serviceName] ?? null;
     }
 }
 

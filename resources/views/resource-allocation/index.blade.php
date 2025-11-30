@@ -54,7 +54,6 @@
                                         <option value="" disabled selected>Select Action</option>
                                         <option value="upgrade" {{ old('action_type') === 'upgrade' ? 'selected' : '' }}>Upgrade</option>
                                         <option value="downgrade" {{ old('action_type') === 'downgrade' ? 'selected' : '' }}>Downgrade</option>
-                                        <option value="dismantle" {{ old('action_type') === 'dismantle' ? 'selected' : '' }}>Dismantle</option>
                                     </select>
                                     @error('action_type')
                                         <div class="invalid-feedback">{{ $message }}</div>
@@ -141,24 +140,6 @@
                         return;
                     }
 
-                    if (actionType === 'dismantle') {
-                        // For dismantle, just show confirmation
-                        container.innerHTML = `
-                            <div class="card border-0 shadow-sm h-100">
-                                <div class="card-body p-4">
-                                    <h5 class="fw-bold mb-3 text-danger">Confirm Dismantle</h5>
-                                    <p>Are you sure you want to dismantle all resources for this customer?</p>
-                                    <p class="text-muted">This action will remove all cloud details.</p>
-                                    <div class="d-flex justify-content-end gap-2 mt-4">
-                                        <button type="button" class="btn btn-outline-secondary" onclick="window.clearAllocationForm()">Cancel</button>
-                                        <button type="button" class="btn btn-danger px-4" onclick="document.getElementById('resource-action-form').submit()">Confirm Dismantle</button>
-                                    </div>
-                                </div>
-                            </div>
-                        `;
-                        return;
-                    }
-
                     // For upgrade, require status selection
                     if (actionType === 'upgrade' && !statusId) {
                         renderPlaceholder('Please select a customer status to proceed with upgrade.');
@@ -211,9 +192,14 @@
                         formData.append('status_id', statusId);
                     }
 
-                    // Clear previous errors
+                    // Clear previous errors and messages
                     document.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
                     document.querySelectorAll('.invalid-feedback').forEach(el => el.textContent = '');
+                    const successMsg = document.getElementById('allocation-success-message');
+                    if (successMsg) {
+                        successMsg.classList.add('d-none');
+                        successMsg.classList.remove('show');
+                    }
 
                     try {
                         const response = await fetch(`{{ url('resource-allocation') }}/${customerId}/allocate`, {
@@ -231,7 +217,12 @@
                         if (!response.ok) {
                             // Handle validation errors
                             if (data.message) {
-                                alert(data.message);
+                                // Show error in the success message container (but as danger)
+                                if (successMsg) {
+                                    successMsg.classList.remove('alert-success', 'd-none');
+                                    successMsg.classList.add('alert-danger', 'show');
+                                    document.getElementById('success-message-text').textContent = data.message;
+                                }
                             }
                             if (data.errors) {
                                 Object.keys(data.errors).forEach(key => {
@@ -248,15 +239,32 @@
                             return false;
                         }
 
-                        // Success - show message and redirect
-                        if (data.message) {
-                            alert(data.message);
+                        // Success - show inline message
+                        if (successMsg) {
+                            successMsg.classList.remove('alert-danger', 'd-none');
+                            successMsg.classList.add('alert-success', 'show');
+                            document.getElementById('success-message-text').textContent = data.message || 'Resources updated successfully!';
+                            
+                            // Scroll to the success message
+                            successMsg.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
                         }
-                        window.location.href = '{{ route("resource-allocation.index") }}';
+
+                        // Reset the form inputs
+                        form.reset();
+
+                        // Reload the allocation form to show updated values
+                        setTimeout(() => {
+                            loadAllocationForm();
+                        }, 1500);
+
                         return false;
                     } catch (error) {
                         console.error(error);
-                        alert('An error occurred while saving the allocation.');
+                        if (successMsg) {
+                            successMsg.classList.remove('alert-success', 'd-none');
+                            successMsg.classList.add('alert-danger', 'show');
+                            document.getElementById('success-message-text').textContent = 'An error occurred while saving the allocation.';
+                        }
                         return false;
                     }
                 };
@@ -292,6 +300,17 @@
                         // For upgrade/downgrade, the form is loaded via AJAX
                     }
                 });
+
+                // Global function to fill all downgrade inputs with current values (for dismantle)
+                window.fillDismantleValues = function() {
+                    const inputs = document.querySelectorAll('.downgrade-input');
+                    inputs.forEach(input => {
+                        const currentValue = input.getAttribute('data-current-value');
+                        if (currentValue) {
+                            input.value = currentValue;
+                        }
+                    });
+                };
 
                 // Global function for cancel button
                 window.clearAllocationForm = function() {

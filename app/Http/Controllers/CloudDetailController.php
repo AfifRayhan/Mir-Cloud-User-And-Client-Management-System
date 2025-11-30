@@ -34,6 +34,8 @@ class CloudDetailController extends Controller
             'inserted_by' => \Illuminate\Support\Facades\Auth::id(),
         ];
 
+        $otherConfig = [];
+
         // Map service IDs to cloud_details columns
         $services = \App\Models\Service::all();
         foreach ($services as $service) {
@@ -48,7 +50,15 @@ class CloudDetailController extends Controller
             if ($columnName) {
                 $payload[$columnName] = $value;
                 \Log::info("Mapped to column: {$columnName} = {$value}");
+            } else {
+                // Store in other_configuration for unmapped services
+                $otherConfig[$service->service_name] = $value;
+                \Log::info("Stored in other_configuration: {$service->service_name} = {$value}");
             }
+        }
+
+        if (!empty($otherConfig)) {
+            $payload['other_configuration'] = $otherConfig;
         }
 
         \Log::info("Final payload before save:", $payload);

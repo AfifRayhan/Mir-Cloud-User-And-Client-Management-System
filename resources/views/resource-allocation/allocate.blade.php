@@ -75,21 +75,21 @@
 
                                 <div class="col-md-6">
                                     <label for="real_ip" class="form-label fw-semibold">Real IP</label>
-                                    <input type="text" id="real_ip" name="real_ip" class="form-control @error('real_ip') is-invalid @enderror"
+                                    <input type="number" id="real_ip" name="real_ip" class="form-control @error('real_ip') is-invalid @enderror"
                                            value="{{ old('real_ip', $customer->cloudDetail->real_ip ?? '') }}">
                                     @error('real_ip') <div class="invalid-feedback">{{ $message }}</div> @enderror
                                 </div>
 
                                 <div class="col-md-6">
                                     <label for="vpn" class="form-label fw-semibold">VPN</label>
-                                    <input type="text" id="vpn" name="vpn" class="form-control @error('vpn') is-invalid @enderror"
+                                    <input type="number" id="vpn" name="vpn" class="form-control @error('vpn') is-invalid @enderror"
                                            value="{{ old('vpn', $customer->cloudDetail->vpn ?? '') }}">
                                     @error('vpn') <div class="invalid-feedback">{{ $message }}</div> @enderror
                                 </div>
 
                                 <div class="col-md-6">
                                     <label for="bdix" class="form-label fw-semibold">BDIX</label>
-                                    <input type="text" id="bdix" name="bdix" class="form-control @error('bdix') is-invalid @enderror"
+                                    <input type="number" id="bdix" name="bdix" class="form-control @error('bdix') is-invalid @enderror"
                                            value="{{ old('bdix', $customer->cloudDetail->bdix ?? '') }}">
                                     @error('bdix') <div class="invalid-feedback">{{ $message }}</div> @enderror
                                 </div>

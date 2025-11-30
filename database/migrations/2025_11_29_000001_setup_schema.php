@@ -132,7 +132,7 @@ return new class extends Migration
             $table->foreignId('resource_upgradation_id')->constrained('resource_upgradations')->onDelete('cascade');
             $table->foreignId('service_id')->constrained('services');
             $table->integer('quantity');
-            $table->integer('downgrade_amount')->nullable();
+            $table->integer('upgrade_amount')->nullable();
             $table->timestamps();
         });
 

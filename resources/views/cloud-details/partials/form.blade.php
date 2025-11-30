@@ -107,21 +107,21 @@
                             <div class="row g-3">
                                 <div class="col-md-4">
                                     <label for="real_ip" class="form-label fw-semibold">Real IP</label>
-                                    <input type="text" class="form-control @error('real_ip') is-invalid @enderror" id="real_ip" name="real_ip" value="{{ old('real_ip', $cloudDetail->real_ip ?? '') }}" placeholder="Value / Status">
+                                    <input type="number" class="form-control @error('real_ip') is-invalid @enderror" id="real_ip" name="real_ip" value="{{ old('real_ip', $cloudDetail->real_ip ?? '') }}" placeholder="Value / Status">
                                     @error('real_ip')
                                         <div class="invalid-feedback d-block">{{ $message }}</div>
                                     @enderror
                                 </div>
                                 <div class="col-md-4">
                                     <label for="vpn" class="form-label fw-semibold">VPN</label>
-                                    <input type="text" class="form-control @error('vpn') is-invalid @enderror" id="vpn" name="vpn" value="{{ old('vpn', $cloudDetail->vpn ?? '') }}" placeholder="Value / Status">
+                                    <input type="number" class="form-control @error('vpn') is-invalid @enderror" id="vpn" name="vpn" value="{{ old('vpn', $cloudDetail->vpn ?? '') }}" placeholder="Value / Status">
                                     @error('vpn')
                                         <div class="invalid-feedback d-block">{{ $message }}</div>
                                     @enderror
                                 </div>
                                 <div class="col-md-4">
                                     <label for="bdix" class="form-label fw-semibold">BDIX</label>
-                                    <input type="text" class="form-control @error('bdix') is-invalid @enderror" id="bdix" name="bdix" value="{{ old('bdix', $cloudDetail->bdix ?? '') }}" placeholder="Value / Status">
+                                    <input type="number" class="form-control @error('bdix') is-invalid @enderror" id="bdix" name="bdix" value="{{ old('bdix', $cloudDetail->bdix ?? '') }}" placeholder="Value / Status">
                                     @error('bdix')
                                         <div class="invalid-feedback d-block">{{ $message }}</div>
                                     @enderror

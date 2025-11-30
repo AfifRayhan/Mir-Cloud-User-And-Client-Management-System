@@ -10,7 +10,7 @@ class ResourceUpgradationDetail extends Model
         'resource_upgradation_id',
         'service_id',
         'quantity',
-        'downgrade_amount',
+        'upgrade_amount',
     ];
 
     public function resourceUpgradation()

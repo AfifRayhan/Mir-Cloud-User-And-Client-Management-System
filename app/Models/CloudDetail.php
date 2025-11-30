@@ -16,13 +16,12 @@ class CloudDetail extends Model
         'vpn',
         'bdix',
         'internet',
-        'billing_type',
+        'other_configuration',
+        'inserted_by',
     ];
 
     protected $casts = [
-        'real_ip' => 'boolean',
-        'vpn' => 'boolean',
-        'bdix' => 'boolean',
+        'other_configuration' => 'array',
     ];
 
     public function customer(): BelongsTo

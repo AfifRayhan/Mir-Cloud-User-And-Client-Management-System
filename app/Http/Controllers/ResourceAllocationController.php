@@ -12,8 +12,7 @@ class ResourceAllocationController extends Controller
 {
     public function index(): View
     {
-        $customers = Customer::with('cloudDetail')
-            ->orderBy('customer_name')
+        $customers = Customer::orderBy('customer_name')
             ->get();
 
         $customerStatuses = \App\Models\CustomerStatus::all();
@@ -28,19 +27,13 @@ class ResourceAllocationController extends Controller
             'action_type' => ['required', Rule::in(['dismantle'])],
         ]);
 
-        $customer = Customer::with('cloudDetail')->findOrFail($validated['customer_id']);
+        $customer = Customer::findOrFail($validated['customer_id']);
 
-        if ($customer->cloudDetail) {
-            $customer->cloudDetail()->delete();
-
-            return redirect()
-                ->route('resource-allocation.index')
-                ->with('success', "{$customer->customer_name}'s resources have been dismantled.");
-        }
-
+        // Dismantle functionality can be implemented by setting inactivation dates
+        // For now, just return a message
         return redirect()
             ->route('resource-allocation.index')
-            ->with('info', "{$customer->customer_name} does not have active cloud resources to dismantle.");
+            ->with('info', "Dismantle functionality will be implemented through inactivation dates.");
     }
 
     public function allocationForm(Request $request, Customer $customer)
@@ -51,13 +44,29 @@ class ResourceAllocationController extends Controller
         $services = \App\Models\Service::all();
         $taskStatuses = \App\Models\TaskStatus::all();
         
+        // Check if this is the first allocation
+        $isFirstAllocation = !$customer->hasResourceAllocations();
+        
+        // If first allocation and no status selected, default to "Test"
+        if ($isFirstAllocation && !$statusId) {
+            $testStatus = \App\Models\CustomerStatus::where('name', 'Test')->first();
+            $statusId = $testStatus ? $testStatus->id : null;
+        }
+        
+        // Get default task status "Proceed from KAM" for first allocation
+        $defaultTaskStatusId = null;
+        if ($isFirstAllocation) {
+            $proceedFromKAM = \App\Models\TaskStatus::where('name', 'Proceed from KAM')->first();
+            $defaultTaskStatusId = $proceedFromKAM ? $proceedFromKAM->id : null;
+        }
+        
         $statusName = null;
         if ($statusId) {
             $status = \App\Models\CustomerStatus::find($statusId);
             $statusName = $status ? $status->name : null;
         }
         
-        $html = view('resource-allocation.partials.allocation-form', compact('customer', 'services', 'actionType', 'statusId', 'statusName', 'taskStatuses'))->render();
+        $html = view('resource-allocation.partials.allocation-form', compact('customer', 'services', 'actionType', 'statusId', 'statusName', 'taskStatuses', 'isFirstAllocation', 'defaultTaskStatusId'))->render();
         
         return response()->json(['html' => $html]);
     }
@@ -105,30 +114,12 @@ class ResourceAllocationController extends Controller
                 'activation_date' => $validated['activation_date'],
             ]);
 
-            // Store inactivation_date in CloudDetail other_configuration
-            if ($customer->cloudDetail) {
-                $otherConfig = $customer->cloudDetail->other_configuration ?? [];
-                $otherConfig['inactivation_date'] = $validated['inactivation_date'] ?? '3000-01-01';
-                $customer->cloudDetail->other_configuration = $otherConfig;
-                $customer->cloudDetail->save();
-            }
-
             foreach ($servicesInput as $serviceId => $increaseAmount) {
                 $service = \App\Models\Service::find($serviceId);
                 if (!$service) continue;
 
-                // Get current value
-                $columnName = $this->getColumnNameForService($service->service_name);
-                $currentValue = 0;
-                if ($customer->cloudDetail) {
-                    if ($columnName) {
-                        $currentValue = $customer->cloudDetail->{$columnName} ?? 0;
-                    } else {
-                        // Check other_configuration for unmapped services
-                        $otherConfig = $customer->cloudDetail->other_configuration ?? [];
-                        $currentValue = $otherConfig[$service->service_name] ?? 0;
-                    }
-                }
+                // Get current value from resource history
+                $currentValue = $customer->getResourceQuantity($service->service_name);
 
                 // Calculate the new value after increase
                 $newValue = $currentValue + $increaseAmount;
@@ -139,9 +130,6 @@ class ResourceAllocationController extends Controller
                     'quantity' => $newValue,
                     'upgrade_amount' => $increaseAmount,
                 ]);
-                
-                // Update Cloud Details by adding the increase amount
-                $this->updateCloudDetails($customer, $serviceId, $increaseAmount, 'add');
             }
         } else {
             $downgradation = \App\Models\ResourceDowngradation::create([
@@ -155,18 +143,8 @@ class ResourceAllocationController extends Controller
                 $service = \App\Models\Service::find($serviceId);
                 if (!$service) continue;
 
-                // Get current value
-                $columnName = $this->getColumnNameForService($service->service_name);
-                $currentValue = 0;
-                if ($customer->cloudDetail) {
-                    if ($columnName) {
-                        $currentValue = $customer->cloudDetail->{$columnName} ?? 0;
-                    } else {
-                        // Check other_configuration for unmapped services
-                        $otherConfig = $customer->cloudDetail->other_configuration ?? [];
-                        $currentValue = $otherConfig[$service->service_name] ?? 0;
-                    }
-                }
+                // Get current value from resource history
+                $currentValue = $customer->getResourceQuantity($service->service_name);
 
                 // Calculate the new value after reduction
                 $newValue = max(0, $currentValue - $reductionAmount);
@@ -177,9 +155,6 @@ class ResourceAllocationController extends Controller
                     'quantity' => $newValue,
                     'downgrade_amount' => $reductionAmount,
                 ]);
-                
-                // Update Cloud Details by reducing
-                $this->updateCloudDetails($customer, $serviceId, $reductionAmount, 'subtract');
             }
         }
 
@@ -190,54 +165,6 @@ class ResourceAllocationController extends Controller
         ]);
     }
 
-    private function updateCloudDetails($customer, $serviceId, $value, $operation)
-    {
-        $service = \App\Models\Service::find($serviceId);
-        if (!$service || !$customer->cloudDetail) return;
 
-        $columnName = $this->getColumnNameForService($service->service_name);
-        
-        if ($columnName) {
-            // Update dedicated column
-            if ($operation == 'add') {
-                // For upgrade: add the increase amount to current value
-                $current = $customer->cloudDetail->{$columnName} ?? 0;
-                $customer->cloudDetail->{$columnName} = $current + $value;
-            } elseif ($operation == 'subtract') {
-                // For downgrade: subtract the reduction amount
-                $current = $customer->cloudDetail->{$columnName} ?? 0;
-                $customer->cloudDetail->{$columnName} = max(0, $current - $value);
-            }
-        } else {
-            // Update other_configuration for unmapped services
-            $otherConfig = $customer->cloudDetail->other_configuration ?? [];
-            $current = $otherConfig[$service->service_name] ?? 0;
-            
-            if ($operation == 'add') {
-                $otherConfig[$service->service_name] = $current + $value;
-            } elseif ($operation == 'subtract') {
-                $otherConfig[$service->service_name] = max(0, $current - $value);
-            }
-            
-            $customer->cloudDetail->other_configuration = $otherConfig;
-        }
-        
-        $customer->cloudDetail->save();
-    }
-
-    private function getColumnNameForService($serviceName)
-    {
-        $mapping = [
-            'vCPU' => 'vcpu',
-            'RAM' => 'ram',
-            'Storage' => 'storage',
-            'Internet' => 'internet',
-            'Real IP' => 'real_ip',
-            'VPN' => 'vpn',
-            'BDIX' => 'bdix',
-        ];
-
-        return $mapping[$serviceName] ?? null;
-    }
 }
 

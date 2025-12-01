@@ -48,49 +48,49 @@
                                 <div class="col-md-6">
                                     <label for="vcpu" class="form-label fw-semibold">vCPU (Core)</label>
                                     <input type="number" id="vcpu" name="vcpu" class="form-control @error('vcpu') is-invalid @enderror"
-                                           value="{{ old('vcpu', $customer->cloudDetail->vcpu ?? '') }}" min="0">
+                                           value="{{ old('vcpu', $customer->getResourceQuantity('vCPU')) }}" min="0">
                                     @error('vcpu') <div class="invalid-feedback">{{ $message }}</div> @enderror
                                 </div>
 
                                 <div class="col-md-6">
                                     <label for="ram" class="form-label fw-semibold">RAM (GB)</label>
                                     <input type="number" id="ram" name="ram" class="form-control @error('ram') is-invalid @enderror"
-                                           value="{{ old('ram', $customer->cloudDetail->ram ?? '') }}" min="0">
+                                           value="{{ old('ram', $customer->getResourceQuantity('RAM')) }}" min="0">
                                     @error('ram') <div class="invalid-feedback">{{ $message }}</div> @enderror
                                 </div>
 
                                 <div class="col-md-6">
                                     <label for="storage" class="form-label fw-semibold">Storage (GB)</label>
                                     <input type="number" id="storage" name="storage" class="form-control @error('storage') is-invalid @enderror"
-                                           value="{{ old('storage', $customer->cloudDetail->storage ?? '') }}" min="0">
+                                           value="{{ old('storage', $customer->getResourceQuantity('Storage')) }}" min="0">
                                     @error('storage') <div class="invalid-feedback">{{ $message }}</div> @enderror
                                 </div>
 
                                 <div class="col-md-6">
                                     <label for="internet" class="form-label fw-semibold">Internet Bandwidth (Mbps)</label>
                                     <input type="number" id="internet" name="internet" class="form-control @error('internet') is-invalid @enderror"
-                                           value="{{ old('internet', $customer->cloudDetail->internet ?? '') }}" min="0">
+                                           value="{{ old('internet', $customer->getResourceQuantity('Internet')) }}" min="0">
                                     @error('internet') <div class="invalid-feedback">{{ $message }}</div> @enderror
                                 </div>
 
                                 <div class="col-md-6">
                                     <label for="real_ip" class="form-label fw-semibold">Real IP</label>
                                     <input type="number" id="real_ip" name="real_ip" class="form-control @error('real_ip') is-invalid @enderror"
-                                           value="{{ old('real_ip', $customer->cloudDetail->real_ip ?? '') }}">
+                                           value="{{ old('real_ip', $customer->getResourceQuantity('Real IP')) }}">
                                     @error('real_ip') <div class="invalid-feedback">{{ $message }}</div> @enderror
                                 </div>
 
                                 <div class="col-md-6">
                                     <label for="vpn" class="form-label fw-semibold">VPN</label>
                                     <input type="number" id="vpn" name="vpn" class="form-control @error('vpn') is-invalid @enderror"
-                                           value="{{ old('vpn', $customer->cloudDetail->vpn ?? '') }}">
+                                           value="{{ old('vpn', $customer->getResourceQuantity('VPN')) }}">
                                     @error('vpn') <div class="invalid-feedback">{{ $message }}</div> @enderror
                                 </div>
 
                                 <div class="col-md-6">
                                     <label for="bdix" class="form-label fw-semibold">BDIX</label>
                                     <input type="number" id="bdix" name="bdix" class="form-control @error('bdix') is-invalid @enderror"
-                                           value="{{ old('bdix', $customer->cloudDetail->bdix ?? '') }}">
+                                           value="{{ old('bdix', $customer->getResourceQuantity('BDIX')) }}">
                                     @error('bdix') <div class="invalid-feedback">{{ $message }}</div> @enderror
                                 </div>
                             </div>

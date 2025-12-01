@@ -39,7 +39,7 @@
                                         <option value="" disabled {{ old('customer_id') ? '' : 'selected' }}>Choose a customer</option>
                                         @foreach($customers as $customer)
                                             <option value="{{ $customer->id }}" {{ old('customer_id') == $customer->id ? 'selected' : '' }}>
-                                                {{ $customer->customer_name }} @if($customer->cloudDetail) - Active Resources @else - No Resources @endif
+                                                {{ $customer->customer_name }} @if($customer->hasResourceAllocations()) - Active Resources @else - No Resources @endif
                                             </option>
                                         @endforeach
                                     </select>

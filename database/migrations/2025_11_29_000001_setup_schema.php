@@ -98,21 +98,6 @@ return new class extends Migration
             $table->timestamps();
         });
 
-        // 9. Cloud Details
-        Schema::create('cloud_details', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('customer_id')->constrained('customers')->onDelete('cascade');
-            $table->integer('vcpu')->nullable();
-            $table->integer('ram')->nullable();
-            $table->integer('storage')->nullable();
-            $table->integer('real_ip')->nullable();
-            $table->integer('vpn')->nullable();
-            $table->integer('bdix')->nullable();
-            $table->integer('internet')->nullable();
-            $table->json('other_configuration')->nullable();
-            $table->foreignId('inserted_by')->nullable()->constrained('users');
-            $table->timestamps();
-        });
 
         // 10. Resource Upgradations
         Schema::create('resource_upgradations', function (Blueprint $table) {
@@ -167,7 +152,6 @@ return new class extends Migration
         Schema::dropIfExists('resource_downgradations');
         Schema::dropIfExists('resource_upgradation_details');
         Schema::dropIfExists('resource_upgradations');
-        Schema::dropIfExists('cloud_details');
         Schema::dropIfExists('customers');
         
         Schema::table('users', function (Blueprint $table) {

@@ -4,7 +4,11 @@
         <div class="card border-0 shadow-sm h-100">
             <div class="card-header bg-white py-3">
                 <h5 class="fw-bold mb-0 text-success">
-                    Upgrade Resources for {{ $customer->customer_name }}
+                    @if($isFirstAllocation ?? false)
+                        Initial Resource Allocation for {{ $customer->customer_name }}
+                    @else
+                        Upgrade Resources for {{ $customer->customer_name }}
+                    @endif
                 </h5>
             </div>
             <div class="card-body p-4">
@@ -14,9 +18,15 @@
                     <button type="button" class="btn-close" onclick="this.parentElement.classList.add('d-none')"></button>
                 </div>
                 
-                <div class="alert alert-success mb-4">
-                    <small><strong>Upgrade Mode:</strong> Specify the amount to increase for each resource.</small>
-                </div>
+                @if($isFirstAllocation ?? false)
+                    <div class="alert alert-info mb-4">
+                        <small><strong>Initial Allocation:</strong> This is the first resource allocation for this customer. Specify the initial quantity for each resource.</small>
+                    </div>
+                @else
+                    <div class="alert alert-success mb-4">
+                        <small><strong>Upgrade Mode:</strong> Specify the amount to increase for each resource.</small>
+                    </div>
+                @endif
 
                 <div class="mb-4">
                     <h6 class="fw-bold mb-3">Customer Status</h6>
@@ -28,9 +38,9 @@
                 <div class="mb-4">
                     <label for="task_status_id" class="form-label fw-semibold">Task Status <span class="text-danger">*</span></label>
                     <select id="task_status_id" name="task_status_id" class="form-select" required>
-                        <option value="" disabled selected>Select Task Status</option>
+                        <option value="" disabled {{ !isset($defaultTaskStatusId) ? 'selected' : '' }}>Select Task Status</option>
                         @foreach($taskStatuses as $taskStatus)
-                            <option value="{{ $taskStatus->id }}">{{ $taskStatus->name }}</option>
+                            <option value="{{ $taskStatus->id }}" {{ (isset($defaultTaskStatusId) && $defaultTaskStatusId == $taskStatus->id) ? 'selected' : '' }}>{{ $taskStatus->name }}</option>
                         @endforeach
                     </select>
                 </div>
@@ -42,13 +52,7 @@
                     </div>
                     <div class="col-md-6">
                         <label for="inactivation_date" class="form-label fw-semibold">Inactivation Date</label>
-                        @php
-                            $inactivationDate = '3000-01-01';
-                            if ($customer->cloudDetail && isset($customer->cloudDetail->other_configuration['inactivation_date'])) {
-                                $inactivationDate = $customer->cloudDetail->other_configuration['inactivation_date'];
-                            }
-                        @endphp
-                        <input type="date" id="inactivation_date" name="inactivation_date" class="form-control" value="{{ $inactivationDate }}">
+                        <input type="date" id="inactivation_date" name="inactivation_date" class="form-control" value="3000-01-01">
                         <small class="text-muted">Leave as default (3000-01-01) for no inactivation</small>
                     </div>
                 </div>
@@ -65,28 +69,7 @@
                         <tbody>
                             @foreach($services as $service)
                                 @php
-                                    $columnName = null;
-                                    $mapping = [
-                                        'vCPU' => 'vcpu',
-                                        'RAM' => 'ram',
-                                        'Storage' => 'storage',
-                                        'Internet' => 'internet',
-                                        'Real IP' => 'real_ip',
-                                        'VPN' => 'vpn',
-                                        'BDIX' => 'bdix',
-                                    ];
-                                    $columnName = $mapping[$service->service_name] ?? null;
-                                    $currentValue = 0;
-                                    if ($customer->cloudDetail) {
-                                        if ($columnName) {
-                                            $currentValue = $customer->cloudDetail->{$columnName} ?? 0;
-                                        } else {
-                                            // Check other_configuration for unmapped services
-                                            $otherConfig = $customer->cloudDetail->other_configuration ?? [];
-                                            $currentValue = $otherConfig[$service->service_name] ?? 0;
-                                        }
-                                    }
-                                    // Debug: Service: {{ $service->service_name }}, Column: {{ $columnName }}, Value: {{ $currentValue }}
+                                    $currentValue = $customer->getResourceQuantity($service->service_name);
                                 @endphp
                                 <tr>
                                     <td>
@@ -162,28 +145,7 @@
                         <tbody>
                             @foreach($services as $service)
                                 @php
-                                    $columnName = null;
-                                    $mapping = [
-                                        'vCPU' => 'vcpu',
-                                        'RAM' => 'ram',
-                                        'Storage' => 'storage',
-                                        'Internet' => 'internet',
-                                        'Real IP' => 'real_ip',
-                                        'VPN' => 'vpn',
-                                        'BDIX' => 'bdix',
-                                    ];
-                                    $columnName = $mapping[$service->service_name] ?? null;
-                                    $currentValue = 0;
-                                    if ($customer->cloudDetail) {
-                                        if ($columnName) {
-                                            $currentValue = $customer->cloudDetail->{$columnName} ?? 0;
-                                        } else {
-                                            // Check other_configuration for unmapped services
-                                            $otherConfig = $customer->cloudDetail->other_configuration ?? [];
-                                            $currentValue = $otherConfig[$service->service_name] ?? 0;
-                                        }
-                                    }
-                                    // Debug: Service: {{ $service->service_name }}, Column: {{ $columnName }}, Value: {{ $currentValue }}
+                                    $currentValue = $customer->getResourceQuantity($service->service_name);
                                 @endphp
                                 <tr>
                                     <td>

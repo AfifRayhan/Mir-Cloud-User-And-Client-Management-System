@@ -23,15 +23,11 @@ Route::middleware('auth')->group(function () {
     
     // Customer routes
     Route::resource('customers', \App\Http\Controllers\CustomerController::class);
-    
-    // Cloud details routes
-    Route::get('customers/{customerId}/cloud-details/create', [\App\Http\Controllers\CloudDetailController::class, 'create'])->name('cloud-details.create');
-    Route::post('customers/{customerId}/cloud-details', [\App\Http\Controllers\CloudDetailController::class, 'store'])->name('cloud-details.store');
 
     // Resource allocation (combined upgrade/downgrade)
     Route::get('resource-allocation', [ResourceAllocationController::class, 'index'])->name('resource-allocation.index');
     Route::post('resource-allocation', [ResourceAllocationController::class, 'process'])->name('resource-allocation.process');
-    Route::get('resource-allocation/customer/{customer}/form', [ResourceAllocationController::class, 'cloudDetailForm'])->name('resource-allocation.cloud-form');
+
     Route::get('resource-allocation/{customer}/allocate', [ResourceAllocationController::class, 'allocationForm'])->name('resource-allocation.allocate');
     Route::post('resource-allocation/{customer}/allocate', [ResourceAllocationController::class, 'storeAllocation'])->name('resource-allocation.store');
 

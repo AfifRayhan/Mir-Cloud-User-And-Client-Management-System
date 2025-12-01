@@ -59,8 +59,8 @@ class CustomerController extends Controller
             'submitted_by' => Auth::id(),
         ]);
 
-        return redirect()->route('cloud-details.create', $customer->id)
-            ->with('success', 'Customer created successfully. Please add cloud details.');
+        return redirect()->route('resource-allocation.index')
+            ->with('success', 'Customer created successfully. Please allocate resources.');
     }
 
     /**

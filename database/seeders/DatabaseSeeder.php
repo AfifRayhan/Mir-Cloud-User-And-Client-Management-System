@@ -22,6 +22,7 @@ class DatabaseSeeder extends Seeder
             ServiceSeeder::class,
             CustomerStatusSeeder::class,
             TaskStatusSeeder::class,
+            UserDepartmentSeeder::class,
         ]);
 
         // Create admin user

@@ -28,6 +28,18 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
+        // Check if this is the user's first login
+        $user = Auth::user();
+        if (is_null($user->first_login_at)) {
+            // Mark first login
+            $user->update(['first_login_at' => now()]);
+
+            // Send welcome email only if user is NOT an admin
+            // if (!$user->isAdmin()) {
+            //     \Illuminate\Support\Facades\Mail::to($user->email)->send(new \App\Mail\WelcomeEmail($user));
+            // }
+        }
+
         return redirect()->intended(route('dashboard', absolute: false));
     }
 

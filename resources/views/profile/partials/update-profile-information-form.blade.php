@@ -1,10 +1,29 @@
 <section>
     <header class="mb-4">
         <h2 class="h5 fw-bold mb-2">Profile Information</h2>
-        <p class="text-muted small mb-0">Update your account's profile information.</p>
+        <p class="mt-1 text-sm text-gray-600">
+            {{ __("Update your account's profile information and email address.") }}
+        </p>
     </header>
 
-    <form method="post" action="{{ route('profile.update') }}">
+    <div class="mb-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+                <label class="block font-medium text-sm text-gray-700">Role</label>
+                <div class="mt-1 text-gray-900 font-semibold">
+                    {{ ucfirst(str_replace('-', ' ', $user->role->role_name)) }}
+                </div>
+            </div>
+            <div>
+                <label class="block font-medium text-sm text-gray-700">Department</label>
+                <div class="mt-1 text-gray-900 font-semibold">
+                    {{ $user->department ? $user->department->department_name : 'Not Assigned' }}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <form id="send-verification" method="post" action="{{ route('verification.send') }}">
         @csrf
         @method('patch')
 

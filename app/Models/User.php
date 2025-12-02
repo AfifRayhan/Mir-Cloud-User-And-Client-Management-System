@@ -20,8 +20,11 @@ class User extends Authenticatable
     protected $fillable = [
         'name',
         'username',
+        'email',
         'password',
         'role_id',
+        'department_id',
+        'first_login_at',
     ];
 
     /**
@@ -43,12 +46,18 @@ class User extends Authenticatable
     {
         return [
             'password' => 'hashed',
+            'first_login_at' => 'datetime',
         ];
     }
 
     public function role()
     {
         return $this->belongsTo(Role::class);
+    }
+
+    public function department()
+    {
+        return $this->belongsTo(UserDepartment::class, 'department_id');
     }
 
     public function isAdmin()

@@ -32,7 +32,7 @@ Route::middleware('auth')->group(function () {
     Route::post('resource-allocation/{customer}/allocate', [ResourceAllocationController::class, 'storeAllocation'])->name('resource-allocation.store');
 
     // User management (admin only enforced in controller)
-    Route::resource('users', UserManagementController::class)->except(['show']);
+    Route::resource('users', \App\Http\Controllers\UserManagementController::class);
 
     // Platform management
     Route::get('platforms', [PlatformManagementController::class, 'index'])->name('platforms.index');
@@ -43,7 +43,12 @@ Route::middleware('auth')->group(function () {
     Route::get('services', [ServiceManagementController::class, 'index'])->name('services.index');
     Route::post('services', [ServiceManagementController::class, 'store'])->name('services.store');
     Route::put('services/{service}', [ServiceManagementController::class, 'update'])->name('services.update');
+    Route::put('services/{service}', [ServiceManagementController::class, 'update'])->name('services.update');
     Route::delete('services/{service}', [ServiceManagementController::class, 'destroy'])->name('services.destroy');
+
+    // Mail routes
+    Route::get('mail/create', [\App\Http\Controllers\MailController::class, 'create'])->name('mail.create');
+    Route::post('mail', [\App\Http\Controllers\MailController::class, 'store'])->name('mail.store');
 });
 
 require __DIR__.'/auth.php';

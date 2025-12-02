@@ -2,144 +2,115 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Role;
 use App\Models\User;
+use App\Models\Role;
 use App\Models\UserDepartment;
-use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules;
-use Illuminate\View\View;
 
 class UserManagementController extends Controller
 {
-    public function index(): View
+    /**
+     * Display a listing of the resource.
+     */
+    public function index()
     {
-        $this->authorizeAdmin();
-
-        $users = User::with(['role', 'department', 'creator'])
-            ->orderBy('name')
-            ->paginate(12);
-
+        $users = User::with(['role', 'department'])->latest()->paginate(10);
         return view('users.index', compact('users'));
     }
 
-    public function create(): View
+    /**
+     * Show the form for creating a new resource.
+     */
+    public function create()
     {
-        $this->authorizeAdmin();
-
-        $roles = Role::orderBy('role_name')->get();
-        $departments = UserDepartment::orderBy('department_name')->get();
-
+        $roles = Role::all();
+        $departments = UserDepartment::all();
         return view('users.create', compact('roles', 'departments'));
     }
 
-    public function store(Request $request): RedirectResponse
+    /**
+     * Store a newly created resource in storage.
+     */
+    public function store(Request $request)
     {
-        $this->authorizeAdmin();
-
-        $validated = $request->validate([
+        $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'designation' => ['nullable', 'string', 'max:255'],
-            'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email'],
-            'username' => ['required', 'string', 'max:255', 'unique:users,username'],
-            'phone' => ['nullable', 'string', 'max:50'],
+            'username' => ['required', 'string', 'max:255', 'unique:users'],
+            'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
             'role_id' => ['required', 'exists:roles,id'],
-            'department_id' => ['required', 'exists:user_departments,id'],
+            'department_id' => ['nullable', 'exists:user_departments,id'],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ]);
 
         User::create([
-            'name' => $validated['name'],
-            'designation' => $validated['designation'] ?? null,
-            'email' => $validated['email'],
-            'username' => $validated['username'],
-            'phone' => $validated['phone'] ?? null,
-            'role_id' => $validated['role_id'],
-            'department_id' => $validated['department_id'],
-            'password' => Hash::make($validated['password']),
-            'user_created_by' => Auth::id(),
+            'name' => $request->name,
+            'username' => $request->username,
+            'email' => $request->email,
+            'role_id' => $request->role_id,
+            'department_id' => $request->department_id,
+            'password' => Hash::make($request->password),
         ]);
 
-        return redirect()->route('users.index')->with('success', 'User created successfully.');
+        return redirect()->route('users.index')
+            ->with('success', 'User created successfully.');
     }
 
-    public function edit(User $user): View
+    /**
+     * Show the form for editing the specified resource.
+     */
+    public function edit(User $user)
     {
-        $this->authorizeAdmin();
-
-        $roles = Role::orderBy('role_name')->get();
-        $departments = UserDepartment::orderBy('department_name')->get();
-
+        $roles = Role::all();
+        $departments = UserDepartment::all();
         return view('users.edit', compact('user', 'roles', 'departments'));
     }
 
-    public function update(Request $request, User $user): RedirectResponse
+    /**
+     * Update the specified resource in storage.
+     */
+    public function update(Request $request, User $user)
     {
-        $this->authorizeAdmin();
-
-        $validated = $request->validate([
+        $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'designation' => ['nullable', 'string', 'max:255'],
-            'email' => [
-                'required',
-                'string',
-                'email',
-                'max:255',
-                Rule::unique('users', 'email')->ignore($user->id),
-            ],
-            'username' => [
-                'required',
-                'string',
-                'max:255',
-                Rule::unique('users', 'username')->ignore($user->id),
-            ],
-            'phone' => ['nullable', 'string', 'max:50'],
+            'username' => ['required', 'string', 'max:255', 'unique:users,username,' . $user->id],
+            'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email,' . $user->id],
             'role_id' => ['required', 'exists:roles,id'],
-            'department_id' => ['required', 'exists:user_departments,id'],
+            'department_id' => ['nullable', 'exists:user_departments,id'],
             'password' => ['nullable', 'confirmed', Rules\Password::defaults()],
         ]);
 
-        $user->fill([
-            'name' => $validated['name'],
-            'designation' => $validated['designation'] ?? null,
-            'email' => $validated['email'],
-            'username' => $validated['username'],
-            'phone' => $validated['phone'] ?? null,
-            'role_id' => $validated['role_id'],
-            'department_id' => $validated['department_id'],
-        ]);
+        $userData = [
+            'name' => $request->name,
+            'username' => $request->username,
+            'email' => $request->email,
+            'role_id' => $request->role_id,
+            'department_id' => $request->department_id,
+        ];
 
-        if (!empty($validated['password'])) {
-            $user->password = Hash::make($validated['password']);
+        if ($request->filled('password')) {
+            $userData['password'] = Hash::make($request->password);
         }
 
-        $user->save();
+        $user->update($userData);
 
-        return redirect()->route('users.index')->with('success', 'User updated successfully.');
+        return redirect()->route('users.index')
+            ->with('success', 'User updated successfully.');
     }
 
-    public function destroy(User $user): RedirectResponse
+    /**
+     * Remove the specified resource from storage.
+     */
+    public function destroy(User $user)
     {
-        $this->authorizeAdmin();
-
-        if ($user->id === Auth::id()) {
-            return redirect()->route('users.index')->withErrors([
-                'user' => 'You cannot delete your own account.',
-            ]);
+        if ($user->id === auth()->id()) {
+            return back()->with('error', 'You cannot delete your own account.');
         }
 
         $user->delete();
 
-        return redirect()->route('users.index')->with('success', 'User removed successfully.');
-    }
-
-    private function authorizeAdmin(): void
-    {
-        if (!Auth::user()?->isAdmin()) {
-            abort(403, 'Only administrators can manage users.');
-        }
+        return redirect()->route('users.index')
+            ->with('success', 'User deleted successfully.');
     }
 }

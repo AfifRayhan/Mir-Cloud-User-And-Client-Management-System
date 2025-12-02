@@ -8,7 +8,7 @@
         <title>Mir Cloud - Login</title>
 
         <!-- Scripts -->
-        @vite(['resources/css/app.css', 'resources/js/app.js'])
+        @vite(['resources/css/app.css', 'resources/css/custom-login.css', 'resources/css/custom-dashboard.css', 'resources/css/custom-add-customer.css','resources/js/app.js', 'resources/js/custom-js-styles.js', 'resources/css/custom-customer-index.css'])
     </head>
     <body class="bg-light">
         {{ $slot }}

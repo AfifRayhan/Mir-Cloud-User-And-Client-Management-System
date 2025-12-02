@@ -1,90 +1,224 @@
 <x-app-layout>
-    <div class="container-fluid py-4">
-        <div class="row mb-4">
+    <div class="container-fluid custom-customer-index-container py-4">
+        <!-- Background Elements -->
+        <div class="custom-customer-index-bg-pattern"></div>
+        <div class="custom-customer-index-bg-circle circle-1"></div>
+        <div class="custom-customer-index-bg-circle circle-2"></div>
+
+        <!-- Header Section -->
+        <div class="row mb-5">
             <div class="col-12">
-                <div class="d-flex flex-wrap align-items-center justify-content-between gap-2">
-                    <div>
-                        <h1 class="h3 fw-bold mb-1">Customer Management</h1>
-                        <p class="text-muted mb-0">View and manage all customers</p>
+                <div class="custom-customer-index-header">
+                    <div class="d-flex flex-column flex-md-row align-items-start align-items-md-center justify-content-between gap-3">
+                        <div>
+                            <h1 class="custom-customer-index-title fw-bold mb-2">Customer Management</h1>
+                            <p class="custom-customer-index-subtitle text-muted">
+                                View and manage all customers in the system
+                            </p>
+                        </div>
+                        <a href="{{ route('customers.create') }}" class="btn btn-primary custom-customer-index-add-btn">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="me-2" viewBox="0 0 16 16">
+                                <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4" />
+                            </svg>
+                            Add New Customer
+                        </a>
                     </div>
-                    <a href="{{ route('customers.create') }}" class="btn btn-primary">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="me-2" viewBox="0 0 16 16">
-                            <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4"/>
-                        </svg>
-                        Add New Customer
-                    </a>
                 </div>
             </div>
         </div>
 
+        <!-- Success Alert -->
         @if(session('success'))
-            <div class="alert alert-success alert-dismissible fade show" role="alert">
-                {{ session('success') }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="custom-customer-index-alert alert alert-success alert-dismissible fade show" role="alert">
+                    <div class="d-flex align-items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="me-3" viewBox="0 0 16 16">
+                            <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z" />
+                        </svg>
+                        <div class="flex-grow-1">
+                            <h6 class="alert-heading mb-1">Success!</h6>
+                            <p class="mb-0">{{ session('success') }}</p>
+                        </div>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
             </div>
+        </div>
         @endif
 
+        <!-- Main Content -->
         <div class="row">
             <div class="col-12">
                 @if($customers->isEmpty())
-                    <div class="card border-0 shadow-sm">
-                        <div class="card-body p-5 text-center">
-                            <p class="text-muted mb-0">No customers found.</p>
+                <!-- Empty State -->
+                <div class="card custom-customer-index-empty-card border-0 shadow-sm">
+                    <div class="card-body p-5 text-center">
+                        <div class="custom-customer-index-empty-icon mb-4">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" fill="currentColor" class="text-muted" viewBox="0 0 16 16">
+                                <path d="M3 14s-1 0-1-1 1-4 6-4 6 3 6 4-1 1-1 1H3Zm5-6a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z" />
+                            </svg>
                         </div>
+                        <h5 class="custom-customer-index-empty-title mb-3">No Customers Found</h5>
+                        <p class="custom-customer-index-empty-text text-muted mb-4">
+                            Get started by adding your first customer to the system.
+                        </p>
+                        <a href="{{ route('customers.create') }}" class="btn btn-primary custom-customer-index-empty-btn">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="me-2" viewBox="0 0 16 16">
+                                <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4" />
+                            </svg>
+                            Add First Customer
+                        </a>
                     </div>
+                </div>
                 @else
-                    <div class="card border-0 shadow-sm">
-                        <div class="card-body p-0">
-                            <div class="table-responsive">
-                                <table class="table table-hover mb-0">
-                                    <thead class="table-light">
-                                        <tr>
-                                            <th>Customer Name</th>
-                                            <th>Activation Date</th>
-                                            <th>PO Number</th>
-                                            <th>Platform</th>
-                                            <th>Submitted By</th>
-                                            <th>Created At</th>
-                                            <th style="min-width: 150px;">Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        @foreach($customers as $customer)
-                                            <tr>
-                                                <td class="fw-semibold">{{ $customer->customer_name }}</td>
-                                                <td>{{ $customer->activation_date->format('M d, Y') }}</td>
-                                                <td>{{ $customer->po_number ?? 'N/A' }}</td>
-                                                <td>{{ $customer->platform->platform_name ?? 'N/A' }}</td>
-                                                <td>{{ $customer->submitter->name ?? 'N/A' }}</td>
-                                                <td>{{ $customer->created_at->format('M d, Y') }}</td>
-                                                <td>
-                                                    <div class="d-flex gap-1">
-                                                        <a href="{{ route('customers.edit', $customer->id) }}" class="btn btn-sm btn-primary">
-                                                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
-                                                                <path d="M12.146.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1 0 .708l-10 10a.5.5 0 0 1-.168.11l-5 2a.5.5 0 0 1-.65-.65l2-5a.5.5 0 0 1 .11-.168zM11.207 2.5 13.5 4.793 14.793 3.5 12.5 1.207zm1.586 3L10.5 3.207 4 9.707V10h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.293zm-9.761 5.175-.106.106-1.528 3.821 3.821-1.528.106-.106A.5.5 0 0 1 5 12.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.468-.325"/>
-                                                            </svg>
-                                                            Edit
-                                                        </a>
-                                                        <form method="POST" action="{{ route('customers.destroy', $customer->id) }}" class="d-inline" onsubmit="return confirm('Are you sure you want to permanently delete {{ $customer->customer_name }}? This will also delete all related cloud details and resource allocations.');">
-                                                            @csrf
-                                                            @method('DELETE')
-                                                            <button type="submit" class="btn btn-sm btn-danger">
-                                                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
-                                                                    <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z"/>
-                                                                    <path d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z"/>
-                                                                </svg>
-                                                                Delete
-                                                            </button>
-                                                        </form>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        @endforeach
-                                    </tbody>
-                                </table>
+                <!-- Customer Table -->
+                <div class="card custom-customer-index-card border-0 shadow-lg">
+                    <div class="card-header custom-customer-index-card-header border-0 bg-white">
+                        <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-2">
+                            <div>
+                                <h5 class="custom-customer-index-card-title mb-1">Customer List</h5>
+                                <p class="custom-customer-index-card-subtitle text-muted mb-0">
+                                    Showing {{ $customers->count() }} customer(s)
+                                </p>
+                            </div>
+                            <div class="custom-customer-index-stats">
+                                <div class="d-flex gap-3">
+                                    <div class="text-center">
+                                        <div class="custom-customer-index-stat-number">{{ $customers->count() }}</div>
+                                        <div class="custom-customer-index-stat-label">Total</div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
+                    <div class="card-body p-0">
+                        <div class="custom-customer-index-table-responsive">
+                            <table class="table custom-customer-index-table mb-0">
+                                <thead class="custom-customer-index-table-head">
+                                    <tr>
+                                        <th class="custom-customer-index-table-header">
+                                            <div class="d-flex align-items-center">
+                                                <span>Customer Name</span>
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="currentColor" class="ms-1" viewBox="0 0 16 16">
+                                                    <path d="M3.5 2.5a.5.5 0 0 0-1 0v8.793l-1.146-1.147a.5.5 0 0 0-.708.708l2 1.999.007.007a.497.497 0 0 0 .7-.006l2-2a.5.5 0 0 0-.707-.708L3.5 11.293V2.5zm3.5 1a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 0 1h-7a.5.5 0 0 1-.5-.5zM7.5 6a.5.5 0 0 0 0 1h5a.5.5 0 0 0 0-1h-5zm0 3a.5.5 0 0 0 0 1h3a.5.5 0 0 0 0-1h-3zm0 3a.5.5 0 0 0 0 1h1a.5.5 0 0 0 0-1h-1z" />
+                                                </svg>
+                                            </div>
+                                        </th>
+                                        <th class="custom-customer-index-table-header">Activation Date</th>
+                                        <th class="custom-customer-index-table-header">PO Number</th>
+                                        <th class="custom-customer-index-table-header">Platform</th>
+                                        <th class="custom-customer-index-table-header">Submitted By</th>
+                                        <th class="custom-customer-index-table-header">Created At</th>
+                                        <th class="custom-customer-index-table-header text-end" style="min-width: 150px;">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="custom-customer-index-table-body">
+                                    @foreach($customers as $customer)
+                                    <tr class="custom-customer-index-table-row">
+                                        <td class="custom-customer-index-table-cell">
+                                            <div class="d-flex align-items-center">
+                                                <div>
+                                                    <div class="custom-customer-index-customer-name fw-semibold">
+                                                        {{ $customer->customer_name }}
+                                                    </div>
+                                                    @if($customer->customer_address)
+                                                    <div class="custom-customer-index-customer-address text-muted small">
+                                                        {{ Str::limit($customer->customer_address, 30) }}
+                                                    </div>
+                                                    @endif
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="custom-customer-index-table-cell">
+                                            <div class="custom-customer-index-date">
+                                                <div class="custom-customer-index-date-day">
+                                                    {{ $customer->activation_date->format('d') }}
+                                                </div>
+                                                <div class="custom-customer-index-date-details">
+                                                    <div class="custom-customer-index-date-month">
+                                                        {{ $customer->activation_date->format('M') }}
+                                                    </div>
+                                                    <div class="custom-customer-index-date-year">
+                                                        {{ $customer->activation_date->format('Y') }}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="custom-customer-index-table-cell">
+                                            @if($customer->po_number)
+                                            <span class="custom-customer-index-badge bg-primary bg-opacity-10 text-primary">
+                                                {{ $customer->po_number }}
+                                            </span>
+                                            @else
+                                            <span class="custom-customer-index-badge bg-secondary bg-opacity-10 text-secondary">
+                                                N/A
+                                            </span>
+                                            @endif
+                                        </td>
+                                        <td class="custom-customer-index-table-cell">
+                                            @if($customer->platform)
+                                            <span class="custom-customer-index-platform">
+                                                {{ $customer->platform->platform_name }}
+                                            </span>
+                                            @else
+                                            <span class="text-muted">N/A</span>
+                                            @endif
+                                        </td>
+                                        <td class="custom-customer-index-table-cell">
+                                            <div class="d-flex align-items-center">
+                                                <span class="custom-customer-index-user-name">
+                                                    {{ $customer->submitter->name ?? 'N/A' }}
+                                                </span>
+                                            </div>
+                                        </td>
+                                        <td class="custom-customer-index-table-cell">
+                                            <span class="custom-customer-index-created-at">
+                                                {{ $customer->created_at->format('M d, Y') }}
+                                            </span>
+                                        </td>
+                                        <td class="custom-customer-index-table-cell text-end">
+                                            <div class="d-flex justify-content-end gap-2">
+                                                <a href="{{ route('customers.edit', $customer->id) }}"
+                                                    class="btn btn-sm custom-customer-index-action-btn custom-customer-index-edit-btn"
+                                                    title="Edit Customer">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+                                                        <path d="M12.146.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1 0 .708l-10 10a.5.5 0 0 1-.168.11l-5 2a.5.5 0 0 1-.65-.65l2-5a.5.5 0 0 1 .11-.168zM11.207 2.5 13.5 4.793 14.793 3.5 12.5 1.207zm1.586 3L10.5 3.207 4 9.707V10h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.293zm-9.761 5.175-.106.106-1.528 3.821 3.821-1.528.106-.106A.5.5 0 0 1 5 12.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.468-.325" />
+                                                    </svg>
+                                                    <span class="d-none d-sm-inline">Edit</span>
+                                                </a>
+                                                <form method="POST" action="{{ route('customers.destroy', $customer->id) }}"
+                                                    class="d-inline custom-customer-index-delete-form"
+                                                    onsubmit="return customCustomerIndexConfirmDelete('{{ addslashes($customer->customer_name) }}');">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                    <button type="submit"
+                                                        class="btn btn-sm custom-customer-index-action-btn custom-customer-index-delete-btn"
+                                                        title="Delete Customer">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+                                                            <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z" />
+                                                            <path d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z" />
+                                                        </svg>
+                                                        <span class="d-none d-sm-inline">Delete</span>
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <!-- Card Footer -->
+                    <div class="card-footer custom-customer-index-card-footer border-0 bg-white">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div class="custom-customer-index-pagination-info text-muted small">
+                                Showing {{ $customers->count() }} of {{ $customers->count() }} customers
+                            </div>
+                        </div>
+                    </div>
+                </div>
                 @endif
             </div>
         </div>

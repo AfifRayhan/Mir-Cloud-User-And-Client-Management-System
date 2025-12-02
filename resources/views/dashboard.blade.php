@@ -1,151 +1,215 @@
 <x-app-layout>
-    <div class="container-fluid py-4">
-        <div class="row mb-4">
+    <div class="container-fluid custom-dashboard-container py-4">
+        <!-- Header Section -->
+        <div class="row mb-5">
             <div class="col-12">
-                <h1 class="h3 fw-bold mb-0">Dashboard</h1>
-                <p class="text-muted">Welcome back, {{ Auth::user()->name }}!</p>
+                <div class="custom-dashboard-header">
+                    <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
+                        <div>
+                            <h1 class="custom-dashboard-title fw-bold mb-2">Dashboard</h1>
+                            <p class="custom-dashboard-subtitle text-muted mb-0">
+                                Welcome back, <span class="text-primary fw-semibold">{{ Auth::user()->name }}</span>!
+                            </p>
+                        </div>
+                        <div class="custom-dashboard-date">
+                            <span class="badge custom-dashboard-date-badge bg-light text-dark">
+                                <i class="fas fa-calendar-alt me-2"></i>
+                                {{ now()->format('F j, Y') }}
+                            </span>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
+        <!-- Success Alert -->
         @if(session('success'))
-            <div class="alert alert-success alert-dismissible fade show" role="alert">
-                {{ session('success') }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="custom-dashboard-alert alert alert-success alert-dismissible fade show" role="alert">
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-check-circle me-3 fs-4"></i>
+                            <div class="flex-grow-1">
+                                <h6 class="alert-heading mb-1">Success!</h6>
+                                <p class="mb-0">{{ session('success') }}</p>
+                            </div>
+                        </div>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                </div>
             </div>
         @endif
 
-        <div class="row">
-            <div class="col-md-6 col-lg-4 mb-4">
-                <div class="card shadow-sm border-0 h-100">
-                    <div class="card-body">
-                        <div class="d-flex align-items-center">
-                            <div class="flex-shrink-0">
-                                <div class="bg-primary bg-opacity-10 rounded-circle p-3">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="text-primary" viewBox="0 0 16 16">
-                                        <path d="M7 14s-1 0-1-1 1-4 5-4 5 3 5 4-1 1-1 1zm4-6a3 3 0 1 0 0-6 3 3 0 0 0 0 6m-5.784 6A2.238 2.238 0 0 1 5 13c0-1.355.68-2.75 1.936-3.72A6.325 6.325 0 0 0 5 9c-4 0-5 3-5 4s1 1 1 1zM4.5 8a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5"/>
-                                    </svg>
+        <!-- Dashboard Cards Grid -->
+        <div class="row g-4 mb-5">
+            <!-- Customers Card -->
+            <div class="col-12 col-md-6 col-lg-4">
+                <a href="{{ route('customers.index') }}" class="custom-dashboard-card-link">
+                    <div class="card custom-dashboard-card custom-dashboard-card-primary border-0 shadow-sm h-100">
+                        <div class="card-body p-4">
+                            <div class="d-flex align-items-start mb-4">
+                                <div class="custom-dashboard-icon-wrapper bg-primary bg-opacity-10">
+                                    <i class="fas fa-users text-primary"></i>
+                                </div>
+                                <div class="ms-3">
+                                    <h5 class="custom-dashboard-card-title mb-1">Customer Management</h5>
+                                    <p class="custom-dashboard-card-subtitle text-muted mb-0">
+                                        Manage customer information
+                                    </p>
                                 </div>
                             </div>
-                            <div class="flex-grow-1 ms-3">
-                                <h5 class="card-title mb-1">Customers</h5>
-                                <p class="text-muted mb-0 small">Manage customer information</p>
+                            <div class="custom-dashboard-card-footer">
+                                <span class="custom-dashboard-card-action">
+                                    Access Customers
+                                    <i class="fas fa-arrow-right ms-2"></i>
+                                </span>
                             </div>
                         </div>
-                        <hr>
-                        <a href="{{ route('customers.index') }}" class="btn btn-primary w-100">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="me-2" viewBox="0 0 16 16">
-                                <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4"/>
-                            </svg>
-                            Manage Customers
-                        </a>
+                        <div class="custom-dashboard-card-hover"></div>
                     </div>
-                </div>
+                </a>
+            </div>
+            <div class="col-12 col-md-6 col-lg-4">
+                <a href="" class="custom-dashboard-card-link">
+                    <div class="card custom-dashboard-card custom-dashboard-card-primary border-0 shadow-sm h-100">
+                        <div class="card-body p-4">
+                            <div class="d-flex align-items-start mb-4">
+                                <div class="custom-dashboard-icon-wrapper bg-primary bg-opacity-10">
+                                    <i class="fas fa-users text-primary"></i>
+                                </div>
+                                <div class="ms-3">
+                                    <h5 class="custom-dashboard-card-title mb-1">Add New Customer</h5>
+                                    <p class="custom-dashboard-card-subtitle text-muted mb-0">
+                                        New Customer Onboard
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="custom-dashboard-card-footer">
+                                <span class="custom-dashboard-card-action">
+                                    Add Customers
+                                    <i class="fas fa-arrow-right ms-2"></i>
+                                </span>
+                            </div>
+                        </div>
+                        <div class="custom-dashboard-card-hover"></div>
+                    </div>
+                </a>
             </div>
 
+            <!-- Resource Allocation Card -->
+            <div class="col-12 col-md-6 col-lg-4">
+                <a href="{{ route('resource-allocation.index') }}" class="custom-dashboard-card-link">
+                    <div class="card custom-dashboard-card custom-dashboard-card-info border-0 shadow-sm h-100">
+                        <div class="card-body p-4">
+                            <div class="d-flex align-items-start mb-4">
+                                <div class="custom-dashboard-icon-wrapper bg-info bg-opacity-10">
+                                    <i class="fas fa-server text-info"></i>
+                                </div>
+                                <div class="ms-3">
+                                    <h5 class="custom-dashboard-card-title mb-1">Customer Resource Management</h5>
+                                    <p class="custom-dashboard-card-subtitle text-muted mb-0">
+                                        Dismantle or rewrite customer resources
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="custom-dashboard-card-footer">
+                                <span class="custom-dashboard-card-action">
+                                    Manage Resource Allocation
+                                    <i class="fas fa-arrow-right ms-2"></i>
+                                </span>
+                            </div>
+                        </div>
+                        <div class="custom-dashboard-card-hover"></div>
+                    </div>
+                </a>
+            </div>
+
+            <!-- Admin Only Cards -->
             @if(Auth::user()->isAdmin())
-            <div class="col-md-6 col-lg-4 mb-4">
-                <div class="card shadow-sm border-0 h-100">
-                    <div class="card-body">
-                        <div class="d-flex align-items-center">
-                            <div class="flex-shrink-0">
-                                <div class="bg-success bg-opacity-10 rounded-circle p-3">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="text-success" viewBox="0 0 16 16">
-                                        <path d="M1 14s-1 0-1-1 1-4 6-4 6 3 6 4-1 1-1 1zm5-6a3 3 0 1 0 0-6 3 3 0 0 0 0 6m-9.5-3a5.5 5.5 0 1 1 11 0 5.5 5.5 0 0 1-11 0m16.5-3a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1h1.5V1.5a.5.5 0 0 1 .5-.5"/>
-                                    </svg>
+                <!-- Users Card -->
+                <div class="col-12 col-md-6 col-lg-4">
+                    <a href="{{ route('register') }}" class="custom-dashboard-card-link">
+                        <div class="card custom-dashboard-card custom-dashboard-card-success border-0 shadow-sm h-100">
+                            <div class="card-body p-4">
+                                <div class="d-flex align-items-start mb-4">
+                                    <div class="custom-dashboard-icon-wrapper bg-success bg-opacity-10">
+                                        <i class="fas fa-user-plus text-success"></i>
+                                    </div>
+                                    <div class="ms-3">
+                                        <h5 class="custom-dashboard-card-title mb-1">User Management</h5>
+                                        <p class="custom-dashboard-card-subtitle text-muted mb-0">
+                                            Manage system users
+                                        </p>
+                                    </div>
+                                </div>
+                                <div class="custom-dashboard-card-footer">
+                                    <span class="custom-dashboard-card-action">
+                                        Add New User
+                                        <i class="fas fa-arrow-right ms-2"></i>
+                                    </span>
                                 </div>
                             </div>
-                            <div class="flex-grow-1 ms-3">
-                                <h5 class="card-title mb-1">Users</h5>
-                                <p class="text-muted mb-0 small">Manage system users</p>
-                            </div>
+                            <div class="custom-dashboard-card-hover"></div>
                         </div>
-                        <hr>
-                        <a href="{{ route('register') }}" class="btn btn-success w-100">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="me-2" viewBox="0 0 16 16">
-                                <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4"/>
-                            </svg>
-                            Add New User
-                        </a>
-                    </div>
+                    </a>
                 </div>
-            </div>
 
-            <div class="col-md-6 col-lg-4 mb-4">
-                <div class="card shadow-sm border-0 h-100">
-                    <div class="card-body">
-                        <div class="d-flex align-items-center">
-                            <div class="flex-shrink-0">
-                                <div class="bg-secondary bg-opacity-10 rounded-circle p-3">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="text-secondary" viewBox="0 0 16 16">
-                                        <path d="M2 1a1 1 0 0 0-1 1v4.586a1 1 0 0 0 .293.707l7 7a1 1 0 0 0 1.414 0l4.586-4.586a1 1 0 0 0 0-1.414l-7-7A1 1 0 0 0 6.586 1H2zm4 3.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0"/>
-                                    </svg>
+                <!-- Platforms Card -->
+                <div class="col-12 col-md-6 col-lg-4">
+                    <a href="{{ route('platforms.index') }}" class="custom-dashboard-card-link">
+                        <div class="card custom-dashboard-card custom-dashboard-card-secondary border-0 shadow-sm h-100">
+                            <div class="card-body p-4">
+                                <div class="d-flex align-items-start mb-4">
+                                    <div class="custom-dashboard-icon-wrapper bg-secondary bg-opacity-10">
+                                        <i class="fas fa-cloud text-secondary"></i>
+                                    </div>
+                                    <div class="ms-3">
+                                        <h5 class="custom-dashboard-card-title mb-1">Platform Management</h5>
+                                        <p class="custom-dashboard-card-subtitle text-muted mb-0">
+                                            Manage cloud platforms
+                                        </p>
+                                    </div>
+                                </div>
+                                <div class="custom-dashboard-card-footer">
+                                    <span class="custom-dashboard-card-action">
+                                        Manage Platforms
+                                        <i class="fas fa-arrow-right ms-2"></i>
+                                    </span>
                                 </div>
                             </div>
-                            <div class="flex-grow-1 ms-3">
-                                <h5 class="card-title mb-1">Platforms</h5>
-                                <p class="text-muted mb-0 small">Manage cloud platforms</p>
-                            </div>
+                            <div class="custom-dashboard-card-hover"></div>
                         </div>
-                        <hr>
-                        <a href="{{ route('platforms.index') }}" class="btn btn-secondary w-100">
-                            Manage Platforms
-                        </a>
-                    </div>
+                    </a>
                 </div>
-            </div>
 
-            <div class="col-md-6 col-lg-4 mb-4">
-                <div class="card shadow-sm border-0 h-100">
-                    <div class="card-body">
-                        <div class="d-flex align-items-center">
-                            <div class="flex-shrink-0">
-                                <div class="bg-warning bg-opacity-10 rounded-circle p-3">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="text-warning" viewBox="0 0 16 16">
-                                        <path d="M6.5 1A1.5 1.5 0 0 0 5 2.5V3H1.5A1.5 1.5 0 0 0 0 4.5v8A1.5 1.5 0 0 0 1.5 14h13a1.5 1.5 0 0 0 1.5-1.5v-8A1.5 1.5 0 0 0 14.5 3H11v-.5A1.5 1.5 0 0 0 9.5 1h-3zm0 1h3a.5.5 0 0 1 .5.5V3H6v-.5a.5.5 0 0 1 .5-.5zm1.886 6.914L15 7.151V12.5a.5.5 0 0 1-.5.5h-13a.5.5 0 0 1-.5-.5V7.15l6.614 1.764a1.5 1.5 0 0 0 .772 0zM1.5 4h13a.5.5 0 0 1 .5.5v1.616L8.129 7.948a.5.5 0 0 1-.258 0L1 6.116V4.5a.5.5 0 0 1 .5-.5z"/>
-                                    </svg>
+                <!-- Services Card -->
+                <div class="col-12 col-md-6 col-lg-4">
+                    <a href="{{ route('services.index') }}" class="custom-dashboard-card-link">
+                        <div class="card custom-dashboard-card custom-dashboard-card-warning border-0 shadow-sm h-100">
+                            <div class="card-body p-4">
+                                <div class="d-flex align-items-start mb-4">
+                                    <div class="custom-dashboard-icon-wrapper bg-warning bg-opacity-10">
+                                        <i class="fas fa-cogs text-warning"></i>
+                                    </div>
+                                    <div class="ms-3">
+                                        <h5 class="custom-dashboard-card-title mb-1">Service Management</h5>
+                                        <p class="custom-dashboard-card-subtitle text-muted mb-0">
+                                            Manage available services
+                                        </p>
+                                    </div>
+                                </div>
+                                <div class="custom-dashboard-card-footer">
+                                    <span class="custom-dashboard-card-action">
+                                        Manage Services
+                                        <i class="fas fa-arrow-right ms-2"></i>
+                                    </span>
                                 </div>
                             </div>
-                            <div class="flex-grow-1 ms-3">
-                                <h5 class="card-title mb-1">Services</h5>
-                                <p class="text-muted mb-0 small">Manage available services</p>
-                            </div>
+                            <div class="custom-dashboard-card-hover"></div>
                         </div>
-                        <hr>
-                        <a href="{{ route('services.index') }}" class="btn btn-warning text-dark w-100">
-                            Manage Services
-                        </a>
-                    </div>
+                    </a>
                 </div>
-            </div>
             @endif
-        </div>
-
-        <div class="row">
-            <div class="col-md-6 col-lg-4 mb-4">
-                <div class="card shadow-sm border-0 h-100">
-                    <div class="card-body">
-                        <div class="d-flex align-items-center">
-                            <div class="flex-shrink-0">
-                                <div class="bg-primary bg-opacity-10 rounded-circle p-3">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="text-primary" viewBox="0 0 16 16">
-                                        <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16"/>
-                                        <path d="M7.002 11a1 1 0 1 1 2 0 1 1 0 0 1-2 0M7.1 4.995a.905.905 0 1 1 1.8 0l-.35 3.507a.552.552 0 0 1-1.1 0z"/>
-                                    </svg>
-                                </div>
-                            </div>
-                            <div class="flex-grow-1 ms-3">
-                                <h5 class="card-title mb-1">Resource Allocation</h5>
-                                <p class="text-muted mb-0 small">Dismantle or rewrite customer resources</p>
-                            </div>
-                        </div>
-                        <hr>
-                        <a href="{{ route('resource-allocation.index') }}" class="btn btn-primary w-100">
-                            Manage Resource Allocation
-                        </a>
-                    </div>
-                </div>
-            </div>
-
 
         </div>
     </div>

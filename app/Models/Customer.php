@@ -68,41 +68,80 @@ class Customer extends Model
      */
     public function getCurrentResources(): array
     {
-        // Get the most recent active upgradation/downgradation for each service
         $resources = [];
         
-        // Get all active upgradations
+        // Collect all resource changes (both upgrades and downgrades) with their timestamps
+        $allChanges = [];
+        
+        // Get all upgradations with their details
         $upgradations = $this->resourceUpgradations()
-            ->where('activation_date', '<=', now())
-            ->where('inactivation_date', '>=', now())
             ->with('details.service')
-            ->orderBy('activation_date', 'desc')
             ->get();
         
-        // Get all active downgradations
-        $downgradations = $this->resourceDowngradations()
-            ->where('activation_date', '<=', now())
-            ->where('inactivation_date', '>=', now())
-            ->with('details.service')
-            ->orderBy('activation_date', 'desc')
-            ->get();
-        
-        // Process upgradations - use the quantity from the most recent record
         foreach ($upgradations as $upgradation) {
             foreach ($upgradation->details as $detail) {
-                $serviceName = $detail->service->service_name;
-                if (!isset($resources[$serviceName])) {
-                    $resources[$serviceName] = $detail->quantity;
+                if ($detail->service) {
+                    $serviceName = $detail->service->service_name;
+                    $allChanges[] = [
+                        'service_name' => $serviceName,
+                        'quantity' => $detail->quantity,
+                        'activation_date' => $upgradation->activation_date,
+                        'inactivation_date' => $upgradation->inactivation_date,
+                        'created_at' => $upgradation->created_at,
+                        'type' => 'upgrade'
+                    ];
                 }
             }
         }
         
-        // Process downgradations - use the quantity from the most recent record
+        // Get all downgradations with their details
+        $downgradations = $this->resourceDowngradations()
+            ->with('details.service')
+            ->get();
+        
         foreach ($downgradations as $downgradation) {
             foreach ($downgradation->details as $detail) {
-                $serviceName = $detail->service->service_name;
-                // Downgradation records also store the final quantity, not just the reduction
-                $resources[$serviceName] = $detail->quantity;
+                if ($detail->service) {
+                    $serviceName = $detail->service->service_name;
+                    $allChanges[] = [
+                        'service_name' => $serviceName,
+                        'quantity' => $detail->quantity,
+                        'activation_date' => $downgradation->activation_date,
+                        'inactivation_date' => $downgradation->inactivation_date,
+                        'created_at' => $downgradation->created_at,
+                        'type' => 'downgrade'
+                    ];
+                }
+            }
+        }
+        
+        // Sort all changes by activation_date DESC, then by created_at DESC
+        // This ensures we process the most recent changes first
+        usort($allChanges, function($a, $b) {
+            $dateCompare = strcmp($b['activation_date'], $a['activation_date']);
+            if ($dateCompare !== 0) {
+                return $dateCompare;
+            }
+            return strcmp($b['created_at'], $a['created_at']);
+        });
+        
+        // Process changes in reverse chronological order
+        // For each service, use the quantity from the most recent non-inactivated record
+        $now = now()->format('Y-m-d');
+        
+        foreach ($allChanges as $change) {
+            $serviceName = $change['service_name'];
+            
+            // Skip if we already found a record for this service
+            if (isset($resources[$serviceName])) {
+                continue;
+            }
+            
+            // Check if this change is not yet inactivated
+            // We show resources even if activation date is in the future
+            if ($change['inactivation_date'] >= $now) {
+                // This is the most recent non-inactivated change for this service
+                $resources[$serviceName] = $change['quantity'];
             }
         }
         

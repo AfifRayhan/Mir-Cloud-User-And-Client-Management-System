@@ -36,13 +36,11 @@
                 </div>
 
                 <div class="mb-4">
-                    <label for="task_status_id" class="form-label fw-semibold">Task Status <span class="text-danger">*</span></label>
-                    <select id="task_status_id" name="task_status_id" class="form-select" required>
-                        <option value="" disabled {{ !isset($defaultTaskStatusId) ? 'selected' : '' }}>Select Task Status</option>
-                        @foreach($taskStatuses as $taskStatus)
-                            <option value="{{ $taskStatus->id }}" {{ (isset($defaultTaskStatusId) && $defaultTaskStatusId == $taskStatus->id) ? 'selected' : '' }}>{{ $taskStatus->name }}</option>
-                        @endforeach
-                    </select>
+                    <h6 class="fw-bold mb-3">Task Status</h6>
+                    <div class="badge bg-secondary px-3 py-2">
+                        {{ $taskStatuses->firstWhere('id', $defaultTaskStatusId)->name ?? 'Proceed from KAM' }}
+                    </div>
+                    <input type="hidden" name="task_status_id" value="{{ $defaultTaskStatusId ?? 1 }}">
                 </div>
 
                 <div class="row mb-4">
@@ -124,13 +122,11 @@
                 </div>
 
                 <div class="mb-4">
-                    <label for="task_status_id_downgrade" class="form-label fw-semibold">Task Status <span class="text-danger">*</span></label>
-                    <select id="task_status_id_downgrade" name="task_status_id" class="form-select" required>
-                        <option value="" disabled selected>Select Task Status</option>
-                        @foreach($taskStatuses as $taskStatus)
-                            <option value="{{ $taskStatus->id }}">{{ $taskStatus->name }}</option>
-                        @endforeach
-                    </select>
+                    <h6 class="fw-bold mb-3">Task Status</h6>
+                    <div class="badge bg-secondary px-3 py-2">
+                        {{ $taskStatuses->firstWhere('id', $defaultTaskStatusId)->name ?? 'Proceed from KAM' }}
+                    </div>
+                    <input type="hidden" name="task_status_id" value="{{ $defaultTaskStatusId ?? 1 }}">
                 </div>
 
                 <div class="table-responsive">

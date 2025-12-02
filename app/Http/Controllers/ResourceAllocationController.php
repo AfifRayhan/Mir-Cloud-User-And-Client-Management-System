@@ -76,7 +76,7 @@ class ResourceAllocationController extends Controller
         $validated = $request->validate([
             'action_type' => 'required|in:upgrade,downgrade',
             'status_id' => $request->action_type === 'upgrade' ? 'required|exists:customer_statuses,id' : 'nullable|exists:customer_statuses,id',
-            'task_status_id' => 'required|exists:task_statuses,id',
+            'task_status_id' => 'nullable|exists:task_statuses,id',
             'activation_date' => $request->action_type === 'upgrade' ? 'required|date' : 'nullable|date',
             'inactivation_date' => $request->action_type === 'upgrade' ? 'nullable|date' : 'nullable|date',
             'services' => 'nullable|array',
@@ -86,6 +86,12 @@ class ResourceAllocationController extends Controller
         $actionType = $validated['action_type'];
         $servicesInput = $validated['services'] ?? [];
         
+        // Ensure task_status_id defaults to "Proceed from KAM" when not provided
+        $taskStatusId = $validated['task_status_id'] ?? \App\Models\TaskStatus::where('name', 'Proceed from KAM')->value('id');
+        if (!$taskStatusId) {
+            // Fallback to id 1 if seed/data differs
+            $taskStatusId = 1;
+        }
         // Filter out null and zero values
         $servicesInput = array_filter($servicesInput, function($value) {
             return !is_null($value) && $value > 0;
@@ -105,7 +111,7 @@ class ResourceAllocationController extends Controller
                 'status_id' => $validated['status_id'],
                 'activation_date' => $validated['activation_date'],
                 'inactivation_date' => $validated['inactivation_date'] ?? '3000-01-01',
-                'task_status_id' => $validated['task_status_id'],
+                    'task_status_id' => $taskStatusId,
                 'inserted_by' => \Illuminate\Support\Facades\Auth::id(),
             ]);
 
@@ -135,7 +141,7 @@ class ResourceAllocationController extends Controller
             $downgradation = \App\Models\ResourceDowngradation::create([
                 'customer_id' => $customer->id,
                 'activation_date' => now(),
-                'task_status_id' => $validated['task_status_id'],
+                'task_status_id' => $taskStatusId,
                 'inserted_by' => \Illuminate\Support\Facades\Auth::id(),
             ]);
 

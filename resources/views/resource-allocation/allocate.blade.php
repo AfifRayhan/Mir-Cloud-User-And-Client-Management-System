@@ -23,20 +23,11 @@
                                 <input type="hidden" name="status_id" value="{{ $statusId }}">
                             @endif
 
-                            {{-- Task Status --}}
+                            {{-- Task Status (fixed to Proceed from KAM) --}}
                             <div class="mb-4">
-                                <label for="task_status_id" class="form-label fw-semibold">Task Status</label>
-                                <select id="task_status_id" name="task_status_id" class="form-select @error('task_status_id') is-invalid @enderror" required>
-                                    <option value="" disabled selected>Select Task Status</option>
-                                    @foreach($taskStatuses as $status)
-                                        <option value="{{ $status->id }}" {{ old('task_status_id') == $status->id ? 'selected' : '' }}>
-                                            {{ $status->name }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                                @error('task_status_id')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
+                                <label class="form-label fw-semibold">Task Status</label>
+                                <div class="badge bg-secondary px-3 py-2">{{ $taskStatuses->firstWhere('id', old('task_status_id') ?? 1)->name ?? 'Proceed from KAM' }}</div>
+                                <input type="hidden" name="task_status_id" value="{{ old('task_status_id') ?? 1 }}">
                             </div>
 
                             <hr class="my-4">

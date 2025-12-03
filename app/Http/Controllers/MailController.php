@@ -37,7 +37,7 @@ class MailController extends Controller
         $receiver = User::findOrFail($validated['receiver_id']);
         $sender = Auth::user();
 
-        // Send email via Mailgun
+        // Send email
         Mail::to($receiver->email)->send(new UserContactEmail($sender, $validated['subject'], $validated['body']));
 
         return redirect()->route('dashboard')

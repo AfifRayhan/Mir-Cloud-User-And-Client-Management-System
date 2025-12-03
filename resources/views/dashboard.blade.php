@@ -75,7 +75,7 @@
                         <div class="card-body p-4">
                             <div class="d-flex align-items-start mb-4">
                                 <div class="custom-dashboard-icon-wrapper bg-primary bg-opacity-10">
-                                    <i class="fas fa-users text-primary"></i>
+                                    <i class="fas fa-user-plus text-primary"></i>
                                 </div>
                                 <div class="ms-3">
                                     <h5 class="custom-dashboard-card-title mb-1">Add New Customer</h5>
@@ -126,14 +126,14 @@
 
             <!-- Admin Only Cards -->
             @if(Auth::user()->isAdmin())
-                <!-- Users Card -->
+                <!-- Users Management Card -->
                 <div class="col-12 col-md-6 col-lg-4">
                     <a href="{{ route('users.index') }}" class="custom-dashboard-card-link">
                         <div class="card custom-dashboard-card custom-dashboard-card-success border-0 shadow-sm h-100">
                             <div class="card-body p-4">
                                 <div class="d-flex align-items-start mb-4">
                                     <div class="custom-dashboard-icon-wrapper bg-success bg-opacity-10">
-                                        <i class="fas fa-user-plus text-success"></i>
+                                        <i class="fas fa-users text-success"></i>
                                     </div>
                                     <div class="ms-3">
                                         <h5 class="custom-dashboard-card-title mb-1">User Management</h5>
@@ -165,9 +165,9 @@
                                         <i class="fas fa-user-plus text-success"></i>
                                     </div>
                                     <div class="ms-3">
-                                        <h5 class="custom-dashboard-card-title mb-1">User Management</h5>
+                                        <h5 class="custom-dashboard-card-title mb-1">Add New User</h5>
                                         <p class="custom-dashboard-card-subtitle text-muted mb-0">
-                                            Manage system users
+                                            Add new user
                                         </p>
                                     </div>
                                 </div>

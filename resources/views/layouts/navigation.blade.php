@@ -12,6 +12,23 @@
         
         <!-- Navigation Content -->
         <div class="collapse navbar-collapse custom-nav-collapse" id="navbarNav">
+            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                <li class="nav-item">
+                    <a class="nav-link {{ request()->routeIs('dashboard') ? 'active' : '' }}" href="{{ route('dashboard') }}">Home</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {{ request()->routeIs('customers.*') ? 'active' : '' }}" href="{{ route('customers.index') }}">Customer Management</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {{ request()->routeIs('resource-allocation.*') ? 'active' : '' }}" href="{{ route('resource-allocation.index') }}">Resource Management</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {{ request()->routeIs('services.*') ? 'active' : '' }}" href="{{ route('services.index') }}">Service Management</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {{ request()->routeIs('platforms.*') ? 'active' : '' }}" href="{{ route('platforms.index') }}">Platform Management</a>
+                </li>
+            </ul>
             <ul class="navbar-nav ms-auto">
                 <li class="nav-item">
                     <a class="nav-link" href="{{ route('mail.create') }}">

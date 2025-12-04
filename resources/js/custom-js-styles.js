@@ -26,6 +26,31 @@ document.addEventListener("DOMContentLoaded", function () {
                 "aria-label",
                 type === "password" ? "Show password" : "Hide password"
             );
+
+            // Switch all borders to white
+            const inputGroup = passwordInput.closest(".input-group");
+            if (inputGroup) {
+                const inputIcon = inputGroup.querySelector(".custom-login-input-icon");
+                const passwordToggle = inputGroup.querySelector(".custom-login-password-toggle");
+                
+                if (type === "text") {
+                    // Show password - switch borders to white
+                    if (inputIcon) {
+                        inputIcon.style.borderColor = "white";
+                    }
+                    if (passwordToggle) {
+                        passwordToggle.style.borderColor = "white";
+                    }
+                } else {
+                    // Hide password - revert to default border
+                    if (inputIcon) {
+                        inputIcon.style.borderColor = "var(--custom-login-border)";
+                    }
+                    if (passwordToggle) {
+                        passwordToggle.style.borderColor = "var(--custom-login-border)";
+                    }
+                }
+            }
         });
 
         // Add keyboard support for password toggle

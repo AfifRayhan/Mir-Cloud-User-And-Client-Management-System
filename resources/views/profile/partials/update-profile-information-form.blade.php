@@ -20,6 +20,12 @@
                     {{ $user->department ? $user->department->department_name : 'Not Assigned' }}
                 </div>
             </div>
+            <div>
+                <label class="block font-medium text-sm text-gray-700"><b>Email:</b></label>
+                <div class="mt-1 text-gray-900 font-semibold">
+                    {{ $user->email }}
+                </div>
+            </div>
         </div>
     </div>
 
@@ -52,6 +58,20 @@
                    required 
                    autocomplete="username">
             @error('username')
+                <div class="invalid-feedback">{{ $message }}</div>
+            @enderror
+        </div>
+
+        <div class="mb-3">
+            <label for="email" class="form-label fw-semibold">Email</label>
+            <input id="email" 
+                   name="email" 
+                   type="email" 
+                   class="form-control @error('email') is-invalid @enderror" 
+                   value="{{ old('email', $user->email) }}" 
+                   required 
+                   autocomplete="email">
+            @error('email')
                 <div class="invalid-feedback">{{ $message }}</div>
             @enderror
         </div>

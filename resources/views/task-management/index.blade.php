@@ -292,7 +292,9 @@
                             resourceDetails.forEach(detail => {
                                 const amount = isUpgrade ? detail.upgrade_amount : detail.downgrade_amount;
                                 const badgeClass = isUpgrade ? 'bg-success' : 'bg-warning';
-                                
+                                const currentValue = isUpgrade
+                                    ? detail.quantity - amount     // upgrade → previous = quantity - upgrade amount
+                                    : detail.quantity + amount;    // downgrade → previous = quantity + downgrade amount
                                 html += `
                                     <tr>
                                         <td>
@@ -300,7 +302,7 @@
                                             ${detail.service.unit ? `<span class="text-muted small"> (${detail.service.unit})</span>` : ''}
                                         </td>
                                         <td>
-                                            <span class="badge bg-secondary">${detail.quantity - amount} ${detail.service.unit || ''}</span>
+                                            <span class="badge bg-secondary">${currentValue} ${detail.service.unit || ''}</span>
                                         </td>
                                         <td>
                                             <span class="badge ${badgeClass}">${amount} ${detail.service.unit || ''}</span>

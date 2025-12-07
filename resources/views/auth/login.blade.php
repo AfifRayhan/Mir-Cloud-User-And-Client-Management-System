@@ -75,7 +75,7 @@
                                         </label>
                                         <div class="input-group input-group-lg">
                                             <span class="input-group-text custom-login-input-icon">
-                                                <i class="fas fa-lock"></i>
+                                                <i class="fas fa-lock me-2"></i>
                                             </span>
                                             <input id="password"
                                                    class="form-control form-control-lg custom-login-input @error('password') is-invalid @enderror"

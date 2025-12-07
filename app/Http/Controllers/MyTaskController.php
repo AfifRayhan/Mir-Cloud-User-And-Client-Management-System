@@ -15,7 +15,7 @@ class MyTaskController extends Controller
     {
         $tasks = Task::with(['customer', 'status', 'assignedBy', 'resourceUpgradation.details.service', 'resourceDowngradation.details.service'])
             ->where('assigned_to', Auth::id())
-            ->orderBy('created_at', 'desc')
+            ->orderBy('activation_date', 'desc')
             ->paginate(15);
 
         return view('my-tasks.index', compact('tasks'));

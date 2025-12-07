@@ -20,7 +20,7 @@ class TaskManagementController extends Controller
         }
 
         $query = Task::with(['customer', 'status', 'assignedTo', 'resourceUpgradation.details.service', 'resourceDowngradation.details.service'])
-            ->orderBy('created_at', 'desc');
+            ->orderBy('activation_date', 'desc');
 
         // Apply filters
         if ($request->filled('allocation_type')) {

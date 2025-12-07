@@ -60,7 +60,8 @@ class CustomerController extends Controller
         ]);
 
         return redirect()->route('resource-allocation.index')
-            ->with('success', 'Customer created successfully. Please allocate resources.');
+            ->with('success', 'Customer created successfully. Please allocate resources.')
+            ->with('new_customer_id', $customer->id);
     }
 
     /**

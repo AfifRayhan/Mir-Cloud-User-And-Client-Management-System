@@ -137,6 +137,18 @@ class ResourceAllocationController extends Controller
                     'upgrade_amount' => $increaseAmount,
                 ]);
             }
+
+            // Auto-create task if task_status_id is "Proceed from KAM"
+            $proceedFromKAM = \App\Models\TaskStatus::where('name', 'Proceed from KAM')->first();
+            if ($proceedFromKAM && $taskStatusId == $proceedFromKAM->id) {
+                \App\Models\Task::create([
+                    'customer_id' => $customer->id,
+                    'status_id' => $validated['status_id'],
+                    'activation_date' => $validated['activation_date'],
+                    'allocation_type' => 'upgrade',
+                    'resource_upgradation_id' => $upgradation->id,
+                ]);
+            }
         } else {
             $downgradation = \App\Models\ResourceDowngradation::create([
                 'customer_id' => $customer->id,
@@ -160,6 +172,17 @@ class ResourceAllocationController extends Controller
                     'service_id' => $serviceId,
                     'quantity' => $newValue,
                     'downgrade_amount' => $reductionAmount,
+                ]);
+            }
+
+            // Auto-create task if task_status_id is "Proceed from KAM"
+            $proceedFromKAM = \App\Models\TaskStatus::where('name', 'Proceed from KAM')->first();
+            if ($proceedFromKAM && $taskStatusId == $proceedFromKAM->id) {
+                \App\Models\Task::create([
+                    'customer_id' => $customer->id,
+                    'activation_date' => now(),
+                    'allocation_type' => 'downgrade',
+                    'resource_downgradation_id' => $downgradation->id,
                 ]);
             }
         }

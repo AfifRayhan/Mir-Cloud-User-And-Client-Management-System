@@ -140,6 +140,10 @@
     background: linear-gradient(90deg, var(--custom-dashboard-info) 0%, #38bdf8 100%);
 }
 
+.custom-dashboard-card-danger::before {
+    background: linear-gradient(90deg, var(--custom-dashboard-danger) 0%, #ef4444 100%);
+}
+
 /* Icon Wrapper */
 .custom-dashboard-icon-wrapper {
     width: 60px;

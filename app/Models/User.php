@@ -89,4 +89,14 @@ class User extends Authenticatable
     {
         return $this->hasMany(Customer::class, 'processed_by');
     }
+
+    public function assignedTasks()
+    {
+        return $this->hasMany(Task::class, 'assigned_to');
+    }
+
+    public function tasksAssigned()
+    {
+        return $this->hasMany(Task::class, 'assigned_by');
+    }
 }

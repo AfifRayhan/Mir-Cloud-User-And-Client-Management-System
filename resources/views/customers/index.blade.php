@@ -162,7 +162,7 @@
                                                 {{ $customer->platform->platform_name }}
                                             </span>
                                             @else
-                                            <span class="text-muted">N/A</span>
+                                            <span class="text-muted">Any</span>
                                             @endif
                                         </td>
                                         <td class="custom-customer-index-table-cell">

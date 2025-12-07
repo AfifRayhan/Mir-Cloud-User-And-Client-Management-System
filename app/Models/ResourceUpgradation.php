@@ -39,4 +39,9 @@ class ResourceUpgradation extends Model
     {
         return $this->hasMany(ResourceUpgradationDetail::class);
     }
+
+    public function task()
+    {
+        return $this->hasOne(Task::class);
+    }
 }

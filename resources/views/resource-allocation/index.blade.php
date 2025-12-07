@@ -281,6 +281,16 @@
                 });
 
                 customerSelect.addEventListener('change', function() {
+                    // Get the selected option text to check if customer has resources
+                    const selectedOption = customerSelect.options[customerSelect.selectedIndex];
+                    const optionText = selectedOption.text;
+                    
+                    // Auto-select upgrade if customer has no resources
+                    if (optionText.includes('No Resources')) {
+                        actionSelect.value = 'upgrade';
+                        toggleStatus();
+                    }
+                    
                     if (actionSelect.value) {
                         loadAllocationForm();
                     }
@@ -324,6 +334,16 @@
                 // Initialize
                 toggleStatus();
                 renderPlaceholder();
+                
+                // Auto-select newly created customer if passed from session
+                @if(session('new_customer_id'))
+                    const newCustomerId = '{{ session('new_customer_id') }}';
+                    if (newCustomerId) {
+                        customerSelect.value = newCustomerId;
+                        // Trigger change event to auto-select upgrade
+                        customerSelect.dispatchEvent(new Event('change'));
+                    }
+                @endif
             })();
         </script>
     @endpush

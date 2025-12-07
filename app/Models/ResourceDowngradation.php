@@ -33,4 +33,9 @@ class ResourceDowngradation extends Model
     {
         return $this->hasMany(ResourceDowngradationDetail::class);
     }
+
+    public function task()
+    {
+        return $this->hasOne(Task::class);
+    }
 }

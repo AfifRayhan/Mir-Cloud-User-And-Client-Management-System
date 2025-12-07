@@ -20,7 +20,11 @@ class TaskManagementController extends Controller
         }
 
         $query = Task::with(['customer', 'status', 'assignedTo', 'resourceUpgradation.details.service', 'resourceDowngradation.details.service'])
-            ->orderBy('activation_date', 'desc');
+            ->leftJoin('resource_upgradations', 'tasks.resource_upgradation_id', '=', 'resource_upgradations.id')
+            ->leftJoin('resource_downgradations', 'tasks.resource_downgradation_id', '=', 'resource_downgradations.id')
+            ->orderByRaw('CASE WHEN tasks.assigned_to IS NULL THEN 0 ELSE 1 END')
+            ->orderByRaw('COALESCE(resource_upgradations.created_at, resource_downgradations.created_at) ASC')
+            ->select('tasks.*');
 
         // Apply filters
         if ($request->filled('allocation_type')) {
@@ -39,7 +43,7 @@ class TaskManagementController extends Controller
             $query->where('assigned_to', $request->assigned_to);
         }
 
-        $tasks = $query->paginate(15);
+        $tasks = $query->paginate(15)->appends($request->query());
 
         // Get all users for assignment dropdown (Tech and Admin only)
         $users = User::whereHas('role', function($q) {

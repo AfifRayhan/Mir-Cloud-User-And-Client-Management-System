@@ -53,6 +53,14 @@ class ResourceAllocationController extends Controller
             $statusId = $testStatus ? $testStatus->id : null;
         }
         
+        // For downgrades, get the most recent status from upgradations
+        if ($actionType === 'downgrade' && !$statusId) {
+            $latestUpgradation = \App\Models\ResourceUpgradation::where('customer_id', $customer->id)
+                ->orderBy('created_at', 'desc')
+                ->first();
+            $statusId = $latestUpgradation ? $latestUpgradation->status_id : null;
+        }
+        
         // Get default task status "Proceed from KAM" for first allocation
         $defaultTaskStatusId = null;
         if ($isFirstAllocation) {
@@ -150,8 +158,15 @@ class ResourceAllocationController extends Controller
                 ]);
             }
         } else {
+            // Get the most recent status from upgradations for this customer
+            $latestUpgradation = \App\Models\ResourceUpgradation::where('customer_id', $customer->id)
+                ->orderBy('created_at', 'desc')
+                ->first();
+            $statusId = $latestUpgradation ? $latestUpgradation->status_id : null;
+            
             $downgradation = \App\Models\ResourceDowngradation::create([
                 'customer_id' => $customer->id,
+                'status_id' => $statusId,
                 'activation_date' => now(),
                 'task_status_id' => $taskStatusId,
                 'inserted_by' => \Illuminate\Support\Facades\Auth::id(),
@@ -180,11 +195,34 @@ class ResourceAllocationController extends Controller
             if ($proceedFromKAM && $taskStatusId == $proceedFromKAM->id) {
                 \App\Models\Task::create([
                     'customer_id' => $customer->id,
+                    'status_id' => $statusId,
                     'activation_date' => now(),
                     'allocation_type' => 'downgrade',
                     'resource_downgradation_id' => $downgradation->id,
                 ]);
+        }
+        }
+
+        // Send email notification to all Pro-Tech users
+        try {
+            $proTechUsers = \App\Models\User::whereHas('role', function($q) {
+                $q->where('role_name', 'pro-tech');
+            })->get();
+
+            $sender = \Illuminate\Support\Facades\Auth::user();
+            
+            // We can fetch the latest task for this customer as it was just created.
+            $latestTask = \App\Models\Task::where('customer_id', $customer->id)->latest()->first();
+
+            if ($latestTask) {
+                foreach ($proTechUsers as $proTech) {
+                    \Illuminate\Support\Facades\Mail::to($proTech->email)
+                        ->send(new \App\Mail\RecommendationSubmissionEmail($latestTask, $sender, $actionType));
+                }
             }
+        } catch (\Exception $e) {
+            // Log error but don't stop execution
+            \Illuminate\Support\Facades\Log::error('Failed to send recommendation email: ' . $e->getMessage());
         }
 
         $actionName = $actionType === 'upgrade' ? 'upgraded' : 'downgraded';

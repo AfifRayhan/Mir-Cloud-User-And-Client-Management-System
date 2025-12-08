@@ -12,7 +12,11 @@ Route::get('/', function () {
 });
 
 Route::get('/dashboard', function () {
-    return view('dashboard');
+    $incompleteTaskCount = \App\Models\Task::where('assigned_to', \Illuminate\Support\Facades\Auth::id())
+        ->whereNull('completed_at')
+        ->count();
+    
+    return view('dashboard', compact('incompleteTaskCount'));
 })->middleware(['auth'])->name('dashboard');
 
 Route::middleware('auth')->group(function () {
@@ -60,6 +64,7 @@ Route::middleware('auth')->group(function () {
     Route::get('my-tasks', [\App\Http\Controllers\MyTaskController::class, 'index'])->name('my-tasks.index');
     Route::get('my-tasks/{task}', [\App\Http\Controllers\MyTaskController::class, 'show'])->name('my-tasks.show');
     Route::get('my-tasks/{task}/details', [\App\Http\Controllers\MyTaskController::class, 'getDetails'])->name('my-tasks.details');
+    Route::post('my-tasks/{task}/complete', [\App\Http\Controllers\MyTaskController::class, 'complete'])->name('my-tasks.complete');
 });
 
 require __DIR__.'/auth.php';

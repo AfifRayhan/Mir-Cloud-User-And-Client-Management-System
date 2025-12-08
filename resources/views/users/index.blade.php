@@ -86,7 +86,7 @@
                     </table>
                 </div>
                 
-                <div class="p-4 border-top">
+                <div class="p-4 border-top d-flex justify-content-center">
                     {{ $users->links() }}
                 </div>
             </div>

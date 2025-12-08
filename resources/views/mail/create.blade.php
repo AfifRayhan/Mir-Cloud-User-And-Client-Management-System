@@ -39,6 +39,25 @@
                                 @enderror
                             </div>
 
+                            <!-- CC -->
+                            <div class="mb-3">
+                                <label for="cc_ids" class="form-label fw-semibold">CC</label>
+                                <select id="cc_ids" 
+                                        name="cc_ids" 
+                                        class="form-select @error('cc_ids') is-invalid @enderror" 
+                                        required>
+                                    <option value="">Select users to CC</option>
+                                    @foreach($users as $user)
+                                        <option value="{{ $user->id }}" {{ old('cc_ids') == $user->id ? 'selected' : '' }}>
+                                            {{ $user->name }} ({{ $user->email }})
+                                        </option>
+                                    @endforeach
+                                </select>
+                                @error('cc_ids')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+
                             <!-- Subject -->
                             <div class="mb-3">
                                 <label for="subject" class="form-label fw-semibold">Subject</label>

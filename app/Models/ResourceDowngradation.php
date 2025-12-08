@@ -8,6 +8,7 @@ class ResourceDowngradation extends Model
 {
     protected $fillable = [
         'customer_id',
+        'status_id',
         'activation_date',
         'inactivation_date',
         'task_status_id',
@@ -17,6 +18,11 @@ class ResourceDowngradation extends Model
     public function customer()
     {
         return $this->belongsTo(Customer::class);
+    }
+
+    public function status()
+    {
+        return $this->belongsTo(CustomerStatus::class, 'status_id');
     }
 
     public function taskStatus()

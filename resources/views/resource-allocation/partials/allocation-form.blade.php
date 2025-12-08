@@ -122,6 +122,13 @@
                 </div>
 
                 <div class="mb-4">
+                    <h6 class="fw-bold mb-3">Customer Status</h6>
+                    <div class="badge bg-primary px-3 py-2">
+                        {{ $statusName ?? 'Not Set' }}
+                    </div>
+                </div>
+
+                <div class="mb-4">
                     <h6 class="fw-bold mb-3">Task Status</h6>
                     <div class="badge bg-secondary px-3 py-2">
                         {{ $taskStatuses->firstWhere('id', $defaultTaskStatusId)->name ?? 'Proceed from KAM' }}

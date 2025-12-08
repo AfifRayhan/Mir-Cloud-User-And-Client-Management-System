@@ -1,0 +1,60 @@
+/* Modern pagination styling */
+.pagination {
+    gap: 0.25rem;
+    align-items: center;
+    /* Ensure vertical alignment */
+}
+
+.pagination .page-link {
+    border-radius: 0.375rem;
+    border: 1px solid #dee2e6;
+    color: #6c757d;
+    padding: 0.5rem 0.75rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    display: flex;
+    /* Flexbox for centering icons/text */
+    align-items: center;
+    justify-content: center;
+    min-width: 2.5rem;
+    /* Ensure consistent width for squares */
+    height: 2.5rem;
+    /* Ensure consistent height */
+    line-height: 1;
+    /* Reset line-height to prevent vertical stretching */
+    text-decoration: none;
+}
+
+.pagination .page-link svg {
+    width: 1em;
+    /* Fix SVG size */
+    height: 1em;
+    /* Fix SVG size */
+    max-width: 16px;
+    /* Explicit max-width for arrow icons */
+    max-height: 16px;
+    /* Explicit max-height for arrow icons */
+}
+
+.pagination .page-link:hover {
+    background-color: #e9ecef;
+    border-color: #dee2e6;
+    color: #495057;
+}
+
+.pagination .page-item.active .page-link {
+    background-color: #0d6efd;
+    border-color: #0d6efd;
+    color: white;
+    box-shadow: 0 2px 4px rgba(13, 110, 253, 0.25);
+}
+
+.pagination .page-item.disabled .page-link {
+    background-color: #f8f9fa;
+    border-color: #dee2e6;
+    color: #adb5bd;
+}
+
+.pagination .page-link:focus {
+    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+}

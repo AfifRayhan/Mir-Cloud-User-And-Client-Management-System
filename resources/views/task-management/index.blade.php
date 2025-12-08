@@ -58,7 +58,15 @@
                             @endforeach
                         </select>
                     </div>
-                    <div class="col-md-3 d-flex align-items-end">
+                    <div class="col-md-3">
+                        <label class="form-label">Completion Status</label>
+                        <select name="completion_status" class="form-select">
+                            <option value="">All Tasks</option>
+                            <option value="incomplete" {{ request('completion_status') == 'incomplete' ? 'selected' : '' }}>Incomplete</option>
+                            <option value="completed" {{ request('completion_status') == 'completed' ? 'selected' : '' }}>Completed</option>
+                        </select>
+                    </div>
+                    <div class="col-md-12 d-flex align-items-end justify-content-end">
                         <button type="submit" class="btn btn-primary me-2">
                             <i class="fas fa-filter me-1"></i> Filter
                         </button>
@@ -82,6 +90,7 @@
                                     <th>Platform</th>
                                     <th>Type</th>
                                     <th>Activation Date</th>
+                                    <th>Created At</th>
                                     <th>Status</th>
                                     <th>Assigned To</th>
                                     <th>Actions</th>
@@ -89,7 +98,7 @@
                             </thead>
                             <tbody>
                                 @foreach($tasks as $task)
-                                    <tr data-task-id="{{ $task->id }}">
+                                    <tr data-task-id="{{ $task->id }}" class="{{ $task->completed_at ? 'task-completed' : '' }}">
                                         <td>
                                             <strong>{{ $task->customer->customer_name }}</strong>
                                         </td>
@@ -112,6 +121,7 @@
                                             @endif
                                         </td>
                                         <td>{{ $task->activation_date->format('M d, Y') }}</td>
+                                        <td>{{ $task->created_at->format('M d, Y H:i') }}</td>
                                         <td>
                                             @if($task->status)
                                                 <span class="badge bg-info">{{ $task->status->name }}</span>
@@ -197,7 +207,7 @@
                     </div>
 
                     <!-- Pagination -->
-                    <div class="mt-3">
+                    <div class="d-flex justify-content-center mt-4">
                         {{ $tasks->links() }}
                     </div>
                 @else
@@ -209,6 +219,26 @@
             </div>
         </div>
     </div>
+
+
+
+    @push('styles')
+    <style>
+        .table-hover tbody tr.task-completed,
+        .table-hover tbody tr.task-completed>td {
+            background-color: #c3e6cb !important;
+            --bs-table-bg: #c3e6cb !important;
+            --bs-table-accent-bg: #c3e6cb !important;
+        }
+
+        .table-hover tbody tr.task-completed:hover,
+        .table-hover tbody tr.task-completed:hover>td {
+            background-color: #c3e6cb !important;
+            cursor: default;
+            --bs-table-accent-bg: #c3e6cb !important;
+        }
+    </style>
+    @endpush
 
     @push('scripts')
     <script>

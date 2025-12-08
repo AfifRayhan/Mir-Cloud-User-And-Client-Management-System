@@ -64,6 +64,7 @@ return new class extends Migration
             $table->foreignId('role_id')->nullable()->after('password')->constrained('roles')->nullOnDelete();
             $table->foreignId('department_id')->nullable()->after('role_id')->constrained('user_departments')->nullOnDelete();
             $table->foreignId('user_created_by')->nullable()->after('department_id')->constrained('users')->nullOnDelete();
+            $table->timestamp('first_login_at')->nullable()->after('user_created_by');
         });
 
         // 8. Customers
@@ -125,6 +126,7 @@ return new class extends Migration
         Schema::create('resource_downgradations', function (Blueprint $table) {
             $table->id();
             $table->foreignId('customer_id')->constrained('customers')->onDelete('cascade');
+            $table->foreignId('status_id')->nullable()->constrained('customer_statuses');
             $table->date('activation_date');
             $table->date('inactivation_date')->default('3000-01-01');
             $table->foreignId('task_status_id')->constrained('task_statuses');
@@ -141,6 +143,28 @@ return new class extends Migration
             $table->integer('downgrade_amount')->nullable();
             $table->timestamps();
         });
+
+        // 14. Tasks
+        Schema::create('tasks', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('customer_id')->constrained('customers')->onDelete('cascade');
+            $table->foreignId('status_id')->nullable()->constrained('customer_statuses');
+            $table->foreignId('task_status_id')->default(1)->constrained('task_statuses');
+            $table->date('activation_date');
+            $table->enum('allocation_type', ['upgrade', 'downgrade']);
+            
+            // Reference to either upgrade or downgrade (only one will be set)
+            $table->foreignId('resource_upgradation_id')->nullable()->constrained('resource_upgradations')->onDelete('cascade');
+            $table->foreignId('resource_downgradation_id')->nullable()->constrained('resource_downgradations')->onDelete('cascade');
+            
+            // Assignment tracking
+            $table->foreignId('assigned_to')->nullable()->constrained('users')->nullOnDelete();
+            $table->foreignId('assigned_by')->nullable()->constrained('users')->nullOnDelete();
+            $table->timestamp('assigned_at')->nullable();
+            $table->timestamp('completed_at')->nullable();
+            
+            $table->timestamps();
+        });
     }
 
     /**
@@ -148,6 +172,7 @@ return new class extends Migration
      */
     public function down(): void
     {
+        Schema::dropIfExists('tasks');
         Schema::dropIfExists('resource_downgradation_details');
         Schema::dropIfExists('resource_downgradations');
         Schema::dropIfExists('resource_upgradation_details');
@@ -158,7 +183,7 @@ return new class extends Migration
             $table->dropForeign(['role_id']);
             $table->dropForeign(['department_id']);
             $table->dropForeign(['user_created_by']);
-            $table->dropColumn(['username', 'phone', 'designation', 'role_id', 'department_id', 'user_created_by']);
+            $table->dropColumn(['username', 'phone', 'designation', 'role_id', 'department_id', 'user_created_by', 'first_login_at']);
         });
 
         Schema::dropIfExists('services');

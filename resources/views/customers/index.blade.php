@@ -79,13 +79,13 @@
                             <div>
                                 <h5 class="custom-customer-index-card-title mb-1">Customer List</h5>
                                 <p class="custom-customer-index-card-subtitle text-muted mb-0">
-                                    Showing {{ $customers->count() }} customer(s)
+                                    Total {{ $customers->total() }} customer(s)
                                 </p>
                             </div>
                             <div class="custom-customer-index-stats">
                                 <div class="d-flex gap-3">
                                     <div class="text-center">
-                                        <div class="custom-customer-index-stat-number">{{ $customers->count() }}</div>
+                                        <div class="custom-customer-index-stat-number">{{ $customers->total() }}</div>
                                         <div class="custom-customer-index-stat-label">Total</div>
                                     </div>
                                 </div>
@@ -212,10 +212,8 @@
                     </div>
                     <!-- Card Footer -->
                     <div class="card-footer custom-customer-index-card-footer border-0 bg-white">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div class="custom-customer-index-pagination-info text-muted small">
-                                Showing {{ $customers->count() }} of {{ $customers->count() }} customers
-                            </div>
+                        <div class="d-flex justify-content-center">
+                            {{ $customers->links() }}
                         </div>
                     </div>
                 </div>

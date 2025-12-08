@@ -15,8 +15,8 @@ class MyTaskController extends Controller
     {
         $tasks = Task::with(['customer', 'status', 'assignedBy', 'resourceUpgradation.details.service', 'resourceDowngradation.details.service'])
             ->where('assigned_to', Auth::id())
-            ->orderBy('activation_date', 'desc')
-            ->paginate(15);
+            ->orderBy('assigned_at', 'desc')
+            ->paginate(10);
 
         return view('my-tasks.index', compact('tasks'));
     }
@@ -52,5 +52,48 @@ class MyTaskController extends Controller
         $task->load(['customer', 'status', 'assignedTo', 'assignedBy', 'resourceUpgradation.details.service', 'resourceDowngradation.details.service']);
 
         return view('my-tasks.show', compact('task'));
+    }
+
+    /**
+     * Mark task as complete
+     */
+    public function complete(Task $task)
+    {
+        // Verify the task is assigned to the current user
+        if ($task->assigned_to !== Auth::id()) {
+            abort(403, 'Unauthorized access to this task.');
+        }
+
+        $task->update([
+            'completed_at' => now(),
+            'task_status_id' => 3, // Proceed from Tech
+        ]);
+
+        // Send email notification
+        $sender = Auth::user();
+        
+        // Find management users
+        $managementUsers = \App\Models\User::whereHas('role', function($q) {
+            $q->where('role_name', 'management');
+        })->get();
+
+        // Prepare CC list (assigned_by user)
+        $ccUsers = [];
+        if ($task->assignedBy) {
+            $ccUsers[] = $task->assignedBy->email;
+        }
+
+        // Send email to each management user
+        foreach ($managementUsers as $manager) {
+            $mail = \Illuminate\Support\Facades\Mail::to($manager->email);
+            
+            if (!empty($ccUsers)) {
+                $mail->cc($ccUsers);
+            }
+            
+            $mail->send(new \App\Mail\TaskCompletionEmail($task, $sender));
+        }
+
+        return back()->with('success', 'Task marked as complete and notification sent.');
     }
 }

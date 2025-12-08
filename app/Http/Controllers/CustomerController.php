@@ -14,7 +14,7 @@ class CustomerController extends Controller
      */
     public function index()
     {
-        $customers = Customer::with(['submitter', 'processor'])->latest()->get();
+        $customers = Customer::with(['submitter', 'processor'])->latest()->paginate(10);
         return view('customers.index', compact('customers'));
     }
 

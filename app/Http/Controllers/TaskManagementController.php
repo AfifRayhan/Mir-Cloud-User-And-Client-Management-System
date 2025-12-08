@@ -43,7 +43,15 @@ class TaskManagementController extends Controller
             $query->where('assigned_to', $request->assigned_to);
         }
 
-        $tasks = $query->paginate(15)->appends($request->query());
+        if ($request->filled('completion_status')) {
+            if ($request->completion_status === 'completed') {
+                $query->whereNotNull('completed_at');
+            } elseif ($request->completion_status === 'incomplete') {
+                $query->whereNull('completed_at');
+            }
+        }
+
+        $tasks = $query->paginate(10)->appends($request->query());
 
         // Get all users for assignment dropdown (Tech and Admin only)
         $users = User::whereHas('role', function($q) {
@@ -110,7 +118,18 @@ class TaskManagementController extends Controller
             'assigned_to' => $validated['assigned_to'],
             'assigned_by' => Auth::id(),
             'assigned_at' => now(),
+            'task_status_id' => 2, // Proceed from Pro Tech
         ]);
+
+        // Send email notification to the assigned user
+        try {
+            $sender = Auth::user();
+            \Illuminate\Support\Facades\Mail::to($assignedUser->email)
+                ->send(new \App\Mail\TaskAssignmentEmail($task, $sender));
+        } catch (\Exception $e) {
+             // Log error but don't stop execution
+             \Illuminate\Support\Facades\Log::error('Failed to send assignment email: ' . $e->getMessage());
+        }
 
         return back()->with('success', 'Task assigned successfully to ' . $assignedUser->name);
     }

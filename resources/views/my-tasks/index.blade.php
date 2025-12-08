@@ -12,6 +12,21 @@
             </div>
         </div>
 
+        <!-- Success/Error Messages -->
+        @if(session('success'))
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                <i class="fas fa-check-circle me-2"></i>{{ session('success') }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        @endif
+
+        @if(session('error'))
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                <i class="fas fa-exclamation-circle me-2"></i>{{ session('error') }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        @endif
+
         <!-- Tasks Table -->
         <div class="card shadow-sm">
             <div class="card-body">
@@ -24,6 +39,8 @@
                                     <th>Platform</th>
                                     <th>Type</th>
                                     <th>Activation Date</th>
+                                    <th>Assigned At</th>
+                                    <th>Completed At</th>
                                     <th>Status</th>
                                     <th>Assigned By</th>
                                     <th>Actions</th>
@@ -55,6 +72,20 @@
                                         </td>
                                         <td>{{ $task->activation_date->format('M d, Y') }}</td>
                                         <td>
+                                            @if($task->assigned_at)
+                                                {{ \Carbon\Carbon::parse($task->assigned_at)->format('M d, Y H:i') }}
+                                            @else
+                                                <span class="text-muted">N/A</span>
+                                            @endif
+                                        </td>
+                                        <td>
+                                            @if($task->completed_at)
+                                                {{ \Carbon\Carbon::parse($task->completed_at)->format('M d, Y H:i') }}
+                                            @else
+                                                <span class="text-muted">Pending</span>
+                                            @endif
+                                        </td>
+                                        <td>
                                             @if($task->status)
                                                 <span class="badge bg-info">{{ $task->status->name }}</span>
                                             @else
@@ -72,9 +103,22 @@
                                             @endif
                                         </td>
                                         <td>
-                                            <button class="btn btn-sm btn-outline-primary view-task-btn" data-task-id="{{ $task->id }}">
+                                            <button class="btn btn-sm btn-outline-primary view-task-btn me-1" data-task-id="{{ $task->id }}">
                                                 <i class="fas fa-eye me-1"></i> <span class="btn-text">View</span>
                                             </button>
+                                            @if(!$task->completed_at)
+                                                <form method="POST" action="{{ route('my-tasks.complete', $task) }}" style="display: inline;">
+                                                    @csrf
+                                                    <button type="submit" class="btn btn-sm btn-success" 
+                                                            onclick="return confirm('Are you sure you want to mark this task as complete?')">
+                                                        <i class="fas fa-check me-1"></i> Complete
+                                                    </button>
+                                                </form>
+                                            @else
+                                                <span class="badge bg-success">
+                                                    <i class="fas fa-check-circle me-1"></i> Completed
+                                                </span>
+                                            @endif
                                         </td>
                                     </tr>
                                     <!-- Expandable details row (hidden by default) -->
@@ -95,7 +139,7 @@
                     </div>
 
                     <!-- Pagination -->
-                    <div class="mt-3">
+                    <div class="d-flex justify-content-center mt-4">
                         {{ $tasks->links() }}
                     </div>
                 @else
@@ -107,6 +151,8 @@
             </div>
         </div>
     </div>
+
+
 
     @push('scripts')
     <script>

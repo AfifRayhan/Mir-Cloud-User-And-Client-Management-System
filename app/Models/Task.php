@@ -9,6 +9,7 @@ class Task extends Model
     protected $fillable = [
         'customer_id',
         'status_id',
+        'task_status_id',
         'activation_date',
         'allocation_type',
         'resource_upgradation_id',
@@ -33,6 +34,11 @@ class Task extends Model
     public function status()
     {
         return $this->belongsTo(CustomerStatus::class, 'status_id');
+    }
+
+    public function taskStatus()
+    {
+        return $this->belongsTo(TaskStatus::class, 'task_status_id');
     }
 
     public function resourceUpgradation()

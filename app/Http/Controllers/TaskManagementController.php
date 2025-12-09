@@ -64,17 +64,17 @@ class TaskManagementController extends Controller
     /**
      * Display the specified task
      */
-    public function show(Task $task)
-    {
-        // Check authorization
-        if (!Auth::user()->isAdmin() && !Auth::user()->isProTech()) {
-            abort(403, 'Unauthorized access.');
-        }
+    // public function show(Task $task)
+    // {
+    //     // Check authorization
+    //     if (!Auth::user()->isAdmin() && !Auth::user()->isProTech()) {
+    //         abort(403, 'Unauthorized access.');
+    //     }
 
-        $task->load(['customer', 'status', 'assignedTo', 'assignedBy', 'resourceUpgradation.details.service', 'resourceDowngradation.details.service']);
+    //     $task->load(['customer', 'status', 'assignedTo', 'assignedBy', 'resourceUpgradation.details.service', 'resourceDowngradation.details.service']);
 
-        return view('task-management.show', compact('task'));
-    }
+    //     return view('task-management.show', compact('task'));
+    // }
 
     /**
      * Get task details for AJAX request (inline view)
@@ -124,8 +124,11 @@ class TaskManagementController extends Controller
         // Send email notification to the assigned user
         try {
             $sender = Auth::user();
+            $actionType = $task->allocation_type ?? 'allocation';
+            // Load relationships for email template
+            $task->load(['customer', 'customer.platform', 'resourceUpgradation.details.service', 'resourceDowngradation.details.service']);
             \Illuminate\Support\Facades\Mail::to($assignedUser->email)
-                ->send(new \App\Mail\TaskAssignmentEmail($task, $sender));
+                ->send(new \App\Mail\TaskAssignmentEmail($task, $sender, $actionType));
         } catch (\Exception $e) {
              // Log error but don't stop execution
              \Illuminate\Support\Facades\Log::error('Failed to send assignment email: ' . $e->getMessage());

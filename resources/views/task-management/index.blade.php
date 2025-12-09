@@ -93,6 +93,7 @@
                                     <th>Created At</th>
                                     <th>Status</th>
                                     <th>Assigned To</th>
+                                    <th>Assigned By</th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
@@ -134,6 +135,16 @@
                                                 <div class="d-flex align-items-center">
                                                     <i class="fas fa-user-circle text-primary me-2"></i>
                                                     {{ $task->assignedTo->name }}
+                                                </div>
+                                            @else
+                                                <span class="badge bg-secondary">Unassigned</span>
+                                            @endif
+                                        </td>
+                                        <td>
+                                            @if($task->assignedBy)
+                                                <div class="d-flex align-items-center">
+                                                    <i class="fas fa-user-circle text-primary me-2"></i>
+                                                    {{ $task->assignedBy->name }}
                                                 </div>
                                             @else
                                                 <span class="badge bg-secondary">Unassigned</span>
@@ -244,6 +255,9 @@
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const viewButtons = document.querySelectorAll('.view-task-btn');
+            const params = new URLSearchParams(window.location.search);
+    
+
             
             viewButtons.forEach(button => {
                 button.addEventListener('click', function() {
@@ -314,6 +328,7 @@
                                                 <th style="width: 40%;">Service</th>
                                                 <th>Current Value</th>
                                                 <th class="${headerClass}">${headerLabel}</th>
+                                                <th class="text-primary">New Value</th>
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -336,6 +351,9 @@
                                         </td>
                                         <td>
                                             <span class="badge ${badgeClass}">${amount} ${detail.service.unit || ''}</span>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-primary">${detail.quantity} ${detail.service.unit || ''}</span>
                                         </td>
                                     </tr>
                                 `;

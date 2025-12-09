@@ -56,15 +56,13 @@ Route::middleware('auth')->group(function () {
 
     // Task Management (Admin and ProTech only - authorization in controller)
     Route::get('task-management', [\App\Http\Controllers\TaskManagementController::class, 'index'])->name('task-management.index');
-    Route::get('task-management/{task}', [\App\Http\Controllers\TaskManagementController::class, 'show'])->name('task-management.show');
     Route::get('task-management/{task}/details', [\App\Http\Controllers\TaskManagementController::class, 'getDetails'])->name('task-management.details');
     Route::post('task-management/{task}/assign', [\App\Http\Controllers\TaskManagementController::class, 'assign'])->name('task-management.assign');
 
     // My Tasks (All authenticated users)
     Route::get('my-tasks', [\App\Http\Controllers\MyTaskController::class, 'index'])->name('my-tasks.index');
-    Route::get('my-tasks/{task}', [\App\Http\Controllers\MyTaskController::class, 'show'])->name('my-tasks.show');
     Route::get('my-tasks/{task}/details', [\App\Http\Controllers\MyTaskController::class, 'getDetails'])->name('my-tasks.details');
-    Route::post('my-tasks/{task}/complete', [\App\Http\Controllers\MyTaskController::class, 'complete'])->name('my-tasks.complete');
+    Route::get('my-tasks/{task}/complete', [\App\Http\Controllers\MyTaskController::class, 'complete'])->name('my-tasks.complete')->middleware('signed');
 });
 
 require __DIR__.'/auth.php';

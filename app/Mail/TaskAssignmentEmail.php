@@ -16,14 +16,16 @@ class TaskAssignmentEmail extends Mailable
 
     public $task;
     public $sender;
+    public $actionType;
 
     /**
      * Create a new message instance.
      */
-    public function __construct($task, $sender)
+    public function __construct($task, $sender, $actionType)
     {
         $this->task = $task;
         $this->sender = $sender;
+        $this->actionType = $actionType;
     }
 
     /**

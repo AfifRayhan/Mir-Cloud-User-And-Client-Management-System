@@ -7,6 +7,17 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
+/**
+ * App User model
+ *
+ * Helpful IDE annotations for dynamic role helpers and Eloquent methods.
+ *
+ * @mixin \Eloquent
+ * @method bool isAdmin()
+ * @method bool isProTech()
+ * @method bool isTech()
+ * @method bool isProTechOrTech()
+ */
 class User extends Authenticatable
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */

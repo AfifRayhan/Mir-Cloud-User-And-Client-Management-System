@@ -71,11 +71,15 @@ class MyTaskController extends Controller
 
         // Send email notification
         $sender = Auth::user();
-        
+
         // Find management users
         $managementUsers = \App\Models\User::whereHas('role', function($q) {
             $q->where('role_name', 'management');
         })->get();
+
+        // Load relationships required by the email template and determine action type
+        $task->load(['customer', 'customer.platform', 'resourceUpgradation.details.service', 'resourceDowngradation.details.service', 'assignedBy']);
+        $actionType = $task->allocation_type ?? 'allocation';
 
         // Prepare CC list (assigned_by user)
         $ccUsers = [];
@@ -86,12 +90,12 @@ class MyTaskController extends Controller
         // Send email to each management user
         foreach ($managementUsers as $manager) {
             $mail = \Illuminate\Support\Facades\Mail::to($manager->email);
-            
+
             if (!empty($ccUsers)) {
                 $mail->cc($ccUsers);
             }
-            
-            $mail->send(new \App\Mail\TaskCompletionEmail($task, $sender));
+
+            $mail->send(new \App\Mail\TaskCompletionEmail($task, $sender, $actionType));
         }
 
         return back()->with('success', 'Task marked as complete and notification sent.');

@@ -10,18 +10,7 @@ use Illuminate\Support\Facades\Mail;
 
 class MailController extends Controller
 {
-    /**
-     * Show the form for composing a new email.
-     */
-    public function create()
-    {
-        // Get all users except the current user
-        $users = User::where('id', '!=', Auth::id())
-            ->orderBy('name')
-            ->get();
-
-        return view('mail.create', compact('users'));
-    }
+    
 
     /**
      * Send the email.

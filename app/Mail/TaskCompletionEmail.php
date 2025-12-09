@@ -16,14 +16,16 @@ class TaskCompletionEmail extends Mailable
 
     public $task;
     public $sender;
+    public $actionType;
 
     /**
      * Create a new message instance.
      */
-    public function __construct($task, $sender)
+    public function __construct($task, $sender, $actionType = null)
     {
         $this->task = $task;
         $this->sender = $sender;
+        $this->actionType = $actionType ?? ($task->allocation_type ?? 'allocation');
     }
 
     /**

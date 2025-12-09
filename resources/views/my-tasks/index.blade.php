@@ -107,13 +107,11 @@
                                                 <i class="fas fa-eye me-1"></i> <span class="btn-text">View</span>
                                             </button>
                                             @if(!$task->completed_at)
-                                                <form method="POST" action="{{ route('my-tasks.complete', $task) }}" style="display: inline;">
-                                                    @csrf
-                                                    <button type="submit" class="btn btn-sm btn-success" 
-                                                            onclick="return confirm('Are you sure you want to mark this task as complete?')">
-                                                        <i class="fas fa-check me-1"></i> Complete
-                                                    </button>
-                                                </form>
+                                                <a href="{{ URL::signedRoute('my-tasks.complete', ['task' => $task->id]) }}"
+                                                    class="btn btn-sm btn-success"
+                                                    onclick="return confirm('Are you sure you want to mark this task as complete?')">
+                                                    <i class="fas fa-check me-1"></i> Complete
+                                                </a>
                                             @else
                                                 <span class="badge bg-success">
                                                     <i class="fas fa-check-circle me-1"></i> Completed
@@ -228,6 +226,7 @@
                                                 <th style="width: 40%;">Service</th>
                                                 <th>Current Value</th>
                                                 <th class="${headerClass}">${headerLabel}</th>
+                                                <th class="text-primary">New Value</th>
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -248,6 +247,9 @@
                                         </td>
                                         <td>
                                             <span class="badge ${badgeClass}">${amount} ${detail.service.unit || ''}</span>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-primary">${detail.quantity} ${detail.service.unit || ''}</span>
                                         </td>
                                     </tr>
                                 `;

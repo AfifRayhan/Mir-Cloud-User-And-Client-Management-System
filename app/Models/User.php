@@ -76,6 +76,16 @@ class User extends Authenticatable
         return $this->role && $this->role->role_name === 'admin';
     }
 
+    public function isProKam()
+    {
+        return $this->role && $this->role->role_name === 'pro-kam';
+    }
+
+    public function isKam()
+    {
+        return $this->role && $this->role->role_name === 'kam';
+    }
+
     public function isProTech()
     {
         return $this->role && $this->role->role_name === 'pro-tech';

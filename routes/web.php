@@ -25,39 +25,53 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
     Route::put('/password', [\App\Http\Controllers\Auth\PasswordController::class, 'update'])->name('profile.password');
     
-    // Customer routes
-    Route::resource('customers', \App\Http\Controllers\CustomerController::class);
+    // Customer routes (Admin, Pro-Tech, KAM, Pro-KAM)
+    Route::middleware('role:admin,pro-tech,kam,pro-kam')->group(function () {
+        Route::resource('customers', \App\Http\Controllers\CustomerController::class);
+    });
 
-    // Resource allocation (combined upgrade/downgrade)
-    Route::get('resource-allocation', [ResourceAllocationController::class, 'index'])->name('resource-allocation.index');
-    Route::post('resource-allocation', [ResourceAllocationController::class, 'process'])->name('resource-allocation.process');
+    // Resource allocation (Admin, Pro-Tech, KAM, Pro-KAM) - Tech EXCLUDED
+    Route::middleware('role:admin,pro-tech,kam,pro-kam')->group(function () {
+        Route::get('resource-allocation', [ResourceAllocationController::class, 'index'])->name('resource-allocation.index');
+        Route::post('resource-allocation', [ResourceAllocationController::class, 'process'])->name('resource-allocation.process');
+    
+        Route::get('resource-allocation/{customer}/allocate', [ResourceAllocationController::class, 'allocationForm'])->name('resource-allocation.allocate');
+        Route::post('resource-allocation/{customer}/allocate', [ResourceAllocationController::class, 'storeAllocation'])->name('resource-allocation.store');
+    });
 
-    Route::get('resource-allocation/{customer}/allocate', [ResourceAllocationController::class, 'allocationForm'])->name('resource-allocation.allocate');
-    Route::post('resource-allocation/{customer}/allocate', [ResourceAllocationController::class, 'storeAllocation'])->name('resource-allocation.store');
+    // User management (Admin only)
+    Route::middleware('role:admin')->group(function () {
+        Route::resource('users', \App\Http\Controllers\UserManagementController::class);
+    });
 
-    // User management (admin only enforced in controller)
-    Route::resource('users', \App\Http\Controllers\UserManagementController::class);
+    // Platform management (Admin, Pro-Tech, Pro-KAM)
+    Route::middleware('role:admin,pro-tech,pro-kam')->group(function () {
+        Route::get('platforms', [PlatformManagementController::class, 'index'])->name('platforms.index');
+        Route::post('platforms', [PlatformManagementController::class, 'store'])->name('platforms.store');
+        Route::delete('platforms/{platform}', [PlatformManagementController::class, 'destroy'])->name('platforms.destroy');
+    });
 
-    // Platform management
-    Route::get('platforms', [PlatformManagementController::class, 'index'])->name('platforms.index');
-    Route::post('platforms', [PlatformManagementController::class, 'store'])->name('platforms.store');
-    Route::delete('platforms/{platform}', [PlatformManagementController::class, 'destroy'])->name('platforms.destroy');
+    // Service management (Admin, Pro-Tech, Pro-KAM)
+    Route::middleware('role:admin,pro-tech,pro-kam')->group(function () {
+        Route::get('services', [ServiceManagementController::class, 'index'])->name('services.index');
+        Route::post('services', [ServiceManagementController::class, 'store'])->name('services.store');
+        Route::put('services/{service}', [ServiceManagementController::class, 'update'])->name('services.update');
+        // Removed duplicate route definition
+        Route::delete('services/{service}', [ServiceManagementController::class, 'destroy'])->name('services.destroy');
+    });
 
-    // Service management
-    Route::get('services', [ServiceManagementController::class, 'index'])->name('services.index');
-    Route::post('services', [ServiceManagementController::class, 'store'])->name('services.store');
-    Route::put('services/{service}', [ServiceManagementController::class, 'update'])->name('services.update');
-    Route::put('services/{service}', [ServiceManagementController::class, 'update'])->name('services.update');
-    Route::delete('services/{service}', [ServiceManagementController::class, 'destroy'])->name('services.destroy');
+    // Mail routes (Admin, Pro-Tech, KAM, Pro-KAM) - Assuming Techs don't need this
+    Route::middleware('role:admin,pro-tech,kam,pro-kam')->group(function () {
+         Route::get('mail/create', [\App\Http\Controllers\MailController::class, 'create'])->name('mail.create');
+         Route::post('mail', [\App\Http\Controllers\MailController::class, 'store'])->name('mail.store');
+    });
 
-    // Mail routes
-    Route::get('mail/create', [\App\Http\Controllers\MailController::class, 'create'])->name('mail.create');
-    Route::post('mail', [\App\Http\Controllers\MailController::class, 'store'])->name('mail.store');
-
-    // Task Management (Admin and ProTech only - authorization in controller)
-    Route::get('task-management', [\App\Http\Controllers\TaskManagementController::class, 'index'])->name('task-management.index');
-    Route::get('task-management/{task}/details', [\App\Http\Controllers\TaskManagementController::class, 'getDetails'])->name('task-management.details');
-    Route::post('task-management/{task}/assign', [\App\Http\Controllers\TaskManagementController::class, 'assign'])->name('task-management.assign');
+    // Task Management (Admin and ProTech)
+    Route::middleware('role:admin,pro-tech')->group(function () {
+        Route::get('task-management', [\App\Http\Controllers\TaskManagementController::class, 'index'])->name('task-management.index');
+        Route::get('task-management/{task}/details', [\App\Http\Controllers\TaskManagementController::class, 'getDetails'])->name('task-management.details');
+        Route::post('task-management/{task}/assign', [\App\Http\Controllers\TaskManagementController::class, 'assign'])->name('task-management.assign');
+    });
 
     // My Tasks (All authenticated users)
     Route::get('my-tasks', [\App\Http\Controllers\MyTaskController::class, 'index'])->name('my-tasks.index');

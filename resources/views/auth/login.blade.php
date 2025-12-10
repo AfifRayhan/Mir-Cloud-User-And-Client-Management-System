@@ -4,7 +4,6 @@
             <!-- Left Side - Logo & Branding -->
             <div class="col-lg-6 d-flex custom-login-left">
                 <div class="custom-login-brand-wrapper w-100 d-flex flex-column justify-content-center align-items-center p-4 p-lg-5">
-                    
                     <h1 class="custom-login-brand-title fw-bold text-white mb-3 mb-lg-4 text-center">MCloud Client Management System</h1>
                     <p class="custom-login-brand-subtitle text-light text-center px-3 px-lg-0">
                         Secure Cloud Platform for Modern Businesses
@@ -18,7 +17,8 @@
                 <div class="w-100 px-3 px-md-4 px-lg-5 py-4 py-lg-5">
                     <div class="custom-login-form-container mx-auto">
                         <!-- Form Header -->
-                        <div class="text-center mb-4 mb-lg-5">
+                        <div class="text-center mb-2 mb-lg-3">
+                            <image src="{{ asset('Mir-Cloud-Logo.png') }}" alt="Logo" style="width: 150px; height: auto;">
                             <h2 class="custom-login-form-title fw-bold mb-2">Welcome Back</h2>
                             <p class="custom-login-form-subtitle text-muted">
                                 Sign in to continue to your account
@@ -38,7 +38,7 @@
 
                         <!-- Login Form -->
                         <div class="custom-login-card card border-0 shadow-sm rounded-4">
-                            <div class="card-body p-3 p-md-4 p-lg-5">
+                            <div class="card-body p-3 p-md-4 p-lg-4">
                                 <form method="POST" action="{{ route('login') }}" id="loginForm">
                                     @csrf
 

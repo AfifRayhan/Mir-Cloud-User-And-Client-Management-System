@@ -53,32 +53,14 @@ class TaskManagementController extends Controller
 
         $tasks = $query->paginate(10)->appends($request->query());
 
-        // Get all users for assignment dropdown (Tech and Admin only)
+        // Get all users for assignment dropdown (Tech, Pro-Tech, and Admin)
         $users = User::whereHas('role', function($q) {
-            $q->whereIn('role_name', ['tech', 'admin']);
+            $q->whereIn('role_name', ['tech', 'pro-tech', 'admin']);
         })->orderBy('name')->get();
 
         return view('task-management.index', compact('tasks', 'users'));
     }
 
-    /**
-     * Display the specified task
-     */
-    // public function show(Task $task)
-    // {
-    //     // Check authorization
-    //     if (!Auth::user()->isAdmin() && !Auth::user()->isProTech()) {
-    //         abort(403, 'Unauthorized access.');
-    //     }
-
-    //     $task->load(['customer', 'status', 'assignedTo', 'assignedBy', 'resourceUpgradation.details.service', 'resourceDowngradation.details.service']);
-
-    //     return view('task-management.show', compact('task'));
-    // }
-
-    /**
-     * Get task details for AJAX request (inline view)
-     */
     public function getDetails(Task $task)
     {
         // Check authorization
@@ -108,10 +90,10 @@ class TaskManagementController extends Controller
             'assigned_to' => 'required|exists:users,id',
         ]);
 
-        // Verify the assigned user is Tech or Admin
+        // Verify the assigned user is Tech or Pro-Tech
         $assignedUser = User::findOrFail($validated['assigned_to']);
-        if (!$assignedUser->isAdmin() && !$assignedUser->isTech()) {
-            return back()->with('error', 'Tasks can only be assigned to Tech or Admin users.');
+        if (!$assignedUser->isAdmin() && !$assignedUser->isTech() && !$assignedUser->isProTech()) {
+            return back()->with('error', 'Tasks can only be assigned to Tech or Pro-Tech users.');
         }
 
         $task->update([

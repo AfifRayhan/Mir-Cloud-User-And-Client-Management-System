@@ -13,7 +13,7 @@ class ServiceManagementController extends Controller
 {
     public function index(Request $request): View
     {
-        $this->authorizeAdmin();
+        $this->authorizeAccess();
 
         $services = Service::with('insertedBy')
             ->orderBy('service_name')
@@ -29,7 +29,7 @@ class ServiceManagementController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
-        $this->authorizeAdmin();
+        $this->authorizeAccess();
 
         $validated = $request->validate([
             'service_name' => 'required|string|max:255|unique:services,service_name',
@@ -49,7 +49,7 @@ class ServiceManagementController extends Controller
 
     public function update(Request $request, Service $service): RedirectResponse
     {
-        $this->authorizeAdmin();
+        $this->authorizeAccess();
 
         $validated = $request->validate([
             'service_name' => [
@@ -74,17 +74,18 @@ class ServiceManagementController extends Controller
 
     public function destroy(Service $service): RedirectResponse
     {
-        $this->authorizeAdmin();
+        $this->authorizeAccess();
 
         $service->delete();
 
         return redirect()->route('services.index')->with('success', 'Service removed successfully.');
     }
 
-    private function authorizeAdmin(): void
+    private function authorizeAccess(): void
     {
-        if (!Auth::user()?->isAdmin()) {
-            abort(403, 'Only administrators can manage services.');
+        $user = Auth::user();
+        if (! ($user?->isAdmin() || $user?->isProKam() || $user?->isProTech())) {
+            abort(403, 'Unauthorized access.');
         }
     }
 }

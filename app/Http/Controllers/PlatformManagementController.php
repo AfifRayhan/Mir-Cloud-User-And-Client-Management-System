@@ -12,7 +12,7 @@ class PlatformManagementController extends Controller
 {
     public function index(): View
     {
-        $this->authorizeAdmin();
+        $this->authorizeAccess();
 
         $platforms = Platform::orderBy('platform_name')->get();
 
@@ -21,7 +21,7 @@ class PlatformManagementController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
-        $this->authorizeAdmin();
+        $this->authorizeAccess();
 
         $validated = $request->validate([
             'platform_name' => 'required|string|max:255|unique:platforms,platform_name',
@@ -36,7 +36,7 @@ class PlatformManagementController extends Controller
 
     public function destroy(Platform $platform): RedirectResponse
     {
-        $this->authorizeAdmin();
+        $this->authorizeAccess();
 
         if ($platform->customers()->exists()) {
             return redirect()->route('platforms.index')->withErrors([
@@ -49,10 +49,11 @@ class PlatformManagementController extends Controller
         return redirect()->route('platforms.index')->with('success', 'Platform removed successfully.');
     }
 
-    private function authorizeAdmin(): void
+    private function authorizeAccess(): void
     {
-        if (!Auth::user()?->isAdmin()) {
-            abort(403, 'Only administrators can manage platforms.');
+        $user = Auth::user();
+        if (! ($user?->isAdmin() || $user?->isProKam() || $user?->isProTech())) {
+            abort(403, 'Unauthorized access.');
         }
     }
 }

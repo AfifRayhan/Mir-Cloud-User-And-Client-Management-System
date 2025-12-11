@@ -113,123 +113,131 @@ class ResourceAllocationController extends Controller
             ], 422);
         }
 
-        if ($actionType === 'upgrade') {
-            $upgradation = \App\Models\ResourceUpgradation::create([
-                'customer_id' => $customer->id,
-                'status_id' => $validated['status_id'],
-                'activation_date' => $validated['activation_date'],
-                'inactivation_date' => $validated['inactivation_date'] ?? '3000-01-01',
-                    'task_status_id' => $taskStatusId,
-                'inserted_by' => \Illuminate\Support\Facades\Auth::id(),
-            ]);
+        return \Illuminate\Support\Facades\DB::transaction(function () use ($customer, $validated, $servicesInput, $actionType, $taskStatusId) {
+            // Lock the customer record to serialize allocations for this customer
+            // This prevents two simultaneous upgrades from reading the same "current value" and writing inconsistent data
+            $lockedCustomer = \App\Models\Customer::where('id', $customer->id)->lockForUpdate()->first();
 
-            // Update Customer activation date
-            $customer->update([
-                'activation_date' => $validated['activation_date'],
-            ]);
-
-            foreach ($servicesInput as $serviceId => $increaseAmount) {
-                $service = \App\Models\Service::find($serviceId);
-                if (!$service) continue;
-
-                // Get current value from resource history
-                $currentValue = $customer->getResourceQuantity($service->service_name);
-
-                // Calculate the new value after increase
-                $newValue = $currentValue + $increaseAmount;
-                
-                \App\Models\ResourceUpgradationDetail::create([
-                    'resource_upgradation_id' => $upgradation->id,
-                    'service_id' => $serviceId,
-                    'quantity' => $newValue,
-                    'upgrade_amount' => $increaseAmount,
-                ]);
-            }
-
-            // Auto-create task if task_status_id is "Proceed from KAM"
-            $proceedFromKAM = \App\Models\TaskStatus::where('name', 'Proceed from KAM')->first();
-            if ($proceedFromKAM && $taskStatusId == $proceedFromKAM->id) {
-                \App\Models\Task::create([
-                    'customer_id' => $customer->id,
+            if ($actionType === 'upgrade') {
+                $upgradation = \App\Models\ResourceUpgradation::create([
+                    'customer_id' => $lockedCustomer->id,
                     'status_id' => $validated['status_id'],
                     'activation_date' => $validated['activation_date'],
-                    'allocation_type' => 'upgrade',
-                    'resource_upgradation_id' => $upgradation->id,
+                    'inactivation_date' => $validated['inactivation_date'] ?? '3000-01-01',
+                    'task_status_id' => $taskStatusId,
+                    'inserted_by' => \Illuminate\Support\Facades\Auth::id(),
                 ]);
-            }
-        } else {
-            // Get the most recent status from upgradations for this customer
-            $latestUpgradation = \App\Models\ResourceUpgradation::where('customer_id', $customer->id)
-                ->orderBy('created_at', 'desc')
-                ->first();
-            $statusId = $latestUpgradation ? $latestUpgradation->status_id : null;
-            
-            $downgradation = \App\Models\ResourceDowngradation::create([
-                'customer_id' => $customer->id,
-                'status_id' => $statusId,
-                'activation_date' => now(),
-                'task_status_id' => $taskStatusId,
-                'inserted_by' => \Illuminate\Support\Facades\Auth::id(),
-            ]);
 
-            foreach ($servicesInput as $serviceId => $reductionAmount) {
-                $service = \App\Models\Service::find($serviceId);
-                if (!$service) continue;
+                // Update Customer activation date
+                $lockedCustomer->update([
+                    'activation_date' => $validated['activation_date'],
+                ]);
 
-                // Get current value from resource history
-                $currentValue = $customer->getResourceQuantity($service->service_name);
+                foreach ($servicesInput as $serviceId => $increaseAmount) {
+                    $service = \App\Models\Service::find($serviceId);
+                    if (!$service) continue;
 
-                // Calculate the new value after reduction
-                $newValue = max(0, $currentValue - $reductionAmount);
+                    // Get current value from resource history (using the locked customer instance if possible, though relation loading stays same)
+                    // Note: getResourceQuantity likely queries database. Since we are in transaction, we see our own writes, 
+                    // but we need to ensure we read the COMPLETED writes of others. The lockForUpdate ensures no one else is writing right now.
+                    $currentValue = $lockedCustomer->getResourceQuantity($service->service_name);
+
+                    // Calculate the new value after increase
+                    $newValue = $currentValue + $increaseAmount;
+                    
+                    \App\Models\ResourceUpgradationDetail::create([
+                        'resource_upgradation_id' => $upgradation->id,
+                        'service_id' => $serviceId,
+                        'quantity' => $newValue,
+                        'upgrade_amount' => $increaseAmount,
+                    ]);
+                }
+
+                // Auto-create task if task_status_id is "Proceed from KAM"
+                $proceedFromKAM = \App\Models\TaskStatus::where('name', 'Proceed from KAM')->first();
+                if ($proceedFromKAM && $taskStatusId == $proceedFromKAM->id) {
+                    \App\Models\Task::create([
+                        'customer_id' => $lockedCustomer->id,
+                        'status_id' => $validated['status_id'],
+                        'activation_date' => $validated['activation_date'],
+                        'allocation_type' => 'upgrade',
+                        'resource_upgradation_id' => $upgradation->id,
+                    ]);
+                }
+            } else {
+                // Get the most recent status from upgradations for this customer
+                $latestUpgradation = \App\Models\ResourceUpgradation::where('customer_id', $lockedCustomer->id)
+                    ->orderBy('created_at', 'desc')
+                    ->first();
+                $statusId = $latestUpgradation ? $latestUpgradation->status_id : null;
                 
-                \App\Models\ResourceDowngradationDetail::create([
-                    'resource_downgradation_id' => $downgradation->id,
-                    'service_id' => $serviceId,
-                    'quantity' => $newValue,
-                    'downgrade_amount' => $reductionAmount,
-                ]);
-            }
-
-            // Auto-create task if task_status_id is "Proceed from KAM"
-            $proceedFromKAM = \App\Models\TaskStatus::where('name', 'Proceed from KAM')->first();
-            if ($proceedFromKAM && $taskStatusId == $proceedFromKAM->id) {
-                \App\Models\Task::create([
-                    'customer_id' => $customer->id,
+                $downgradation = \App\Models\ResourceDowngradation::create([
+                    'customer_id' => $lockedCustomer->id,
                     'status_id' => $statusId,
                     'activation_date' => now(),
-                    'allocation_type' => 'downgrade',
-                    'resource_downgradation_id' => $downgradation->id,
+                    'task_status_id' => $taskStatusId,
+                    'inserted_by' => \Illuminate\Support\Facades\Auth::id(),
                 ]);
-        }
-        }
 
-        // Send email notification to all Pro-Tech users
-        try {
-            $proTechUsers = \App\Models\User::whereHas('role', function($q) {
-                $q->where('role_name', 'pro-tech');
-            })->get();
+                foreach ($servicesInput as $serviceId => $reductionAmount) {
+                    $service = \App\Models\Service::find($serviceId);
+                    if (!$service) continue;
 
-            $sender = \Illuminate\Support\Facades\Auth::user();
-            
-            // We can fetch the latest task for this customer as it was just created.
-            $latestTask = \App\Models\Task::where('customer_id', $customer->id)->latest()->first();
+                    // Get current value from resource history
+                    $currentValue = $lockedCustomer->getResourceQuantity($service->service_name);
 
-            if ($latestTask) {
-                foreach ($proTechUsers as $proTech) {
-                    \Illuminate\Support\Facades\Mail::to($proTech->email)
-                        ->send(new \App\Mail\RecommendationSubmissionEmail($latestTask, $sender, $actionType));
+                    // Calculate the new value after reduction
+                    $newValue = max(0, $currentValue - $reductionAmount);
+                    
+                    \App\Models\ResourceDowngradationDetail::create([
+                        'resource_downgradation_id' => $downgradation->id,
+                        'service_id' => $serviceId,
+                        'quantity' => $newValue,
+                        'downgrade_amount' => $reductionAmount,
+                    ]);
+                }
+
+                // Auto-create task if task_status_id is "Proceed from KAM"
+                $proceedFromKAM = \App\Models\TaskStatus::where('name', 'Proceed from KAM')->first();
+                if ($proceedFromKAM && $taskStatusId == $proceedFromKAM->id) {
+                    \App\Models\Task::create([
+                        'customer_id' => $lockedCustomer->id,
+                        'status_id' => $statusId,
+                        'activation_date' => now(),
+                        'allocation_type' => 'downgrade',
+                        'resource_downgradation_id' => $downgradation->id,
+                    ]);
                 }
             }
-        } catch (\Exception $e) {
-            // Log error but don't stop execution
-            \Illuminate\Support\Facades\Log::error('Failed to send recommendation email: ' . $e->getMessage());
-        }
 
-        $actionName = $actionType === 'upgrade' ? 'upgraded' : 'downgraded';
-        return response()->json([
-            'success' => true,
-            'message' => "Resources {$actionName} successfully for {$customer->customer_name}."
-        ]);
+            // Send email notification to all Pro-Tech users
+            try {
+                $proTechUsers = \App\Models\User::whereHas('role', function($q) {
+                    $q->where('role_name', 'pro-tech');
+                })->get();
+
+                $sender = \Illuminate\Support\Facades\Auth::user();
+                
+                // We can fetch the latest task for this customer as it was just created.
+                $latestTask = \App\Models\Task::where('customer_id', $lockedCustomer->id)->latest()->first();
+
+                if ($latestTask) {
+                    foreach ($proTechUsers as $proTech) {
+                        \Illuminate\Support\Facades\Mail::to($proTech->email)
+                            ->send(new \App\Mail\RecommendationSubmissionEmail($latestTask, $sender, $actionType));
+                    }
+                }
+            } catch (\Exception $e) {
+                // Log error but don't stop execution
+                \Illuminate\Support\Facades\Log::error('Failed to send recommendation email: ' . $e->getMessage());
+            }
+
+            $actionName = $actionType === 'upgrade' ? 'upgraded' : 'downgraded';
+            return response()->json([
+                'success' => true,
+                'message' => "Resources {$actionName} successfully for {$lockedCustomer->customer_name}."
+            ]);
+        });
     }
 
 

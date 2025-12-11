@@ -189,8 +189,30 @@
     transition: height 0.3s ease;
 }
 
-/* Responsive Design */
+/* Responsive Navigation Centering */
+@media (min-width: 992px) {
+    .nav-centered-desktop {
+        position: absolute;
+        left: 50%;
+        transform: translateX(-50%);
+    }
+}
+
 @media (max-width: 991.98px) {
+    .nav-centered-desktop {
+        position: static;
+        width: 100%;
+        margin: 1rem 0;
+    }
+    
+    .nav-centered-desktop .nav-item {
+        width: 100%;
+    }
+    
+    .nav-centered-desktop .nav-link {
+        justify-content: flex-start;
+    }
+
     .custom-nav-collapse {
         background: var(--custom-nav-bg);
         border-radius: var(--custom-nav-radius);

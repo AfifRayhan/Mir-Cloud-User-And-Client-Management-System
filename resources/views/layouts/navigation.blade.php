@@ -11,8 +11,8 @@
         </button>
         
         <!-- Navigation Content -->
-        <div class="collapse navbar-collapse custom-nav-collapse d-flex" id="navbarNav">
-            <ul class="navbar-nav position-absolute start-50 translate-middle-x mb-2 mb-lg-0">
+        <div class="collapse navbar-collapse custom-nav-collapse" id="navbarNav">
+            <ul class="navbar-nav nav-centered-desktop mb-2 mb-lg-0">
                 {{-- Home (All roles) --}}
                     <li class="nav-item">
                         <a class="nav-link {{ request()->routeIs('dashboard') ? 'active' : '' }}" href="{{ route('dashboard') }}">Home</a>

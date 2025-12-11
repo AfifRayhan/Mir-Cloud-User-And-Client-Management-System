@@ -109,7 +109,7 @@
                                             @if(!$task->completed_at)
                                                 <a href="{{ URL::signedRoute('my-tasks.complete', ['task' => $task->id]) }}"
                                                     class="btn btn-sm btn-success"
-                                                    onclick="return confirm('Are you sure you want to mark this task as complete?')">
+                                                    onclick="if(confirm('Are you sure you want to mark this task as complete?')) { this.classList.add('disabled'); this.innerHTML = '<i class=\'fas fa-circle-notch fa-spin me-1\'></i> Processing...'; return true; } else { return false; }">
                                                     <i class="fas fa-check me-1"></i> Complete
                                                 </a>
                                             @else

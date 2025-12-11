@@ -168,7 +168,7 @@
                                                             <h5 class="modal-title">Assign Task</h5>
                                                             <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                                                         </div>
-                                                        <form method="POST" action="{{ route('task-management.assign', $task) }}">
+                                                        <form method="POST" action="{{ route('task-management.assign', $task) }}" onsubmit="this.querySelector('button[type=submit]').disabled = true; this.querySelector('button[type=submit]').innerHTML = '<i class=\'fas fa-circle-notch fa-spin me-1\'></i> Processing...';">
                                                             @csrf
                                                             <div class="modal-body">
                                                                 <p class="mb-3">

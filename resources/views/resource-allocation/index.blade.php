@@ -201,6 +201,14 @@
                     event.preventDefault();
                     console.log('Form submitted', form);
 
+                    const submitBtn = form.querySelector('button[type="submit"]');
+                    const originalBtnText = submitBtn ? submitBtn.innerHTML : 'Confirm';
+                    
+                    if (submitBtn) {
+                        submitBtn.disabled = true;
+                        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Processing...';
+                    }
+
                     const formData = new FormData(form);
                     const customerId = form.dataset.customerId;
                     const actionType = form.dataset.actionType;
@@ -234,6 +242,12 @@
                         const data = await response.json();
 
                         if (!response.ok) {
+                            // Re-enable button on error
+                            if (submitBtn) {
+                                submitBtn.disabled = false;
+                                submitBtn.innerHTML = originalBtnText;
+                            }
+
                             // Handle validation errors
                             if (data.message) {
                                 // Show error in the success message container (but as danger)
@@ -274,11 +288,18 @@
                         // Reload the allocation form to show updated values
                         setTimeout(() => {
                             loadAllocationForm();
+                            // Button remains disabled until reload to prevent double-submit during delay
                         }, 1500);
 
                         return false;
                     } catch (error) {
                         console.error(error);
+                        // Re-enable button on error
+                        if (submitBtn) {
+                            submitBtn.disabled = false;
+                            submitBtn.innerHTML = originalBtnText;
+                        }
+                        
                         if (successMsg) {
                             successMsg.classList.remove('alert-success', 'd-none');
                             successMsg.classList.add('alert-danger', 'show');

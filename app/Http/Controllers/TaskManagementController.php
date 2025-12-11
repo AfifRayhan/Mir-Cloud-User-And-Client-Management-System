@@ -90,32 +90,43 @@ class TaskManagementController extends Controller
             'assigned_to' => 'required|exists:users,id',
         ]);
 
-        // Verify the assigned user is Tech or Pro-Tech
-        $assignedUser = User::findOrFail($validated['assigned_to']);
-        if (!$assignedUser->isAdmin() && !$assignedUser->isTech() && !$assignedUser->isProTech()) {
-            return back()->with('error', 'Tasks can only be assigned to Tech or Pro-Tech users.');
-        }
+        return \Illuminate\Support\Facades\DB::transaction(function () use ($request, $task, $validated) {
+            // Lock the task record for update to prevent race conditions
+            $lockedTask = Task::where('id', $task->id)->lockForUpdate()->first();
 
-        $task->update([
-            'assigned_to' => $validated['assigned_to'],
-            'assigned_by' => Auth::id(),
-            'assigned_at' => now(),
-            'task_status_id' => 2, // Proceed from Pro Tech
-        ]);
+            // Check if task was assigned by another request while we were waiting
+            if ($lockedTask->assigned_to) {
+                 // Prevent "surprise" overwrites if the task is already assigned
+                 return back()->with('error', 'Task was already assigned to ' . ($lockedTask->assignedTo->name ?? 'someone else') . '. Please refresh.');
+            }
 
-        // Send email notification to the assigned user
-        try {
-            $sender = Auth::user();
-            $actionType = $task->allocation_type ?? 'allocation';
-            // Load relationships for email template
-            $task->load(['customer', 'customer.platform', 'resourceUpgradation.details.service', 'resourceDowngradation.details.service']);
-            \Illuminate\Support\Facades\Mail::to($assignedUser->email)
-                ->send(new \App\Mail\TaskAssignmentEmail($task, $sender, $actionType));
-        } catch (\Exception $e) {
-             // Log error but don't stop execution
-             \Illuminate\Support\Facades\Log::error('Failed to send assignment email: ' . $e->getMessage());
-        }
+            // Verify the assigned user is Tech or Pro-Tech
+            $assignedUser = User::findOrFail($validated['assigned_to']);
+            if (!$assignedUser->isAdmin() && !$assignedUser->isTech() && !$assignedUser->isProTech()) {
+                return back()->with('error', 'Tasks can only be assigned to Tech or Pro-Tech users.');
+            }
 
-        return back()->with('success', 'Task assigned successfully to ' . $assignedUser->name);
+            $lockedTask->update([
+                'assigned_to' => $validated['assigned_to'],
+                'assigned_by' => Auth::id(),
+                'assigned_at' => now(),
+                'task_status_id' => 2, // Proceed from Pro Tech
+            ]);
+
+            // Send email notification to the assigned user
+            try {
+                $sender = Auth::user();
+                $actionType = $lockedTask->allocation_type ?? 'allocation';
+                // Load relationships for email template
+                $lockedTask->load(['customer', 'customer.platform', 'resourceUpgradation.details.service', 'resourceDowngradation.details.service']);
+                \Illuminate\Support\Facades\Mail::to($assignedUser->email)
+                    ->send(new \App\Mail\TaskAssignmentEmail($lockedTask, $sender, $actionType));
+            } catch (\Exception $e) {
+                 // Log error but don't stop execution
+                 \Illuminate\Support\Facades\Log::error('Failed to send assignment email: ' . $e->getMessage());
+            }
+
+            return back()->with('success', 'Task assigned successfully to ' . $assignedUser->name);
+        });
     }
 }

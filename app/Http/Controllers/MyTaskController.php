@@ -64,40 +64,54 @@ class MyTaskController extends Controller
             abort(403, 'Unauthorized access to this task.');
         }
 
-        $task->update([
-            'completed_at' => now(),
-            'task_status_id' => 3, // Proceed from Tech
-        ]);
+        return \Illuminate\Support\Facades\DB::transaction(function () use ($task) {
+            // Lock the task record
+            $lockedTask = Task::where('id', $task->id)->lockForUpdate()->first();
 
-        // Send email notification
-        $sender = Auth::user();
-
-        // Find management users
-        $managementUsers = \App\Models\User::whereHas('role', function($q) {
-            $q->where('role_name', 'management');
-        })->get();
-
-        // Load relationships required by the email template and determine action type
-        $task->load(['customer', 'customer.platform', 'resourceUpgradation.details.service', 'resourceDowngradation.details.service', 'assignedBy']);
-        $actionType = $task->allocation_type ?? 'allocation';
-
-        // Prepare CC list (assigned_by user)
-        $ccUsers = [];
-        if ($task->assignedBy) {
-            $ccUsers[] = $task->assignedBy->email;
-        }
-
-        // Send email to each management user
-        foreach ($managementUsers as $manager) {
-            $mail = \Illuminate\Support\Facades\Mail::to($manager->email);
-
-            if (!empty($ccUsers)) {
-                $mail->cc($ccUsers);
+            // Check if already completed by a race condition
+            if ($lockedTask->completed_at) {
+                return back()->with('error', 'Task is already marked as complete.');
             }
 
-            $mail->send(new \App\Mail\TaskCompletionEmail($task, $sender, $actionType));
-        }
+            $lockedTask->update([
+                'completed_at' => now(),
+                'task_status_id' => 3, // Proceed from Tech
+            ]);
 
-        return back()->with('success', 'Task marked as complete and notification sent.');
+            // Send email notification
+            $sender = Auth::user();
+
+            // Find management users
+            $managementUsers = \App\Models\User::whereHas('role', function($q) {
+                $q->where('role_name', 'management');
+            })->get();
+
+            // Load relationships required by the email template and determine action type
+            $lockedTask->load(['customer', 'customer.platform', 'resourceUpgradation.details.service', 'resourceDowngradation.details.service', 'assignedBy']);
+            $actionType = $lockedTask->allocation_type ?? 'allocation';
+
+            // Prepare CC list (assigned_by user)
+            $ccUsers = [];
+            if ($lockedTask->assignedBy) {
+                $ccUsers[] = $lockedTask->assignedBy->email;
+            }
+
+            // Send email to each management user
+            foreach ($managementUsers as $manager) {
+                try {
+                    $mail = \Illuminate\Support\Facades\Mail::to($manager->email);
+
+                    if (!empty($ccUsers)) {
+                        $mail->cc($ccUsers);
+                    }
+
+                    $mail->send(new \App\Mail\TaskCompletionEmail($lockedTask, $sender, $actionType));
+                } catch (\Exception $e) {
+                     \Illuminate\Support\Facades\Log::error('Failed to send completion email to ' . $manager->email . ': ' . $e->getMessage());
+                }
+            }
+
+            return back()->with('success', 'Task marked as complete and notification sent.');
+        });
     }
 }

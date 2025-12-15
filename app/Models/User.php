@@ -17,6 +17,7 @@ use Illuminate\Notifications\Notifiable;
  * @method bool isProTech()
  * @method bool isTech()
  * @method bool isProTechOrTech()
+ * @method bool isManagement()
  */
 class User extends Authenticatable
 {
@@ -101,6 +102,11 @@ class User extends Authenticatable
         return $this->role && in_array($this->role->role_name, ['pro-tech', 'tech']);
     }
 
+    public function isManagement()
+    {
+        return $this->role && $this->role->role_name === 'management';
+    }
+
     public function submittedCustomers()
     {
         return $this->hasMany(Customer::class, 'submitted_by');
@@ -119,5 +125,5 @@ class User extends Authenticatable
     public function tasksAssigned()
     {
         return $this->hasMany(Task::class, 'assigned_by');
-    }
+    } 
 }

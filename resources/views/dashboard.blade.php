@@ -46,7 +46,7 @@
         <!-- Dashboard Cards Grid -->
         <div class="row g-4 mb-5">
         <!-- Customers Card -->
-            @if(Auth::user()->isAdmin() || Auth::user()->isProKam()|| Auth::user()->isKam() || Auth::user()->isProTech())
+            @if(Auth::user()->isAdmin() || Auth::user()->isProKam()|| Auth::user()->isKam() || Auth::user()->isProTech() || Auth::user()->isManagement())
                 <div class="col-12 col-md-6 col-lg-4">
                     <a href="{{ route('customers.index') }}" class="custom-dashboard-card-link">
                         <div class="card custom-dashboard-card custom-dashboard-card-primary border-0 shadow-sm h-100">
@@ -74,7 +74,7 @@
                     </a>
                 </div>
             @endif
-            @if(Auth::user()->isAdmin() || Auth::user()->isProKam()|| Auth::user()->isKam() || Auth::user()->isProTech())
+            @if(Auth::user()->isAdmin() || Auth::user()->isProKam()|| Auth::user()->isKam() || Auth::user()->isProTech() || Auth::user()->isManagement())
                 <div class="col-12 col-md-6 col-lg-4">
                     <a href="{{ route('customers.create') }}" class="custom-dashboard-card-link">
                         <div class="card custom-dashboard-card custom-dashboard-card-primary border-0 shadow-sm h-100">
@@ -104,7 +104,7 @@
             @endif
 
             <!-- Resource Allocation Card -->
-            @if(Auth::user()->isAdmin() || Auth::user()->isProKam()|| Auth::user()->isKam() || Auth::user()->isProTech())
+            @if(Auth::user()->isAdmin() || Auth::user()->isProKam()|| Auth::user()->isKam() || Auth::user()->isProTech() || Auth::user()->isManagement())
                 <div class="col-12 col-md-6 col-lg-4">
                     <a href="{{ route('resource-allocation.index') }}" class="custom-dashboard-card-link">
                         <div class="card custom-dashboard-card custom-dashboard-card-info border-0 shadow-sm h-100">
@@ -194,7 +194,7 @@
 
 
                 <!-- Platforms Card -->
-                @if(Auth::user()->isAdmin() || Auth::user()->isProTech() || Auth::user()->isProKam())
+                @if(Auth::user()->isAdmin() || Auth::user()->isProTech() || Auth::user()->isProKam() || Auth::user()->isManagement())
                     <div class="col-12 col-md-6 col-lg-4">
                         <a href="{{ route('platforms.index') }}" class="custom-dashboard-card-link">
                             <div class="card custom-dashboard-card custom-dashboard-card-secondary border-0 shadow-sm h-100">
@@ -224,7 +224,7 @@
                 @endif
 
                 <!-- Services Card -->
-                @if(Auth::user()->isAdmin() || Auth::user()->isProTech() || Auth::user()->isProKam())
+               @if(Auth::user()->isAdmin() || Auth::user()->isProTech() || Auth::user()->isProKam() || Auth::user()->isManagement())
                     <div class="col-12 col-md-6 col-lg-4">
                         <a href="{{ route('services.index') }}" class="custom-dashboard-card-link">
                             <div class="card custom-dashboard-card custom-dashboard-card-warning border-0 shadow-sm h-100">
@@ -254,8 +254,8 @@
                 @endif
             
 
-            <!-- Task Management Card (Admin and ProTech only) -->
-            @if(Auth::user()->isAdmin() || Auth::user()->isProTech())
+            <!-- Task Management Card -->
+            @if(Auth::user()->isAdmin() || Auth::user()->isProTech() || Auth::user()->isManagement())
                 <div class="col-12 col-md-6 col-lg-4">
                     <a href="{{ route('task-management.index') }}" class="custom-dashboard-card-link">
                         <div class="card custom-dashboard-card custom-dashboard-card-danger border-0 shadow-sm h-100">
@@ -284,7 +284,7 @@
                 </div>
             @endif
 
-            <!-- My Tasks Card (All authenticated users) -->
+            <!-- My Tasks Card -->
             @if(Auth::user()->isAdmin() || Auth::user()->isProTechOrTech())
                 <div class="col-12 col-md-6 col-lg-4">
                     <div class="position-relative">

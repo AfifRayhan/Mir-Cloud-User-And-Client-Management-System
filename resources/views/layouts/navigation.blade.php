@@ -24,13 +24,13 @@
                     </li>
                 @endif
                 {{-- Customer Management --}}
-                @if(Auth::user()->isAdmin() || Auth::user()->isProKam() || Auth::user()->isKam() || Auth::user()->isProTech())
+                @if(Auth::user()->isAdmin() || Auth::user()->isProKam() || Auth::user()->isKam() || Auth::user()->isProTech() || Auth::user()->isManagement())
                     <li class="nav-item">
                         <a class="nav-link {{ request()->routeIs('customers.*') ? 'active' : '' }}" href="{{ route('customers.index') }}">Customer</a>
                     </li>
                 @endif
                 {{-- Resource Management --}}
-                @if(Auth::user()->isAdmin() || Auth::user()->isProKam() || Auth::user()->isKam() || Auth::user()->isProTech())
+                @if(Auth::user()->isAdmin() || Auth::user()->isProKam() || Auth::user()->isKam() || Auth::user()->isProTech() || Auth::user()->isManagement())
                     <li class="nav-item">
                         <a class="nav-link {{ request()->routeIs('resource-allocation.*') ? 'active' : '' }}" href="{{ route('resource-allocation.index') }}">Resource</a>
                     </li>
@@ -40,19 +40,20 @@
                     <li class="nav-item">
                         <a class="nav-link {{ request()->routeIs('my-tasks.*') ? 'active' : '' }}" href="{{ route('my-tasks.index') }}">Task</a>
                     </li>
-                @elseif(Auth::user()->isAdmin() || Auth::user()->isProTech())
+                @elseif(Auth::user()->isAdmin() || Auth::user()->isProTech() || Auth::user()->isManagement())
                     <li class="nav-item">
                         <a class="nav-link {{ request()->routeIs('task-management.*') ? 'active' : '' }}" href="{{ route('task-management.index') }}">Task</a>
                     </li>
                 @endif
                 {{-- Service Management --}}
-                @if(Auth::user()->isAdmin() || Auth::user()->isProKam() || Auth::user()->isProTech())
+                {{-- Service Management --}}
+                @if(Auth::user()->isAdmin() || Auth::user()->isProKam() || Auth::user()->isProTech() || Auth::user()->isManagement())
                     <li class="nav-item">
                         <a class="nav-link {{ request()->routeIs('services.*') ? 'active' : '' }}" href="{{ route('services.index') }}">Service</a>
                     </li>
                 @endif
                 {{-- Platform Management --}}
-                @if(Auth::user()->isAdmin() || Auth::user()->isProKam() || Auth::user()->isProTech())
+                @if(Auth::user()->isAdmin() || Auth::user()->isProKam() || Auth::user()->isProTech() || Auth::user()->isManagement())
                     <li class="nav-item">
                         <a class="nav-link {{ request()->routeIs('platforms.*') ? 'active' : '' }}" href="{{ route('platforms.index') }}">Platform</a>
                     </li>

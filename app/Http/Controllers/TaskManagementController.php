@@ -15,7 +15,7 @@ class TaskManagementController extends Controller
     public function index(Request $request)
     {
         // Check authorization
-        if (!Auth::user()->isAdmin() && !Auth::user()->isProTech()) {
+        if (!Auth::user()->isAdmin() && !Auth::user()->isProTech() && !Auth::user()->isManagement()) {
             abort(403, 'Unauthorized access.');
         }
 
@@ -54,6 +54,7 @@ class TaskManagementController extends Controller
         $tasks = $query->paginate(10)->appends($request->query());
 
         // Get all users for assignment dropdown (Tech, Pro-Tech, and Admin)
+        // Management can assign to Tech/Pro-Tech but can't be assigned to (Standard logic: Tech/ProTech exec tasks)
         $users = User::whereHas('role', function($q) {
             $q->whereIn('role_name', ['tech', 'pro-tech', 'admin']);
         })->orderBy('name')->get();
@@ -64,7 +65,7 @@ class TaskManagementController extends Controller
     public function getDetails(Task $task)
     {
         // Check authorization
-        if (!Auth::user()->isAdmin() && !Auth::user()->isProTech()) {
+        if (!Auth::user()->isAdmin() && !Auth::user()->isProTech() && !Auth::user()->isManagement()) {
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 
@@ -82,7 +83,7 @@ class TaskManagementController extends Controller
     public function assign(Request $request, Task $task)
     {
         // Check authorization
-        if (!Auth::user()->isAdmin() && !Auth::user()->isProTech()) {
+        if (!Auth::user()->isAdmin() && !Auth::user()->isProTech() && !Auth::user()->isManagement()) {
             abort(403, 'Unauthorized access.');
         }
 

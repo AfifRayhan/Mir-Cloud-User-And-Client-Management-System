@@ -95,33 +95,15 @@
                         <table class="custom-task-management-table">
                             <thead class="custom-task-management-table-head">
                                 <tr>
-                                    <th class="custom-task-management-table-header">
-                                        <i class="fas fa-building me-2"></i>Customer
-                                    </th>
-                                    <th class="custom-task-management-table-header">
-                                        <i class="fas fa-server me-2"></i>Platform
-                                    </th>
-                                    <th class="custom-task-management-table-header">
-                                        <i class="fas fa-exchange-alt me-2"></i>Type
-                                    </th>
-                                    <th class="custom-task-management-table-header">
-                                        <i class="fas fa-calendar-check me-2"></i>Activation Date
-                                    </th>
-                                    <th class="custom-task-management-table-header">
-                                        <i class="fas fa-clock me-2"></i>Created At
-                                    </th>
-                                    <th class="custom-task-management-table-header">
-                                        <i class="fas fa-info-circle me-2"></i>Status
-                                    </th>
-                                    <th class="custom-task-management-table-header">
-                                        <i class="fas fa-user-check me-2"></i>Assigned To
-                                    </th>
-                                    <th class="custom-task-management-table-header">
-                                        <i class="fas fa-user-tie me-2"></i>Assigned By
-                                    </th>
-                                    <th class="custom-task-management-table-header">
-                                        <i class="fas fa-cogs me-2"></i>Actions
-                                    </th>
+                                    <th class="custom-task-management-table-header">Customer</th>
+                                    <th class="custom-task-management-table-header">Platform</th>
+                                    <th class="custom-task-management-table-header">Type</th>
+                                    <th class="custom-task-management-table-header">Activation Date</th>
+                                    <th class="custom-task-management-table-header">Created At</th>
+                                    <th class="custom-task-management-table-header">Status</th>
+                                    <th class="custom-task-management-table-header">Assigned To</th>
+                                    <th class="custom-task-management-table-header">Assigned By</th>
+                                    <th class="custom-task-management-table-header">Actions</th>
                                 </tr>
                             </thead>
                             <tbody class="custom-task-management-table-body">
@@ -139,11 +121,11 @@
                                         </td>
                                         <td class="custom-task-management-table-cell">
                                             @if($task->allocation_type === 'upgrade')
-                                                <span class="custom-task-management-badge custom-task-management-badge-upgrade">
+                                                <span class="custom-task-management-badge">
                                                     <i class="fas fa-arrow-up me-1"></i> Upgrade
                                                 </span>
                                             @else
-                                                <span class="custom-task-management-badge custom-task-management-badge-downgrade">
+                                                <span class="custom-task-management-badge">
                                                     <i class="fas fa-arrow-down me-1"></i> Downgrade
                                                 </span>
                                             @endif
@@ -195,8 +177,7 @@
                                             <button class="custom-task-management-action-btn custom-task-management-edit-btn view-task-btn me-1" data-task-id="{{ $task->id }}">
                                                 <i class="fas fa-eye me-1"></i> <span class="btn-text">View</span>
                                             </button>
-                                            
-                                            <button type="button" class="custom-task-management-action-btn custom-task-management-edit-btn" 
+                                            <button type="button" class="btn btn-outline-success" 
                                                     data-bs-toggle="modal" 
                                                     data-bs-target="#assignModal{{ $task->id }}">
                                                 <i class="fas fa-user-plus me-1"></i> <span class="btn-text">Assign</span>
@@ -385,7 +366,7 @@
                             
                             resourceDetails.forEach(detail => {
                                 const amount = isUpgrade ? detail.upgrade_amount : detail.downgrade_amount;
-                                const badgeClass = isUpgrade ? 'custom-task-management-badge custom-task-management-badge-upgrade' : 'custom-task-management-badge custom-task-management-badge-downgrade';
+                                const badgeClass = isUpgrade ? 'bg-success' : 'bg-warning';
                                 const currentValue = isUpgrade
                                     ? detail.quantity - amount     // upgrade → previous = quantity - upgrade amount
                                     : detail.quantity + amount;    // downgrade → previous = quantity + downgrade amount

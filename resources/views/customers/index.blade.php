@@ -99,18 +99,42 @@
                                     <tr>
                                         <th class="custom-customer-index-table-header">
                                             <div class="d-flex align-items-center">
-                                                <span>Customer Name</span>
+                                                <i class="fas fa-building me-2"></i>Customer
                                                 <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="currentColor" class="ms-1" viewBox="0 0 16 16">
                                                     <path d="M3.5 2.5a.5.5 0 0 0-1 0v8.793l-1.146-1.147a.5.5 0 0 0-.708.708l2 1.999.007.007a.497.497 0 0 0 .7-.006l2-2a.5.5 0 0 0-.707-.708L3.5 11.293V2.5zm3.5 1a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 0 1h-7a.5.5 0 0 1-.5-.5zM7.5 6a.5.5 0 0 0 0 1h5a.5.5 0 0 0 0-1h-5zm0 3a.5.5 0 0 0 0 1h3a.5.5 0 0 0 0-1h-3zm0 3a.5.5 0 0 0 0 1h1a.5.5 0 0 0 0-1h-1z" />
                                                 </svg>
                                             </div>
                                         </th>
-                                        <th class="custom-customer-index-table-header">Activation Date</th>
-                                        <th class="custom-customer-index-table-header">PO Number</th>
-                                        <th class="custom-customer-index-table-header">Platform</th>
-                                        <th class="custom-customer-index-table-header">Submitted By</th>
-                                        <th class="custom-customer-index-table-header">Created At</th>
-                                        <th class="custom-customer-index-table-header text-end" style="min-width: 150px;">Actions</th>
+                                        <th class="custom-customer-index-table-header">
+                                            <div class="d-flex align-items-center">
+                                                <i class="fas fa-calendar-check me-2"></i>Activation Date
+                                            </div>
+                                        </th>
+                                        <th class="custom-customer-index-table-header">
+                                            <div class="d-flex align-items-center">
+                                                <i class="fas fa-hashtag me-2"></i>PO Number
+                                            </div>
+                                        </th>
+                                        <th class="custom-customer-index-table-header">
+                                            <div class="d-flex align-items-center">
+                                                <i class="fas fa-server me-2"></i>Platform
+                                            </div>
+                                        </th>
+                                        <th class="custom-customer-index-table-header">
+                                            <div class="d-flex align-items-center">
+                                                <i class="fas fa-user-tie me-2"></i>Submitted By
+                                            </div>
+                                        </th>
+                                        <th class="custom-customer-index-table-header">
+                                            <div class="d-flex align-items-center">
+                                                <i class="fas fa-clock me-2"></i>Created At
+                                            </div>
+                                        </th>
+                                        <th class="custom-customer-index-table-header text-end" style="min-width: 150px;">
+                                            <div class="d-flex align-items-center justify-content-end">
+                                                <i class="fas fa-cogs me-2"></i>Actions
+                                            </div>
+                                        </th>
                                     </tr>
                                 </thead>
                                 <tbody class="custom-customer-index-table-body">

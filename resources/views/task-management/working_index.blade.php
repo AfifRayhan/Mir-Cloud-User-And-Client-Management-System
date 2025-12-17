@@ -1,36 +1,34 @@
 <x-app-layout>
-    <div class="container-fluid custom-task-management-container py-4">
-        <!-- Background Elements -->
-        <div class="custom-task-management-bg-pattern"></div>
-        <div class="custom-task-management-bg-circle circle-1"></div>
-        <div class="custom-task-management-bg-circle circle-2"></div>
-
+    <div class="container-fluid py-4">
         <!-- Header -->
-        <div class="custom-task-management-header">
-            <div>
-                <h1 class="custom-task-management-title">Task Management</h1>
-                <p class="custom-task-management-subtitle">View and assign tasks to team members</p>
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h1 class="h3 mb-2">Task Management</h1>
+                        <p class="text-muted mb-0">View and assign tasks to team members</p>
+                    </div>
+                </div>
             </div>
         </div>
 
         <!-- Success/Error Messages -->
         @if(session('success'))
-            <div class="custom-task-management-alert" role="alert">
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
                 <i class="fas fa-check-circle me-2"></i>{{ session('success') }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             </div>
         @endif
 
         @if(session('error'))
-            <div class="custom-task-management-alert" role="alert">
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
                 <i class="fas fa-exclamation-circle me-2"></i>{{ session('error') }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             </div>
         @endif
 
         <!-- Filters -->
-        <div class="custom-task-management-card mb-4">
-            <div class="custom-task-management-card-header">
-                <h5 class="custom-task-management-card-title">Filters</h5>
-            </div>
+        <div class="card shadow-sm mb-4">
             <div class="card-body">
                 <form method="GET" action="{{ route('task-management.index') }}" class="row g-3">
                     <div class="col-md-3">
@@ -69,143 +67,142 @@
                         </select>
                     </div>
                     <div class="col-md-12 d-flex align-items-end justify-content-end">
-                        <button type="submit" class="custom-task-management-add-btn me-2">
+                        <button type="submit" class="btn btn-primary me-2">
                             <i class="fas fa-filter me-1"></i> Filter
                         </button>
-                        <button 
-                            type="button" 
-                            class="custom-task-management-reset-btn" 
-                            data-url="{{ route('task-management.index') }}"
-                            onclick="window.location.href=this.getAttribute('data-url')">
+                        <a href="{{ route('task-management.index') }}" class="btn btn-secondary">
                             <i class="fas fa-redo me-1"></i> Reset
-                        </button>
+                        </a>
                     </div>
                 </form>
             </div>
         </div>
 
         <!-- Tasks Table -->
-        <div class="custom-task-management-card">
-            <div class="custom-task-management-card-header">
-                <h5 class="custom-task-management-card-title">Tasks</h5>
-            </div>
+        <div class="card shadow-sm">
             <div class="card-body">
                 @if($tasks->count() > 0)
-                    <div class="custom-task-management-table-responsive">
-                        <table class="custom-task-management-table">
-                            <thead class="custom-task-management-table-head">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle">
+                            <thead class="table-light">
                                 <tr>
-                                    <th class="custom-task-management-table-header">
-                                        <i class="fas fa-building me-2"></i>Customer
-                                    </th>
-                                    <th class="custom-task-management-table-header">
-                                        <i class="fas fa-server me-2"></i>Platform
-                                    </th>
-                                    <th class="custom-task-management-table-header">
-                                        <i class="fas fa-exchange-alt me-2"></i>Type
-                                    </th>
-                                    <th class="custom-task-management-table-header">
-                                        <i class="fas fa-calendar-check me-2"></i>Activation Date
-                                    </th>
-                                    <th class="custom-task-management-table-header">
-                                        <i class="fas fa-clock me-2"></i>Created At
-                                    </th>
-                                    <th class="custom-task-management-table-header">
-                                        <i class="fas fa-info-circle me-2"></i>Status
-                                    </th>
-                                    <th class="custom-task-management-table-header">
-                                        <i class="fas fa-user-check me-2"></i>Assigned To
-                                    </th>
-                                    <th class="custom-task-management-table-header">
-                                        <i class="fas fa-user-tie me-2"></i>Assigned By
-                                    </th>
-                                    <th class="custom-task-management-table-header">
-                                        <i class="fas fa-cogs me-2"></i>Actions
-                                    </th>
+                                    <th>Customer</th>
+                                    <th>Platform</th>
+                                    <th>Type</th>
+                                    <th>Activation Date</th>
+                                    <th>Created At</th>
+                                    <th>Status</th>
+                                    <th>Assigned To</th>
+                                    <th>Assigned By</th>
+                                    <th>Actions</th>
                                 </tr>
                             </thead>
-                            <tbody class="custom-task-management-table-body">
+                            <tbody>
                                 @foreach($tasks as $task)
-                                    <tr class="custom-task-management-table-row {{ $task->completed_at ? 'task-completed' : '' }}">
-                                        <td class="custom-task-management-table-cell">
+                                    <tr data-task-id="{{ $task->id }}" class="{{ $task->completed_at ? 'task-completed' : '' }}">
+                                        <td>
                                             <strong>{{ $task->customer->customer_name }}</strong>
                                         </td>
-                                        <td class="custom-task-management-table-cell">
+                                        <td>
                                             @if($task->customer->platform)
-                                                <span class="custom-task-management-badge">{{ $task->customer->platform->platform_name }}</span>
+                                                <span class="badge bg-info">{{ $task->customer->platform->platform_name }}</span>
                                             @else
                                                 <span class="text-muted">Any</span>
                                             @endif
                                         </td>
-                                        <td class="custom-task-management-table-cell">
+                                        <td>
                                             @if($task->allocation_type === 'upgrade')
-                                                <span class="custom-task-management-badge custom-task-management-badge-upgrade">
+                                                <span class="badge bg-success">
                                                     <i class="fas fa-arrow-up me-1"></i> Upgrade
                                                 </span>
                                             @else
-                                                <span class="custom-task-management-badge custom-task-management-badge-downgrade">
+                                                <span class="badge bg-warning text-dark">
                                                     <i class="fas fa-arrow-down me-1"></i> Downgrade
                                                 </span>
                                             @endif
                                         </td>
-                                        <td class="custom-task-management-table-cell">
-                                            <div class="custom-task-management-date">
-                                                <div class="custom-task-management-date-day">
-                                                    {{ $task->activation_date->format('d') }}
-                                                </div>
-                                                <div class="custom-task-management-date-details">
-                                                    <div class="custom-task-management-date-month">
-                                                        {{ $task->activation_date->format('M') }}
-                                                    </div>
-                                                    <div class="custom-task-management-date-year">
-                                                        {{ $task->activation_date->format('Y') }}
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </td>
-                                        <td class="custom-task-management-table-cell">{{ $task->created_at->format('M d, Y H:i') }}</td>
-                                        <td class="custom-task-management-table-cell">
+                                        <td>{{ $task->activation_date->format('M d, Y') }}</td>
+                                        <td>{{ $task->created_at->format('M d, Y H:i') }}</td>
+                                        <td>
                                             @if($task->status)
-                                                <span class="custom-task-management-badge">{{ $task->status->name }}</span>
+                                                <span class="badge bg-info">{{ $task->status->name }}</span>
                                             @else
                                                 <span class="text-muted">N/A</span>
                                             @endif
                                         </td>
-                                        <td class="custom-task-management-table-cell">
+                                        <td>
                                             @if($task->assignedTo)
                                                 <div class="d-flex align-items-center">
                                                     <i class="fas fa-user-circle text-primary me-2"></i>
                                                     {{ $task->assignedTo->name }}
                                                 </div>
                                             @else
-                                                <span class="custom-task-management-badge">Unassigned</span>
+                                                <span class="badge bg-secondary">Unassigned</span>
                                             @endif
                                         </td>
-                                        <td class="custom-task-management-table-cell">
+                                        <td>
                                             @if($task->assignedBy)
                                                 <div class="d-flex align-items-center">
                                                     <i class="fas fa-user-circle text-primary me-2"></i>
                                                     {{ $task->assignedBy->name }}
                                                 </div>
                                             @else
-                                                <span class="custom-task-management-badge">Unassigned</span>
+                                                <span class="badge bg-secondary">Unassigned</span>
                                             @endif
                                         </td>
-                                        <td class="custom-task-management-table-cell">
-                                            <button class="custom-task-management-action-btn custom-task-management-edit-btn view-task-btn me-1" data-task-id="{{ $task->id }}">
+                                        <td>
+                                            <button class="btn btn-sm btn-outline-primary view-task-btn me-1" data-task-id="{{ $task->id }}">
                                                 <i class="fas fa-eye me-1"></i> <span class="btn-text">View</span>
                                             </button>
-                                            
-                                            <button type="button" class="custom-task-management-action-btn custom-task-management-edit-btn" 
+                                            <button type="button" class="btn btn-sm btn-outline-success" 
                                                     data-bs-toggle="modal" 
                                                     data-bs-target="#assignModal{{ $task->id }}">
                                                 <i class="fas fa-user-plus me-1"></i> <span class="btn-text">Assign</span>
                                             </button>
+
+                                            <!-- Assign Modal -->
+                                            <div class="modal fade" id="assignModal{{ $task->id }}" tabindex="-1">
+                                                <div class="modal-dialog">
+                                                    <div class="modal-content">
+                                                        <div class="modal-header">
+                                                            <h5 class="modal-title">Assign Task</h5>
+                                                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                                        </div>
+                                                        <form method="POST" action="{{ route('task-management.assign', $task) }}" onsubmit="this.querySelector('button[type=submit]').disabled = true; this.querySelector('button[type=submit]').innerHTML = '<i class=\'fas fa-circle-notch fa-spin me-1\'></i> Processing...';">
+                                                            @csrf
+                                                            <div class="modal-body">
+                                                                <p class="mb-3">
+                                                                    <strong>Customer:</strong> {{ $task->customer->customer_name }}<br>
+                                                                    <strong>Type:</strong> {{ ucfirst($task->allocation_type) }}
+                                                                </p>
+                                                                <div class="mb-3">
+                                                                    <label class="form-label">Assign To</label>
+                                                                    <select name="assigned_to" class="form-select" required>
+                                                                        <option value="">Select User</option>
+                                                                        @foreach($users as $user)
+                                                                            <option value="{{ $user->id }}" 
+                                                                                {{ $task->assigned_to == $user->id ? 'selected' : '' }}>
+                                                                                {{ $user->name }} ({{ $user->role->role_name }})
+                                                                            </option>
+                                                                        @endforeach
+                                                                    </select>
+                                                                </div>
+                                                            </div>
+                                                            <div class="modal-footer">
+                                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                                                <button type="submit" class="btn btn-primary">
+                                                                    <i class="fas fa-check me-1"></i> Assign Task
+                                                                </button>
+                                                            </div>
+                                                        </form>
+                                                    </div>
+                                                </div>
+                                            </div>
                                         </td>
                                     </tr>
                                     <!-- Expandable details row (hidden by default) -->
                                     <tr class="task-details-row" id="details-{{ $task->id }}" style="display: none;">
-                                        <td colspan="9" class="p-0">
+                                        <td colspan="7" class="p-0">
                                             <div class="task-details-container p-4 bg-light">
                                                 <div class="text-center py-3">
                                                     <div class="spinner-border text-primary" role="status">
@@ -221,64 +218,20 @@
                     </div>
 
                     <!-- Pagination -->
-                    <div class="custom-task-management-card-footer">
-                        <div class="custom-task-management-pagination-info">
-                            {{ $tasks->links() }}
-                        </div>
+                    <div class="d-flex justify-content-center mt-4">
+                        {{ $tasks->links() }}
                     </div>
                 @else
-                    <div class="custom-task-management-empty-card">
-                        <div class="text-center py-5">
-                            <i class="fas fa-tasks fa-3x custom-task-management-empty-icon mb-3"></i>
-                            <h4 class="custom-task-management-empty-title">No Tasks Found</h4>
-                            <p class="custom-task-management-empty-text">There are currently no tasks to display.</p>
-                        </div>
+                    <div class="text-center py-5">
+                        <i class="fas fa-tasks fa-3x text-muted mb-3"></i>
+                        <p class="text-muted">No tasks found.</p>
                     </div>
                 @endif
             </div>
         </div>
     </div>
 
-    <!-- Assign Modals -->
-    @foreach($tasks as $task)
-    <div class="modal fade" id="assignModal{{ $task->id }}" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Assign Task</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <form method="POST" action="{{ route('task-management.assign', $task) }}" onsubmit="this.querySelector('button[type=submit]').disabled = true; this.querySelector('button[type=submit]').innerHTML = '<i class=\'fas fa-circle-notch fa-spin me-1\'></i> Processing...';">
-                    @csrf
-                    <div class="modal-body">
-                        <p class="mb-3">
-                            <strong>Customer:</strong> {{ $task->customer->customer_name }}<br>
-                            <strong>Type:</strong> {{ ucfirst($task->allocation_type) }}
-                        </p>
-                        <div class="mb-3">
-                            <label class="form-label">Assign To</label>
-                            <select name="assigned_to" class="form-select" required>
-                                <option value="">Select User</option>
-                                @foreach($users as $user)
-                                    <option value="{{ $user->id }}" 
-                                        {{ $task->assigned_to == $user->id ? 'selected' : '' }}>
-                                        {{ $user->name }} ({{ $user->role->role_name }})
-                                    </option>
-                                @endforeach
-                            </select>
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn btn-primary">
-                            <i class="fas fa-check me-1"></i> Assign Task
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-    @endforeach
+
 
     @push('styles')
     <style>
@@ -295,8 +248,6 @@
             cursor: default;
             --bs-table-accent-bg: #c3e6cb !important;
         }
-
-
     </style>
     @endpush
 
@@ -385,7 +336,7 @@
                             
                             resourceDetails.forEach(detail => {
                                 const amount = isUpgrade ? detail.upgrade_amount : detail.downgrade_amount;
-                                const badgeClass = isUpgrade ? 'custom-task-management-badge custom-task-management-badge-upgrade' : 'custom-task-management-badge custom-task-management-badge-downgrade';
+                                const badgeClass = isUpgrade ? 'bg-success' : 'bg-warning';
                                 const currentValue = isUpgrade
                                     ? detail.quantity - amount     // upgrade → previous = quantity - upgrade amount
                                     : detail.quantity + amount;    // downgrade → previous = quantity + downgrade amount

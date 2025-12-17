@@ -1,0 +1,548 @@
+/* Custom My Task Variables */
+:root {
+    --custom-my-task-primary: #4f46e5;
+    --custom-my-task-primary-light: #e0e7ff;
+    --custom-my-task-success: #10b981;
+    --custom-my-task-success-light: #d1fae5;
+    --custom-my-task-danger: #ef4444;
+    --custom-my-task-danger-light: #fee2e2;
+    --custom-my-task-warning: #f59e0b;
+    --custom-my-task-warning-light: #fef3c7;
+    --custom-my-task-secondary: #6b7280;
+    --custom-my-task-secondary-light: #f3f4f6;
+    --custom-my-task-border: #e5e7eb;
+    --custom-my-task-bg: #f8fafc;
+    --custom-my-task-card-bg: #ffffff;
+    --custom-my-task-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);
+    --custom-my-task-shadow-lg: 0 10px 25px -5px rgb(0 0 0 / 0.1);
+    --custom-my-task-radius: 0.75rem;
+    --custom-my-task-transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Container Styles */
+.custom-my-task-container {
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+    min-height: calc(100vh - 76px);
+    position: relative;
+    overflow-x: hidden;
+}
+
+/* Background Elements */
+.custom-my-task-bg-pattern {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image: radial-gradient(var(--custom-my-task-primary-light) 1px, transparent 1px);
+    background-size: 30px 30px;
+    opacity: 0.3;
+    pointer-events: none;
+}
+
+.custom-my-task-bg-circle {
+    position: absolute;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--custom-my-task-primary) 0%, #6366f1 100%);
+    opacity: 0.05;
+    pointer-events: none;
+}
+
+.custom-my-task-bg-circle.circle-1 {
+    width: 300px;
+    height: 300px;
+    top: -150px;
+    right: -150px;
+}
+
+.custom-my-task-bg-circle.circle-2 {
+    width: 200px;
+    height: 200px;
+    bottom: -100px;
+    left: -100px;
+    background: linear-gradient(135deg, var(--custom-my-task-success) 0%, #34d399 100%);
+}
+
+/* Header Styles */
+.custom-my-task-header {
+    position: relative;
+    z-index: 1;
+    margin-bottom: 1.5rem;
+}
+
+.custom-my-task-title {
+    font-size: 2rem;
+    color: #1f2937;
+    letter-spacing: -0.025em;
+    margin-bottom: 0.5rem;
+}
+
+.custom-my-task-subtitle {
+    font-size: 1.125rem;
+    color: var(--custom-my-task-secondary);
+    max-width: 600px;
+}
+
+/* Add Button */
+.custom-my-task-add-btn {
+    background: linear-gradient(135deg, var(--custom-my-task-primary) 0%, #6366f1 100%);
+    border: none;
+    border-radius: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    font-weight: 500;
+    color: white;
+    transition: var(--custom-my-task-transition);
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.custom-my-task-add-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px rgba(79, 70, 229, 0.3);
+}
+
+/* Alert Styles */
+.custom-my-task-alert {
+    border-radius: var(--custom-my-task-radius);
+    border: none;
+    box-shadow: var(--custom-my-task-shadow);
+    padding: 1.25rem 1.5rem;
+    border-left: 4px solid var(--custom-my-task-success);
+    position: relative;
+    z-index: 1;
+}
+
+.custom-my-task-alert .alert-heading {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #1f2937;
+}
+
+/* Empty State */
+.custom-my-task-empty-card {
+    border-radius: var(--custom-my-task-radius);
+    background: var(--custom-my-task-card-bg);
+    border: 1px solid var(--custom-my-task-border);
+    transition: var(--custom-my-task-transition);
+    position: relative;
+    z-index: 1;
+}
+
+.custom-my-task-empty-icon {
+    opacity: 0.5;
+}
+
+.custom-my-task-empty-title {
+    font-size: 1.5rem;
+    color: #1f2937;
+    font-weight: 600;
+}
+
+.custom-my-task-empty-text {
+    font-size: 1rem;
+    max-width: 400px;
+    margin: 0 auto;
+}
+
+.custom-my-task-empty-btn {
+    background: linear-gradient(135deg, var(--custom-my-task-primary) 0%, #6366f1 100%);
+    border: none;
+    border-radius: 0.5rem;
+    padding: 0.75rem 2rem;
+    font-weight: 500;
+    color: white;
+    transition: var(--custom-my-task-transition);
+}
+
+.custom-my-task-empty-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px rgba(79, 70, 229, 0.3);
+}
+
+/* Main Card */
+.custom-my-task-card {
+    border-radius: var(--custom-my-task-radius);
+    background: var(--custom-my-task-card-bg);
+    border: 1px solid var(--custom-my-task-border);
+    transition: var(--custom-my-task-transition);
+    position: relative;
+    z-index: 1;
+    overflow: hidden;
+    margin: 10px;
+    padding: 10px;
+}
+
+.custom-my-task-card:hover {
+    box-shadow: var(--custom-my-task-shadow-lg) !important;
+}
+
+.custom-my-task-card-header {
+    padding: 1.5rem 1.5rem 0.75rem;
+    border-bottom: 1px solid var(--custom-my-task-border);
+}
+
+.custom-my-task-card-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #1f2937;
+    margin: 0;
+}
+
+.custom-my-task-card-subtitle {
+    font-size: 0.875rem;
+    color: var(--custom-my-task-secondary);
+}
+
+/* Stats */
+.custom-my-task-stats {
+    display: flex;
+    align-items: center;
+}
+
+.custom-my-task-stat-number {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--custom-my-task-primary);
+    line-height: 1;
+}
+
+.custom-my-task-stat-label {
+    font-size: 0.75rem;
+    color: var(--custom-my-task-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-top: 0.25rem;
+}
+
+/* Table Styles */
+.custom-my-task-table-responsive {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.custom-my-task-table {
+    width: 100%;
+    margin: 0;
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+.custom-my-task-table-head {
+    background: var(--custom-my-task-bg);
+}
+
+.custom-my-task-table-header {
+    padding: 1rem 1.5rem;
+    font-weight: 600;
+    color: #374151;
+    font-size: 0.8125rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 1px solid var(--custom-my-task-border);
+    white-space: nowrap;
+}
+
+.custom-my-task-table-body {
+    background: var(--custom-my-task-card-bg);
+}
+
+.custom-my-task-table-row {
+    transition: var(--custom-my-task-transition);
+    border-bottom: 1px solid var(--custom-my-task-border);
+}
+
+.custom-my-task-table-row:last-child {
+    border-bottom: none;
+}
+
+.custom-my-task-table-row:hover {
+    background: var(--custom-my-task-bg);
+}
+
+.custom-my-task-table-cell {
+    padding: 1rem 1.5rem;
+    vertical-align: middle;
+    border-bottom: 1px solid var(--custom-my-task-border);
+}
+
+/* Customer */
+
+.custom-my-task-customer-name {
+    font-size: 0.9375rem;
+    color: #1f2937;
+    margin-bottom: 0.125rem;
+}
+
+.custom-my-task-customer-address {
+    font-size: 0.75rem;
+    line-height: 1.3;
+}
+
+/* Date Display */
+.custom-my-task-date {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.custom-my-task-date-day {
+    width: 36px;
+    height: 36px;
+    background: var(--custom-my-task-primary-light);
+    color: var(--custom-my-task-primary);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 0.875rem;
+}
+
+.custom-my-task-date-details {
+    display: flex;
+    flex-direction: column;
+}
+
+.custom-my-task-date-month {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #1f2937;
+}
+
+.custom-my-task-date-year {
+    font-size: 0.6875rem;
+    color: var(--custom-my-task-secondary);
+}
+
+/* Badges */
+.custom-my-task-badge {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    font-size: 0.75rem;
+    font-weight: 500;
+    border-radius: 50px;
+    white-space: nowrap;
+}
+
+.custom-my-task-badge-upgrade {
+    background-color: var(--custom-my-task-success-light);
+    color: var(--custom-my-task-success);
+    border: 1px solid var(--custom-my-task-success);
+}
+
+.custom-my-task-badge-downgrade {
+    background-color: var(--custom-my-task-warning-light);
+    color: var(--custom-my-task-warning);
+    border: 1px solid var(--custom-my-task-warning);
+}
+
+/* Platform & User Info */
+.custom-my-task-platform {
+    font-size: 0.875rem;
+    color: #1f2937;
+    font-weight: 500;
+}
+
+.custom-my-task-user-name {
+    font-size: 0.875rem;
+    color: #1f2937;
+}
+
+.custom-my-task-created-at {
+    font-size: 0.8125rem;
+    color: var(--custom-my-task-secondary);
+}
+
+/* Action Buttons */
+.custom-my-task-action-btn {
+    border-radius: 0.375rem;
+    padding: 0.375rem 0.75rem;
+    font-size: 0.75rem;
+    font-weight: 500;
+    transition: var(--custom-my-task-transition);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.25rem;
+    min-width: 70px;
+    border: none;
+    text-decoration: none;
+}
+
+.custom-my-task-edit-btn {
+    background: var(--custom-my-task-primary-light);
+    color: var(--custom-my-task-primary);
+}
+
+.custom-my-task-edit-btn:hover {
+    background: var(--custom-my-task-primary);
+    color: white;
+    transform: translateY(-1px);
+}
+
+.custom-my-task-delete-btn {
+    background: var(--custom-my-task-danger-light);
+    color: var(--custom-my-task-danger);
+}
+
+.custom-my-task-delete-btn:hover {
+    background: var(--custom-my-task-danger);
+    color: white;
+    transform: translateY(-1px);
+}
+
+/* Card Footer */
+.custom-my-task-card-footer {
+    padding: 1rem 1.5rem;
+    border-top: 1px solid var(--custom-my-task-border);
+}
+
+.custom-my-task-pagination-info {
+    font-size: 0.8125rem;
+}
+
+/* Responsive Design */
+@media (max-width: 1199.98px) {
+    .custom-my-task-title {
+        font-size: 1.75rem;
+    }
+
+    .custom-my-task-table-cell {
+        padding: 0.875rem 1rem;
+    }
+}
+
+@media (max-width: 991.98px) {
+    .custom-my-task-container {
+        padding: 1.5rem 0;
+    }
+
+    .custom-my-task-title {
+        font-size: 1.5rem;
+    }
+
+    .custom-my-task-subtitle {
+        font-size: 1rem;
+    }
+
+    .custom-my-task-table-responsive {
+        border-radius: 0;
+    }
+
+    .custom-my-task-table-header {
+        padding: 0.875rem 1rem;
+        font-size: 0.75rem;
+    }
+
+    .custom-my-task-table-cell {
+        padding: 0.75rem 1rem;
+    }
+
+    .custom-my-task-action-btn {
+        min-width: auto;
+        padding: 0.375rem;
+    }
+
+    .custom-my-task-action-btn span {
+        display: none;
+    }
+
+    .custom-my-task-badge span {
+        display: none;
+    }
+}
+
+@media (max-width: 767.98px) {
+    .custom-my-task-container {
+        padding: 1rem 0;
+    }
+
+    .custom-my-task-title {
+        font-size: 1.375rem;
+        text-align: center;
+    }
+
+    .custom-my-task-subtitle {
+        text-align: center;
+        font-size: 0.9375rem;
+    }
+
+    .custom-my-task-header {
+        text-align: center;
+    }
+
+    .custom-my-task-add-btn {
+        width: 100%;
+        max-width: 300px;
+        margin: 0 auto;
+    }
+
+    .custom-my-task-table-header {
+        min-width: 120px;
+    }
+
+    .custom-my-task-table-cell {
+        min-width: 120px;
+    }
+
+    .custom-my-task-card-title {
+        font-size: 1.125rem;
+    }
+
+    .custom-my-task-stat-number {
+        font-size: 1.25rem;
+    }
+}
+
+@media (max-width: 575.98px) {
+    .custom-my-task-title {
+        font-size: 1.25rem;
+    }
+
+    .custom-my-task-subtitle {
+        font-size: 0.875rem;
+    }
+
+    .custom-my-task-table-header,
+    .custom-my-task-table-cell {
+        padding: 0.625rem 0.75rem;
+    }
+
+    .custom-my-task-customer-name {
+        font-size: 0.875rem;
+    }
+
+    .custom-my-task-customer-address {
+        font-size: 0.6875rem;
+    }
+
+    .custom-my-task-date-day {
+        width: 32px;
+        height: 32px;
+        font-size: 0.8125rem;
+    }
+
+    .custom-my-task-badge {
+        font-size: 0.6875rem;
+        padding: 0.125rem 0.5rem;
+    }
+}
+
+@media (max-width: 375px) {
+
+    .custom-my-task-table-header,
+    .custom-my-task-table-cell {
+        padding: 0.5rem 0.625rem;
+    }
+
+    .custom-my-task-card-header,
+    .custom-my-task-card-footer {
+        padding: 0.75rem 1rem;
+    }
+
+    .custom-my-task-action-btn {
+        padding: 0.25rem 0.5rem;
+    }
+}

@@ -148,6 +148,11 @@ document.addEventListener("DOMContentLoaded", function () {
         const leftSection = document.querySelector(".custom-login-left");
         const rightSection = document.querySelector(".custom-login-right");
 
+        // Only execute if elements exist (login page)
+        if (!leftSection || !rightSection) {
+            return;
+        }
+
         if (window.innerWidth < 992) {
             // Mobile layout
             leftSection.classList.remove("col-lg-6");
@@ -183,10 +188,13 @@ document.addEventListener("DOMContentLoaded", function () {
 
     // Add smooth scroll for mobile
     if (window.innerWidth < 992) {
-        document.querySelector(".custom-login-right").scrollIntoView({
-            behavior: "smooth",
-            block: "start",
-        });
+        const loginRight = document.querySelector(".custom-login-right");
+        if (loginRight) {
+            loginRight.scrollIntoView({
+                behavior: "smooth",
+                block: "start",
+            });
+        }
     }
 
     // Form validation feedback

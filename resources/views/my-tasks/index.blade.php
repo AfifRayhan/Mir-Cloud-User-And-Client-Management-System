@@ -1,98 +1,132 @@
 <x-app-layout>
-    <div class="container-fluid py-4">
+    <div class="container-fluid custom-my-task-container py-4">
+        <!-- Background Elements -->
+        <div class="custom-my-task-bg-pattern"></div>
+        <div class="custom-my-task-bg-circle circle-1"></div>
+        <div class="custom-my-task-bg-circle circle-2"></div>
+
         <!-- Header -->
-        <div class="row mb-4">
-            <div class="col-12">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <h1 class="h3 mb-2">My Tasks</h1>
-                        <p class="text-muted mb-0">Tasks assigned to you</p>
-                    </div>
-                </div>
+        <div class="custom-my-task-header">
+            <div>
+                <h1 class="custom-my-task-title">My Tasks</h1>
+                <p class="custom-my-task-subtitle">Tasks assigned to you</p>
             </div>
         </div>
 
         <!-- Success/Error Messages -->
         @if(session('success'))
-            <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <div class="custom-my-task-alert" role="alert">
                 <i class="fas fa-check-circle me-2"></i>{{ session('success') }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             </div>
         @endif
 
         @if(session('error'))
-            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <div class="custom-my-task-alert" role="alert">
                 <i class="fas fa-exclamation-circle me-2"></i>{{ session('error') }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             </div>
         @endif
 
         <!-- Tasks Table -->
-        <div class="card shadow-sm">
+        <div class="custom-my-task-card">
+            <div class="custom-my-task-card-header">
+                <h5 class="custom-my-task-card-title">Your Tasks</h5>
+            </div>
             <div class="card-body">
                 @if($tasks->count() > 0)
-                    <div class="table-responsive">
-                        <table class="table table-hover align-middle" id="tasksTable">
-                            <thead class="table-light">
+                    <div class="custom-my-task-table-responsive">
+                        <table class="custom-my-task-table" id="tasksTable">
+                            <thead class="custom-my-task-table-head">
                                 <tr>
-                                    <th>Customer</th>
-                                    <th>Platform</th>
-                                    <th>Type</th>
-                                    <th>Activation Date</th>
-                                    <th>Assigned At</th>
-                                    <th>Completed At</th>
-                                    <th>Status</th>
-                                    <th>Assigned By</th>
-                                    <th>Actions</th>
+                                    <th class="custom-my-task-table-header">
+                                        <i class="fas fa-building me-2"></i>Customer
+                                    </th>
+                                    <th class="custom-my-task-table-header">
+                                        <i class="fas fa-server me-2"></i>Platform
+                                    </th>
+                                    <th class="custom-my-task-table-header">
+                                        <i class="fas fa-exchange-alt me-2"></i>Type
+                                    </th>
+                                    <th class="custom-my-task-table-header">
+                                        <i class="fas fa-calendar-check me-2"></i>Activation Date
+                                    </th>
+                                    <th class="custom-my-task-table-header">
+                                        <i class="fas fa-user-clock me-2"></i>Assigned At
+                                    </th>
+                                    <th class="custom-my-task-table-header">
+                                        <i class="fas fa-check-circle me-2"></i>Completed At
+                                    </th>
+                                    <th class="custom-my-task-table-header">
+                                        <i class="fas fa-info-circle me-2"></i>Status
+                                    </th>
+                                    <th class="custom-my-task-table-header">
+                                        <i class="fas fa-user-tie me-2"></i>Assigned By
+                                    </th>
+                                    <th class="custom-my-task-table-header">
+                                        <i class="fas fa-cogs me-2"></i>Actions
+                                    </th>
                                 </tr>
                             </thead>
-                            <tbody>
+                            <tbody class="custom-my-task-table-body">
                                 @foreach($tasks as $task)
-                                    <tr data-task-id="{{ $task->id }}">
-                                        <td>
+                                    <tr class="custom-my-task-table-row" data-task-id="{{ $task->id }}">
+                                        <td class="custom-my-task-table-cell">
                                             <strong>{{ $task->customer->customer_name }}</strong>
                                         </td>
-                                        <td>
+                                        <td class="custom-my-task-table-cell">
                                             @if($task->customer->platform)
-                                                <span class="badge bg-info">{{ $task->customer->platform->platform_name }}</span>
+                                                <span class="custom-my-task-badge">{{ $task->customer->platform->platform_name }}</span>
                                             @else
                                                 <span class="text-muted">Any</span>
                                             @endif
                                         </td>
-                                        <td>
+                                        <td class="custom-my-task-table-cell">
                                             @if($task->allocation_type === 'upgrade')
-                                                <span class="badge bg-success">
+                                                <span class="custom-my-task-badge custom-my-task-badge-upgrade">
                                                     <i class="fas fa-arrow-up me-1"></i> Upgrade
                                                 </span>
                                             @else
-                                                <span class="badge bg-warning text-dark">
+                                                <span class="custom-my-task-badge custom-my-task-badge-downgrade">
                                                     <i class="fas fa-arrow-down me-1"></i> Downgrade
                                                 </span>
                                             @endif
                                         </td>
-                                        <td>{{ $task->activation_date->format('M d, Y') }}</td>
-                                        <td>
+                                        <td class="custom-my-task-table-cell">
+                                            <div class="custom-my-task-date">
+                                                <div class="custom-my-task-date-day">
+                                                    {{ $task->activation_date->format('d') }}
+                                                </div>
+                                                <div class="custom-my-task-date-details">
+                                                    <div class="custom-my-task-date-month">
+                                                        {{ $task->activation_date->format('M') }}
+                                                    </div>
+                                                    <div class="custom-my-task-date-year">
+                                                        {{ $task->activation_date->format('Y') }}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="custom-my-task-table-cell">
                                             @if($task->assigned_at)
                                                 {{ \Carbon\Carbon::parse($task->assigned_at)->format('M d, Y H:i') }}
                                             @else
                                                 <span class="text-muted">N/A</span>
                                             @endif
                                         </td>
-                                        <td>
+                                        <td class="custom-my-task-table-cell">
                                             @if($task->completed_at)
                                                 {{ \Carbon\Carbon::parse($task->completed_at)->format('M d, Y H:i') }}
                                             @else
                                                 <span class="text-muted">Pending</span>
                                             @endif
                                         </td>
-                                        <td>
+                                        <td class="custom-my-task-table-cell">
                                             @if($task->status)
-                                                <span class="badge bg-info">{{ $task->status->name }}</span>
+                                                <span class="custom-my-task-badge">{{ $task->status->name }}</span>
                                             @else
                                                 <span class="text-muted">N/A</span>
                                             @endif
                                         </td>
-                                        <td>
+                                        <td class="custom-my-task-table-cell">
                                             @if($task->assignedBy)
                                                 <div class="d-flex align-items-center">
                                                     <i class="fas fa-user-circle text-primary me-2"></i>
@@ -102,26 +136,26 @@
                                                 <span class="text-muted">N/A</span>
                                             @endif
                                         </td>
-                                        <td>
-                                            <button class="btn btn-sm btn-outline-primary view-task-btn me-1" data-task-id="{{ $task->id }}">
+                                        <td class="custom-my-task-table-cell">
+                                            <button class="custom-my-task-action-btn custom-my-task-edit-btn view-task-btn me-1" data-task-id="{{ $task->id }}">
                                                 <i class="fas fa-eye me-1"></i> <span class="btn-text">View</span>
                                             </button>
                                             @if(!$task->completed_at)
                                                 <a href="{{ URL::signedRoute('my-tasks.complete', ['task' => $task->id]) }}"
-                                                    class="btn btn-sm btn-success"
+                                                    class="custom-my-task-action-btn custom-my-task-edit-btn"
                                                     onclick="if(confirm('Are you sure you want to mark this task as complete?')) { this.classList.add('disabled'); this.innerHTML = '<i class=\'fas fa-circle-notch fa-spin me-1\'></i> Processing...'; return true; } else { return false; }">
-                                                    <i class="fas fa-check me-1"></i> Complete
+                                                    <i class="fas fa-check me-1"></i> <span class="btn-text">Complete</span>
                                                 </a>
                                             @else
-                                                <span class="badge bg-success">
-                                                    <i class="fas fa-check-circle me-1"></i> Completed
+                                                <span class="custom-my-task-badge">
+                                                    <i class="fas fa-check-circle me-1"></i> <span class="btn-text">Completed</span>
                                                 </span>
                                             @endif
                                         </td>
                                     </tr>
                                     <!-- Expandable details row (hidden by default) -->
                                     <tr class="task-details-row" id="details-{{ $task->id }}" style="display: none;">
-                                        <td colspan="7" class="p-0">
+                                        <td colspan="9" class="p-0">
                                             <div class="task-details-container p-4 bg-light">
                                                 <div class="text-center py-3">
                                                     <div class="spinner-border text-primary" role="status">
@@ -137,13 +171,18 @@
                     </div>
 
                     <!-- Pagination -->
-                    <div class="d-flex justify-content-center mt-4">
-                        {{ $tasks->links() }}
+                    <div class="custom-my-task-card-footer">
+                        <div class="custom-my-task-pagination-info">
+                            {{ $tasks->links() }}
+                        </div>
                     </div>
                 @else
-                    <div class="text-center py-5">
-                        <i class="fas fa-clipboard-list fa-3x text-muted mb-3"></i>
-                        <p class="text-muted">You don't have any tasks assigned yet.</p>
+                    <div class="custom-my-task-empty-card">
+                        <div class="text-center py-5">
+                            <i class="fas fa-clipboard-list fa-3x custom-my-task-empty-icon mb-3"></i>
+                            <h4 class="custom-my-task-empty-title">No Tasks Assigned</h4>
+                            <p class="custom-my-task-empty-text">You don't have any tasks assigned yet.</p>
+                        </div>
                     </div>
                 @endif
             </div>
@@ -234,7 +273,7 @@
                             
                             resourceDetails.forEach(detail => {
                                 const amount = isUpgrade ? detail.upgrade_amount : detail.downgrade_amount;
-                                const badgeClass = isUpgrade ? 'bg-success' : 'bg-warning';
+                                const badgeClass = isUpgrade ? 'custom-my-task-badge custom-my-task-badge-upgrade' : 'custom-my-task-badge custom-my-task-badge-downgrade';
                                 
                                 html += `
                                     <tr>

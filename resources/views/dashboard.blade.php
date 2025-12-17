@@ -165,7 +165,7 @@
                 
                 <!-- Users Card -->
                 <div class="col-12 col-md-6 col-lg-4">
-                    <a href="{{ route('register') }}" class="custom-dashboard-card-link">
+                    <a href="{{ route('users.create') }}" class="custom-dashboard-card-link">
                         <div class="card custom-dashboard-card custom-dashboard-card-success border-0 shadow-sm h-100">
                             <div class="card-body p-4">
                                 <div class="d-flex align-items-start mb-4">

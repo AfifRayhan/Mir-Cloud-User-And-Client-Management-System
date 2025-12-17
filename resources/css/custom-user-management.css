@@ -1,0 +1,533 @@
+/* Custom User Management Variables */
+:root {
+    --custom-user-management-primary: #4f46e5;
+    --custom-user-management-primary-light: #e0e7ff;
+    --custom-user-management-success: #10b981;
+    --custom-user-management-success-light: #d1fae5;
+    --custom-user-management-danger: #ef4444;
+    --custom-user-management-danger-light: #fee2e2;
+    --custom-user-management-warning: #f59e0b;
+    --custom-user-management-warning-light: #fef3c7;
+    --custom-user-management-secondary: #6b7280;
+    --custom-user-management-secondary-light: #f3f4f6;
+    --custom-user-management-border: #e5e7eb;
+    --custom-user-management-bg: #f8fafc;
+    --custom-user-management-card-bg: #ffffff;
+    --custom-user-management-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);
+    --custom-user-management-shadow-lg: 0 10px 25px -5px rgb(0 0 0 / 0.1);
+    --custom-user-management-radius: 0.75rem;
+    --custom-user-management-transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Container Styles */
+.custom-user-management-container {
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+    min-height: calc(100vh - 76px);
+    position: relative;
+    overflow-x: hidden;
+}
+
+/* Background Elements */
+.custom-user-management-bg-pattern {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image: radial-gradient(var(--custom-user-management-primary-light) 1px, transparent 1px);
+    background-size: 30px 30px;
+    opacity: 0.3;
+    pointer-events: none;
+}
+
+.custom-user-management-bg-circle {
+    position: absolute;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--custom-user-management-primary) 0%, #6366f1 100%);
+    opacity: 0.05;
+    pointer-events: none;
+}
+
+.custom-user-management-bg-circle.circle-1 {
+    width: 300px;
+    height: 300px;
+    top: -150px;
+    right: -150px;
+}
+
+.custom-user-management-bg-circle.circle-2 {
+    width: 200px;
+    height: 200px;
+    bottom: -100px;
+    left: -100px;
+    background: linear-gradient(135deg, var(--custom-user-management-success) 0%, #34d399 100%);
+}
+
+/* Header Styles */
+.custom-user-management-header {
+    position: relative;
+    z-index: 1;
+    margin-bottom: 1.5rem;
+}
+
+.custom-user-management-title {
+    font-size: 2rem;
+    color: #1f2937;
+    letter-spacing: -0.025em;
+    margin-bottom: 0.5rem;
+}
+
+.custom-user-management-subtitle {
+    font-size: 1.125rem;
+    color: var(--custom-user-management-secondary);
+    max-width: 600px;
+}
+
+/* Add Button */
+.custom-user-management-add-btn {
+    background: linear-gradient(135deg, var(--custom-user-management-primary) 0%, #6366f1 100%);
+    border: none;
+    border-radius: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    font-weight: 500;
+    color: white;
+    transition: var(--custom-user-management-transition);
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+}
+
+.custom-user-management-add-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px rgba(79, 70, 229, 0.3);
+}
+
+/* Alert Styles */
+.custom-user-management-alert {
+    border-radius: var(--custom-user-management-radius);
+    border: none;
+    box-shadow: var(--custom-user-management-shadow);
+    padding: 1.25rem 1.5rem;
+    border-left: 4px solid var(--custom-user-management-success);
+    position: relative;
+    z-index: 1;
+}
+
+.custom-user-management-alert .alert-heading {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #1f2937;
+}
+
+/* Empty State */
+.custom-user-management-empty-card {
+    border-radius: var(--custom-user-management-radius);
+    background: var(--custom-user-management-card-bg);
+    border: 1px solid var(--custom-user-management-border);
+    transition: var(--custom-user-management-transition);
+    position: relative;
+    z-index: 1;
+}
+
+.custom-user-management-empty-icon {
+    opacity: 0.5;
+}
+
+.custom-user-management-empty-title {
+    font-size: 1.5rem;
+    color: #1f2937;
+    font-weight: 600;
+}
+
+.custom-user-management-empty-text {
+    font-size: 1rem;
+    max-width: 400px;
+    margin: 0 auto;
+}
+
+.custom-user-management-empty-btn {
+    background: linear-gradient(135deg, var(--custom-user-management-primary) 0%, #6366f1 100%);
+    border: none;
+    border-radius: 0.5rem;
+    padding: 0.75rem 2rem;
+    font-weight: 500;
+    color: white;
+    transition: var(--custom-user-management-transition);
+}
+
+.custom-user-management-empty-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px rgba(79, 70, 229, 0.3);
+}
+
+/* Main Card */
+.custom-user-management-card {
+    border-radius: var(--custom-user-management-radius);
+    background: var(--custom-user-management-card-bg);
+    border: 1px solid var(--custom-user-management-border);
+    transition: var(--custom-user-management-transition);
+    position: relative;
+    z-index: 1;
+    overflow: hidden;
+    margin: 10px;
+    padding: 10px;
+}
+
+.custom-user-management-card:hover {
+    box-shadow: var(--custom-user-management-shadow-lg) !important;
+}
+
+.custom-user-management-card-header {
+    padding: 1.5rem 1.5rem 0.75rem;
+    border-bottom: 1px solid var(--custom-user-management-border);
+}
+
+.custom-user-management-card-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #1f2937;
+    margin: 0;
+}
+
+.custom-user-management-card-subtitle {
+    font-size: 0.875rem;
+    color: var(--custom-user-management-secondary);
+}
+
+/* Stats */
+.custom-user-management-stats {
+    display: flex;
+    align-items: center;
+}
+
+.custom-user-management-stat-number {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--custom-user-management-primary);
+    line-height: 1;
+}
+
+.custom-user-management-stat-label {
+    font-size: 0.75rem;
+    color: var(--custom-user-management-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-top: 0.25rem;
+}
+
+/* Table Styles */
+.custom-user-management-table-responsive {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.custom-user-management-table {
+    width: 100%;
+    margin: 0;
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+.custom-user-management-table-head {
+    background: var(--custom-user-management-bg);
+}
+
+.custom-user-management-table-header {
+    padding: 1rem 1.5rem;
+    font-weight: 600;
+    color: #374151;
+    font-size: 0.8125rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 1px solid var(--custom-user-management-border);
+    white-space: nowrap;
+}
+
+.custom-user-management-table-body {
+    background: var(--custom-user-management-card-bg);
+}
+
+.custom-user-management-table-row {
+    transition: var(--custom-user-management-transition);
+    border-bottom: 1px solid var(--custom-user-management-border);
+}
+
+.custom-user-management-table-row:last-child {
+    border-bottom: none;
+}
+
+.custom-user-management-table-row:hover {
+    background: var(--custom-user-management-bg);
+}
+
+.custom-user-management-table-cell {
+    padding: 1rem 1.5rem;
+    vertical-align: middle;
+    border-bottom: 1px solid var(--custom-user-management-border);
+}
+
+/* Customer */
+
+.custom-user-management-customer-name {
+    font-size: 0.9375rem;
+    color: #1f2937;
+    margin-bottom: 0.125rem;
+}
+
+.custom-user-management-customer-address {
+    font-size: 0.75rem;
+    line-height: 1.3;
+}
+
+/* Date Display */
+.custom-user-management-date {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.custom-user-management-date-day {
+    width: 36px;
+    height: 36px;
+    background: var(--custom-user-management-primary-light);
+    color: var(--custom-user-management-primary);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 0.875rem;
+}
+
+.custom-user-management-date-details {
+    display: flex;
+    flex-direction: column;
+}
+
+.custom-user-management-date-month {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #1f2937;
+}
+
+.custom-user-management-date-year {
+    font-size: 0.6875rem;
+    color: var(--custom-user-management-secondary);
+}
+
+/* Badges */
+.custom-user-management-badge {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    font-size: 0.75rem;
+    font-weight: 500;
+    border-radius: 50px;
+    white-space: nowrap;
+}
+
+/* Platform & User Info */
+.custom-user-management-platform {
+    font-size: 0.875rem;
+    color: #1f2937;
+    font-weight: 500;
+}
+
+.custom-user-management-user-name {
+    font-size: 0.875rem;
+    color: #1f2937;
+}
+
+.custom-user-management-created-at {
+    font-size: 0.8125rem;
+    color: var(--custom-user-management-secondary);
+}
+
+/* Action Buttons */
+.custom-user-management-action-btn {
+    border-radius: 0.375rem;
+    padding: 0.375rem 0.75rem;
+    font-size: 0.75rem;
+    font-weight: 500;
+    transition: var(--custom-user-management-transition);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.25rem;
+    min-width: 70px;
+    border: none;
+    text-decoration: none;
+}
+
+.custom-user-management-edit-btn {
+    background: var(--custom-user-management-primary-light);
+    color: var(--custom-user-management-primary);
+}
+
+.custom-user-management-edit-btn:hover {
+    background: var(--custom-user-management-primary);
+    color: white;
+    transform: translateY(-1px);
+}
+
+.custom-user-management-delete-btn {
+    background: var(--custom-user-management-danger-light);
+    color: var(--custom-user-management-danger);
+}
+
+.custom-user-management-delete-btn:hover {
+    background: var(--custom-user-management-danger);
+    color: white;
+    transform: translateY(-1px);
+}
+
+/* Card Footer */
+.custom-user-management-card-footer {
+    padding: 1rem 1.5rem;
+    border-top: 1px solid var(--custom-user-management-border);
+}
+
+.custom-user-management-pagination-info {
+    font-size: 0.8125rem;
+}
+
+/* Responsive Design */
+@media (max-width: 1199.98px) {
+    .custom-user-management-title {
+        font-size: 1.75rem;
+    }
+
+    .custom-user-management-table-cell {
+        padding: 0.875rem 1rem;
+    }
+}
+
+@media (max-width: 991.98px) {
+    .custom-user-management-container {
+        padding: 1.5rem 0;
+    }
+
+    .custom-user-management-title {
+        font-size: 1.5rem;
+    }
+
+    .custom-user-management-subtitle {
+        font-size: 1rem;
+    }
+
+    .custom-user-management-table-responsive {
+        border-radius: 0;
+    }
+
+    .custom-user-management-table-header {
+        padding: 0.875rem 1rem;
+        font-size: 0.75rem;
+    }
+
+    .custom-user-management-table-cell {
+        padding: 0.75rem 1rem;
+    }
+
+    .custom-user-management-action-btn {
+        min-width: auto;
+        padding: 0.375rem;
+    }
+
+    .custom-user-management-action-btn span {
+        display: none;
+    }
+}
+
+@media (max-width: 767.98px) {
+    .custom-user-management-container {
+        padding: 1rem 0;
+    }
+
+    .custom-user-management-title {
+        font-size: 1.375rem;
+        text-align: center;
+    }
+
+    .custom-user-management-subtitle {
+        text-align: center;
+        font-size: 0.9375rem;
+    }
+
+    .custom-user-management-header {
+        text-align: center;
+    }
+
+    .custom-user-management-add-btn {
+        width: 100%;
+        max-width: 300px;
+        margin: 0 auto;
+    }
+
+    .custom-user-management-table-header {
+        min-width: 120px;
+    }
+
+    .custom-user-management-table-cell {
+        min-width: 120px;
+    }
+
+    .custom-user-management-card-title {
+        font-size: 1.125rem;
+    }
+
+    .custom-user-management-stat-number {
+        font-size: 1.25rem;
+    }
+}
+
+@media (max-width: 575.98px) {
+    .custom-user-management-title {
+        font-size: 1.25rem;
+    }
+
+    .custom-user-management-subtitle {
+        font-size: 0.875rem;
+    }
+
+    .custom-user-management-table-header,
+    .custom-user-management-table-cell {
+        padding: 0.625rem 0.75rem;
+    }
+
+    .custom-user-management-customer-name {
+        font-size: 0.875rem;
+    }
+
+    .custom-user-management-customer-address {
+        font-size: 0.6875rem;
+    }
+
+    .custom-user-management-date-day {
+        width: 32px;
+        height: 32px;
+        font-size: 0.8125rem;
+    }
+
+    .custom-user-management-badge {
+        font-size: 0.6875rem;
+        padding: 0.125rem 0.5rem;
+    }
+}
+
+@media (max-width: 375px) {
+
+    .custom-user-management-table-header,
+    .custom-user-management-table-cell {
+        padding: 0.5rem 0.625rem;
+    }
+
+    .custom-user-management-card-header,
+    .custom-user-management-card-footer {
+        padding: 0.75rem 1rem;
+    }
+
+    .custom-user-management-action-btn {
+        padding: 0.25rem 0.5rem;
+    }
+}

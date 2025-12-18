@@ -36,9 +36,9 @@
 
 /* Header Styles */
 .custom-dashboard-header {
-    padding: 1.5rem 0;
+    padding: 0.25rem 0;
     border-bottom: 1px solid var(--custom-dashboard-border);
-    margin-bottom: 1rem;
+    margin-bottom: 0.5rem;
 }
 
 .custom-dashboard-title {

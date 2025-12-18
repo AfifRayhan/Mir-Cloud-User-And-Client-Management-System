@@ -75,30 +75,29 @@ return new class extends Migration
             $table->text('customer_address')->nullable();
             $table->string('bin_number')->nullable();
             $table->string('po_number')->nullable();
-            
+
             // Contacts
             $table->string('commercial_contact_name')->nullable();
             $table->string('commercial_contact_designation')->nullable();
             $table->string('commercial_contact_email')->nullable();
             $table->string('commercial_contact_phone')->nullable();
-            
+
             $table->string('technical_contact_name')->nullable();
             $table->string('technical_contact_designation')->nullable();
             $table->string('technical_contact_email')->nullable();
             $table->string('technical_contact_phone')->nullable();
-            
+
             $table->string('optional_contact_name')->nullable();
             $table->string('optional_contact_designation')->nullable();
             $table->string('optional_contact_email')->nullable();
             $table->string('optional_contact_phone')->nullable();
-            
+
             $table->foreignId('platform_id')->nullable()->constrained('platforms')->nullOnDelete();
             $table->foreignId('submitted_by')->nullable()->constrained('users');
             $table->foreignId('processed_by')->nullable()->constrained('users');
-            
+
             $table->timestamps();
         });
-
 
         // 10. Resource Upgradations
         Schema::create('resource_upgradations', function (Blueprint $table) {
@@ -152,17 +151,17 @@ return new class extends Migration
             $table->foreignId('task_status_id')->default(1)->constrained('task_statuses');
             $table->date('activation_date');
             $table->enum('allocation_type', ['upgrade', 'downgrade']);
-            
+
             // Reference to either upgrade or downgrade (only one will be set)
             $table->foreignId('resource_upgradation_id')->nullable()->constrained('resource_upgradations')->onDelete('cascade');
             $table->foreignId('resource_downgradation_id')->nullable()->constrained('resource_downgradations')->onDelete('cascade');
-            
+
             // Assignment tracking
             $table->foreignId('assigned_to')->nullable()->constrained('users')->nullOnDelete();
             $table->foreignId('assigned_by')->nullable()->constrained('users')->nullOnDelete();
             $table->timestamp('assigned_at')->nullable();
             $table->timestamp('completed_at')->nullable();
-            
+
             $table->timestamps();
         });
     }
@@ -178,7 +177,7 @@ return new class extends Migration
         Schema::dropIfExists('resource_upgradation_details');
         Schema::dropIfExists('resource_upgradations');
         Schema::dropIfExists('customers');
-        
+
         Schema::table('users', function (Blueprint $table) {
             $table->dropForeign(['role_id']);
             $table->dropForeign(['department_id']);

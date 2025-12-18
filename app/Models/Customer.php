@@ -69,15 +69,15 @@ class Customer extends Model
     public function getCurrentResources(): array
     {
         $resources = [];
-        
+
         // Collect all resource changes (both upgrades and downgrades) with their timestamps
         $allChanges = [];
-        
+
         // Get all upgradations with their details
         $upgradations = $this->resourceUpgradations()
             ->with('details.service')
             ->get();
-        
+
         foreach ($upgradations as $upgradation) {
             foreach ($upgradation->details as $detail) {
                 if ($detail->service) {
@@ -88,17 +88,17 @@ class Customer extends Model
                         'activation_date' => $upgradation->activation_date,
                         'inactivation_date' => $upgradation->inactivation_date,
                         'created_at' => $upgradation->created_at,
-                        'type' => 'upgrade'
+                        'type' => 'upgrade',
                     ];
                 }
             }
         }
-        
+
         // Get all downgradations with their details
         $downgradations = $this->resourceDowngradations()
             ->with('details.service')
             ->get();
-        
+
         foreach ($downgradations as $downgradation) {
             foreach ($downgradation->details as $detail) {
                 if ($detail->service) {
@@ -109,34 +109,35 @@ class Customer extends Model
                         'activation_date' => $downgradation->activation_date,
                         'inactivation_date' => $downgradation->inactivation_date,
                         'created_at' => $downgradation->created_at,
-                        'type' => 'downgrade'
+                        'type' => 'downgrade',
                     ];
                 }
             }
         }
-        
+
         // Sort all changes by activation_date DESC, then by created_at DESC
         // This ensures we process the most recent changes first
-        usort($allChanges, function($a, $b) {
+        usort($allChanges, function ($a, $b) {
             $dateCompare = strcmp($b['activation_date'], $a['activation_date']);
             if ($dateCompare !== 0) {
                 return $dateCompare;
             }
+
             return strcmp($b['created_at'], $a['created_at']);
         });
-        
+
         // Process changes in reverse chronological order
         // For each service, use the quantity from the most recent non-inactivated record
         $now = now()->format('Y-m-d');
-        
+
         foreach ($allChanges as $change) {
             $serviceName = $change['service_name'];
-            
+
             // Skip if we already found a record for this service
             if (isset($resources[$serviceName])) {
                 continue;
             }
-            
+
             // Check if this change is not yet inactivated
             // We show resources even if activation date is in the future
             if ($change['inactivation_date'] >= $now) {
@@ -144,7 +145,7 @@ class Customer extends Model
                 $resources[$serviceName] = $change['quantity'];
             }
         }
-        
+
         return $resources;
     }
 
@@ -154,6 +155,7 @@ class Customer extends Model
     public function getResourceQuantity(string $serviceName): int
     {
         $resources = $this->getCurrentResources();
+
         return $resources[$serviceName] ?? 0;
     }
 

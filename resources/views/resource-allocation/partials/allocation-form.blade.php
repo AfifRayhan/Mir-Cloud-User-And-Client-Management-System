@@ -59,9 +59,9 @@
                     <table class="table table-bordered align-middle">
                         <thead class="table-light">
                             <tr>
-                                <th style="width: 40%;">Service</th>
-                                <th>Current Value</th>
-                                <th>Increase By</th>
+                                <th style="width: 40%;"><i class="fas fa-tools me-2"></i>Service</th>
+                                <th><i class="fas fa-chart-line me-2"></i>Current Value</th>
+                                <th><i class="fas fa-arrow-up me-2"></i>Increase By</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -140,9 +140,9 @@
                     <table class="table table-bordered align-middle">
                         <thead class="table-light">
                             <tr>
-                                <th style="width: 40%;">Service</th>
-                                <th>Current Value</th>
-                                <th>Reduce By</th>
+                                <th style="width: 40%;"><i class="fas fa-tools me-2"></i>Service</th>
+                                <th><i class="fas fa-chart-line me-2"></i>Current Value</th>
+                                <th><i class="fas fa-arrow-down me-2"></i>Reduce By</th>
                             </tr>
                         </thead>
                         <tbody>

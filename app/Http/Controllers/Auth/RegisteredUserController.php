@@ -20,11 +20,12 @@ class RegisteredUserController extends Controller
     public function create(): View
     {
         // Only admins can access registration
-        if (!Auth::check() || !Auth::user()->isAdmin()) {
+        if (! Auth::check() || ! Auth::user()->isAdmin()) {
             abort(403, 'Only administrators can register users.');
         }
-        
+
         $roles = \App\Models\Role::all();
+
         return view('auth.register', compact('roles'));
     }
 
@@ -36,7 +37,7 @@ class RegisteredUserController extends Controller
     public function store(Request $request): RedirectResponse
     {
         // Only admins can register users
-        if (!Auth::check() || !Auth::user()->isAdmin()) {
+        if (! Auth::check() || ! Auth::user()->isAdmin()) {
             abort(403, 'Only administrators can register users.');
         }
 

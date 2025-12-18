@@ -10,8 +10,6 @@ use Illuminate\Support\Facades\Mail;
 
 class MailController extends Controller
 {
-    
-
     /**
      * Send the email.
      */
@@ -30,20 +28,20 @@ class MailController extends Controller
 
         // Get CC recipients if any
         $ccRecipients = [];
-        if (!empty($validated['cc_ids'])) {
+        if (! empty($validated['cc_ids'])) {
             $ccRecipients = User::whereIn('id', $validated['cc_ids'])->pluck('email')->toArray();
         }
 
         // Send email
         $mail = Mail::to($receiver->email);
-        
-        if (!empty($ccRecipients)) {
+
+        if (! empty($ccRecipients)) {
             $mail->cc($ccRecipients);
         }
-        
+
         $mail->send(new UserContactEmail($sender, $validated['subject'], $validated['body']));
 
         return redirect()->route('dashboard')
-            ->with('success', 'Email sent successfully to ' . $receiver->name . '!');
+            ->with('success', 'Email sent successfully to '.$receiver->name.'!');
     }
 }

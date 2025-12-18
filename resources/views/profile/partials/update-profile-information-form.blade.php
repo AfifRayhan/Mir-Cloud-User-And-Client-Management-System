@@ -1,44 +1,14 @@
 <section>
-    <header class="mb-4">
-        <h2 class="h5 fw-bold mb-2">Profile Information</h2>
-        <p class="mt-1 text-sm text-gray-600">
-            {{ __("Update your account's profile information and email address.") }}
-        </p>
-    </header>
-
-    <div class="mb-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-                <label class="block font-medium text-sm text-gray-700"><b>Role:</b></label>
-                <div class="mt-1 text-gray-900 font-semibold">
-                    {{ ucfirst(str_replace('-', ' ', $user->role->role_name)) }}
-                </div>
-            </div>
-            <div>
-                <label class="block font-medium text-sm text-gray-700"><b>Department:</b></label>
-                <div class="mt-1 text-gray-900 font-semibold">
-                    {{ $user->department ? $user->department->department_name : 'Not Assigned' }}
-                </div>
-            </div>
-            <div>
-                <label class="block font-medium text-sm text-gray-700"><b>Email:</b></label>
-                <div class="mt-1 text-gray-900 font-semibold">
-                    {{ $user->email }}
-                </div>
-            </div>
-        </div>
-    </div>
-
     <form id="send-verification" method="post" action="{{ route('profile.update') }}">
         @csrf
         @method('patch')
 
-        <div class="mb-3">
-            <label for="name" class="form-label fw-semibold">Name</label>
+        <div class="mb-2">
+            <label for="name" class="custom-profile-label">Full Name</label>
             <input id="name" 
                    name="name" 
                    type="text" 
-                   class="form-control @error('name') is-invalid @enderror" 
+                   class="form-control custom-profile-input @error('name') is-invalid @enderror" 
                    value="{{ old('name', $user->name) }}" 
                    required 
                    autofocus 
@@ -48,12 +18,12 @@
             @enderror
         </div>
 
-        <div class="mb-3">
-            <label for="username" class="form-label fw-semibold">Username</label>
+        <div class="mb-2">
+            <label for="username" class="custom-profile-label">Username</label>
             <input id="username" 
                    name="username" 
                    type="text" 
-                   class="form-control @error('username') is-invalid @enderror" 
+                   class="form-control custom-profile-input @error('username') is-invalid @enderror" 
                    value="{{ old('username', $user->username) }}" 
                    required 
                    autocomplete="username">
@@ -62,12 +32,12 @@
             @enderror
         </div>
 
-        <div class="mb-3">
-            <label for="email" class="form-label fw-semibold">Email</label>
+        <div class="mb-2">
+            <label for="email" class="custom-profile-label">Email Address</label>
             <input id="email" 
                    name="email" 
                    type="email" 
-                   class="form-control @error('email') is-invalid @enderror" 
+                   class="form-control custom-profile-input @error('email') is-invalid @enderror" 
                    value="{{ old('email', $user->email) }}" 
                    required 
                    autocomplete="email">
@@ -76,11 +46,15 @@
             @enderror
         </div>
 
-        <div class="d-flex align-items-center gap-3">
-            <button type="submit" class="btn btn-primary">Save</button>
+        <div class="d-flex align-items-center gap-3 mt-3">
+            <button type="submit" class="custom-profile-save-btn">
+                <i class="fas fa-save me-2"></i> Save Changes
+            </button>
             
             @if (session('status') === 'profile-updated')
-                <span class="text-success small">Saved.</span>
+                <div class="text-success small d-flex align-items-center">
+                    <i class="fas fa-check-circle me-1"></i> Changes saved.
+                </div>
             @endif
         </div>
     </form>

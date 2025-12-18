@@ -147,7 +147,7 @@
                                                     <i class="fas fa-check me-1"></i> <span class="btn-text">Complete</span>
                                                 </a>
                                             @else
-                                                <span class="custom-my-task-badge">
+                                                <span class="custom-my-task-action-btn custom-my-task-badge-upgrade">
                                                     <i class="fas fa-check-circle me-1"></i> <span class="btn-text">Completed</span>
                                                 </span>
                                             @endif

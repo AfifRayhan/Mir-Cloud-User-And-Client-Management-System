@@ -69,6 +69,7 @@ class Task extends Model
         } elseif ($this->allocation_type === 'downgrade' && $this->resourceDowngradation) {
             return $this->resourceDowngradation->details;
         }
+
         return collect();
     }
 

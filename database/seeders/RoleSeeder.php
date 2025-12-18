@@ -2,7 +2,6 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 class RoleSeeder extends Seeder
@@ -19,12 +18,12 @@ class RoleSeeder extends Seeder
             'pro-tech',
             'tech',
             'management',
-            'other'
+            'other',
         ];
 
         foreach ($roles as $role) {
             \App\Models\Role::firstOrCreate([
-                'role_name' => $role
+                'role_name' => $role,
             ]);
         }
     }

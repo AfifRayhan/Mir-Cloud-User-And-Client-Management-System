@@ -15,7 +15,7 @@ class TaskManagementController extends Controller
     public function index(Request $request)
     {
         // Check authorization
-        if (!Auth::user()->isAdmin() && !Auth::user()->isProTech() && !Auth::user()->isManagement()) {
+        if (! Auth::user()->isAdmin() && ! Auth::user()->isProTech() && ! Auth::user()->isManagement()) {
             abort(403, 'Unauthorized access.');
         }
 
@@ -55,7 +55,7 @@ class TaskManagementController extends Controller
 
         // Get all users for assignment dropdown (Tech, Pro-Tech, and Admin)
         // Management can assign to Tech/Pro-Tech but can't be assigned to (Standard logic: Tech/ProTech exec tasks)
-        $users = User::whereHas('role', function($q) {
+        $users = User::whereHas('role', function ($q) {
             $q->whereIn('role_name', ['tech', 'pro-tech', 'admin']);
         })->orderBy('name')->get();
 
@@ -65,7 +65,7 @@ class TaskManagementController extends Controller
     public function getDetails(Task $task)
     {
         // Check authorization
-        if (!Auth::user()->isAdmin() && !Auth::user()->isProTech() && !Auth::user()->isManagement()) {
+        if (! Auth::user()->isAdmin() && ! Auth::user()->isProTech() && ! Auth::user()->isManagement()) {
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 
@@ -83,7 +83,7 @@ class TaskManagementController extends Controller
     public function assign(Request $request, Task $task)
     {
         // Check authorization
-        if (!Auth::user()->isAdmin() && !Auth::user()->isProTech() && !Auth::user()->isManagement()) {
+        if (! Auth::user()->isAdmin() && ! Auth::user()->isProTech() && ! Auth::user()->isManagement()) {
             abort(403, 'Unauthorized access.');
         }
 
@@ -91,19 +91,19 @@ class TaskManagementController extends Controller
             'assigned_to' => 'required|exists:users,id',
         ]);
 
-        return \Illuminate\Support\Facades\DB::transaction(function () use ($request, $task, $validated) {
+        return \Illuminate\Support\Facades\DB::transaction(function () use ($task, $validated) {
             // Lock the task record for update to prevent race conditions
             $lockedTask = Task::where('id', $task->id)->lockForUpdate()->first();
 
             // Check if task was assigned by another request while we were waiting
             if ($lockedTask->assigned_to) {
-                 // Prevent "surprise" overwrites if the task is already assigned
-                 return back()->with('error', 'Task was already assigned to ' . ($lockedTask->assignedTo->name ?? 'someone else') . '. Please refresh.');
+                // Prevent "surprise" overwrites if the task is already assigned
+                return back()->with('error', 'Task was already assigned to '.($lockedTask->assignedTo->name ?? 'someone else').'. Please refresh.');
             }
 
             // Verify the assigned user is Tech or Pro-Tech
             $assignedUser = User::findOrFail($validated['assigned_to']);
-            if (!$assignedUser->isAdmin() && !$assignedUser->isTech() && !$assignedUser->isProTech()) {
+            if (! $assignedUser->isAdmin() && ! $assignedUser->isTech() && ! $assignedUser->isProTech()) {
                 return back()->with('error', 'Tasks can only be assigned to Tech or Pro-Tech users.');
             }
 
@@ -123,11 +123,11 @@ class TaskManagementController extends Controller
                 \Illuminate\Support\Facades\Mail::to($assignedUser->email)
                     ->send(new \App\Mail\TaskAssignmentEmail($lockedTask, $sender, $actionType));
             } catch (\Exception $e) {
-                 // Log error but don't stop execution
-                 \Illuminate\Support\Facades\Log::error('Failed to send assignment email: ' . $e->getMessage());
+                // Log error but don't stop execution
+                \Illuminate\Support\Facades\Log::error('Failed to send assignment email: '.$e->getMessage());
             }
 
-            return back()->with('success', 'Task assigned successfully to ' . $assignedUser->name);
+            return back()->with('success', 'Task assigned successfully to '.$assignedUser->name);
         });
     }
 }

@@ -13,6 +13,7 @@ use Illuminate\Notifications\Notifiable;
  * Helpful IDE annotations for dynamic role helpers and Eloquent methods.
  *
  * @mixin \Eloquent
+ *
  * @method bool isAdmin()
  * @method bool isProTech()
  * @method bool isTech()
@@ -125,5 +126,5 @@ class User extends Authenticatable
     public function tasksAssigned()
     {
         return $this->hasMany(Task::class, 'assigned_by');
-    } 
+    }
 }

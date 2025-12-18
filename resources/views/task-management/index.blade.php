@@ -5,11 +5,15 @@
         <div class="custom-task-management-bg-circle circle-1"></div>
         <div class="custom-task-management-bg-circle circle-2"></div>
 
-        <!-- Header -->
-        <div class="custom-task-management-header">
-            <div>
-                <h1 class="custom-task-management-title">Task Management</h1>
-                <p class="custom-task-management-subtitle">View and assign tasks to team members</p>
+        <!-- Header Section -->
+        <div class="row mb-5">
+            <div class="col-12">
+                <div class="custom-task-management-header">
+                    <div>
+                        <h1 class="custom-task-management-title fw-bold mb-2">Task Management</h1>
+                        <p class="custom-task-management-subtitle text-muted">View and assign tasks to team members</p>
+                    </div>
+                </div>
             </div>
         </div>
 

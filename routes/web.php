@@ -4,7 +4,6 @@ use App\Http\Controllers\PlatformManagementController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ResourceAllocationController;
 use App\Http\Controllers\ServiceManagementController;
-use App\Http\Controllers\UserManagementController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -15,7 +14,7 @@ Route::get('/dashboard', function () {
     $incompleteTaskCount = \App\Models\Task::where('assigned_to', \Illuminate\Support\Facades\Auth::id())
         ->whereNull('completed_at')
         ->count();
-    
+
     return view('dashboard', compact('incompleteTaskCount'));
 })->middleware(['auth'])->name('dashboard');
 
@@ -24,7 +23,7 @@ Route::middleware('auth')->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
     Route::put('/password', [\App\Http\Controllers\Auth\PasswordController::class, 'update'])->name('profile.password');
-    
+
     // Customer routes (Admin, Pro-Tech, KAM, Pro-KAM, Management)
     Route::middleware('role:admin,pro-tech,kam,pro-kam,management')->group(function () {
         Route::resource('customers', \App\Http\Controllers\CustomerController::class);
@@ -34,7 +33,7 @@ Route::middleware('auth')->group(function () {
     Route::middleware('role:admin,pro-tech,kam,pro-kam,management')->group(function () {
         Route::get('resource-allocation', [ResourceAllocationController::class, 'index'])->name('resource-allocation.index');
         Route::post('resource-allocation', [ResourceAllocationController::class, 'process'])->name('resource-allocation.process');
-    
+
         Route::get('resource-allocation/{customer}/allocate', [ResourceAllocationController::class, 'allocationForm'])->name('resource-allocation.allocate');
         Route::post('resource-allocation/{customer}/allocate', [ResourceAllocationController::class, 'storeAllocation'])->name('resource-allocation.store');
     });
@@ -62,8 +61,8 @@ Route::middleware('auth')->group(function () {
 
     // Mail routes (Admin, Pro-Tech, KAM, Pro-KAM, Management) - Assuming Techs don't need this
     Route::middleware('role:admin,pro-tech,kam,pro-kam,management')->group(function () {
-         Route::get('mail/create', [\App\Http\Controllers\MailController::class, 'create'])->name('mail.create');
-         Route::post('mail', [\App\Http\Controllers\MailController::class, 'store'])->name('mail.store');
+        Route::get('mail/create', [\App\Http\Controllers\MailController::class, 'create'])->name('mail.create');
+        Route::post('mail', [\App\Http\Controllers\MailController::class, 'store'])->name('mail.store');
     });
 
     // Task Management (Admin and ProTech and Management)

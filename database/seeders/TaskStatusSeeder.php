@@ -2,8 +2,8 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
 use App\Models\TaskStatus;
+use Illuminate\Database\Seeder;
 
 class TaskStatusSeeder extends Seeder
 {
@@ -17,7 +17,7 @@ class TaskStatusSeeder extends Seeder
             'Proceed from Pro Tech',
             'Proceed from Tech',
             'Proceed from Billing',
-            
+
         ];
 
         foreach ($statuses as $status) {

@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\User;
 use App\Models\Role;
+use App\Models\User;
 use App\Models\UserDepartment;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -17,6 +17,7 @@ class UserManagementController extends Controller
     public function index()
     {
         $users = User::with(['role', 'department'])->latest()->paginate(10);
+
         return view('users.index', compact('users'));
     }
 
@@ -27,6 +28,7 @@ class UserManagementController extends Controller
     {
         $roles = Role::all();
         $departments = UserDepartment::all();
+
         return view('users.create', compact('roles', 'departments'));
     }
 
@@ -64,6 +66,7 @@ class UserManagementController extends Controller
     {
         $roles = Role::all();
         $departments = UserDepartment::all();
+
         return view('users.edit', compact('user', 'roles', 'departments'));
     }
 
@@ -74,8 +77,8 @@ class UserManagementController extends Controller
     {
         $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'username' => ['required', 'string', 'max:255', 'unique:users,username,' . $user->id],
-            'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email,' . $user->id],
+            'username' => ['required', 'string', 'max:255', 'unique:users,username,'.$user->id],
+            'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email,'.$user->id],
             'role_id' => ['required', 'exists:roles,id'],
             'department_id' => ['nullable', 'exists:user_departments,id'],
             'password' => ['nullable', 'confirmed', Rules\Password::defaults()],

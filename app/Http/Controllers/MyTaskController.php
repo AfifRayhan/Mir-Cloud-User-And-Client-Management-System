@@ -27,7 +27,7 @@ class MyTaskController extends Controller
     public function getDetails(Task $task)
     {
         // Verify the task is assigned to the current user or user is admin
-        if ($task->assigned_to !== Auth::id() && !Auth::user()->isAdmin()) {
+        if ($task->assigned_to !== Auth::id() && ! Auth::user()->isAdmin()) {
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 
@@ -45,7 +45,7 @@ class MyTaskController extends Controller
     public function show(Task $task)
     {
         // Verify the task is assigned to the current user or user is admin
-        if ($task->assigned_to !== Auth::id() && !Auth::user()->isAdmin()) {
+        if ($task->assigned_to !== Auth::id() && ! Auth::user()->isAdmin()) {
             abort(403, 'Unauthorized access to this task.');
         }
 
@@ -82,7 +82,7 @@ class MyTaskController extends Controller
             $sender = Auth::user();
 
             // Find management users
-            $managementUsers = \App\Models\User::whereHas('role', function($q) {
+            $managementUsers = \App\Models\User::whereHas('role', function ($q) {
                 $q->where('role_name', 'management');
             })->get();
 
@@ -101,13 +101,13 @@ class MyTaskController extends Controller
                 try {
                     $mail = \Illuminate\Support\Facades\Mail::to($manager->email);
 
-                    if (!empty($ccUsers)) {
+                    if (! empty($ccUsers)) {
                         $mail->cc($ccUsers);
                     }
 
                     $mail->send(new \App\Mail\TaskCompletionEmail($lockedTask, $sender, $actionType));
                 } catch (\Exception $e) {
-                     \Illuminate\Support\Facades\Log::error('Failed to send completion email to ' . $manager->email . ': ' . $e->getMessage());
+                    \Illuminate\Support\Facades\Log::error('Failed to send completion email to '.$manager->email.': '.$e->getMessage());
                 }
             }
 

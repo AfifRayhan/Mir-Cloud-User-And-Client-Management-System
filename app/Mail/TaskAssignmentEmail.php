@@ -15,7 +15,9 @@ class TaskAssignmentEmail extends Mailable implements ShouldQueue
     use Queueable, SerializesModels;
 
     public $task;
+
     public $sender;
+
     public $actionType;
 
     /**

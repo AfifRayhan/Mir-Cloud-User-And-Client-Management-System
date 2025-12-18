@@ -234,7 +234,7 @@
 }
 
 .custom-my-task-table-header {
-    padding: 1rem 1.5rem;
+    padding: 1rem 1rem;
     font-weight: 600;
     color: #374151;
     font-size: 0.8125rem;
@@ -262,7 +262,7 @@
 }
 
 .custom-my-task-table-cell {
-    padding: 1rem 1.5rem;
+    padding: 1rem 1rem;
     vertical-align: middle;
     border-bottom: 1px solid var(--custom-my-task-border);
 }
@@ -366,7 +366,7 @@
     align-items: center;
     justify-content: center;
     gap: 0.25rem;
-    min-width: 70px;
+    width: 105px;
     border: none;
     text-decoration: none;
 }
@@ -441,7 +441,7 @@
     }
 
     .custom-my-task-action-btn {
-        min-width: auto;
+        width: auto;
         padding: 0.375rem;
     }
 

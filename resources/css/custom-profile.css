@@ -1,0 +1,205 @@
+/* Custom Profile Variables - Modern Premium Style */
+:root {
+    --custom-profile-primary: #4f46e5;
+    --custom-profile-primary-light: #e0e7ff;
+    --custom-profile-success: #10b981;
+    --custom-profile-success-light: #d1fae5;
+    --custom-profile-danger: #ef4444;
+    --custom-profile-danger-light: #fee2e2;
+    --custom-profile-warning: #f59e0b;
+    --custom-profile-warning-light: #fef3c7;
+    --custom-profile-secondary: #6b7280;
+    --custom-profile-secondary-light: #f3f4f6;
+    --custom-profile-border: #e5e7eb;
+    --custom-profile-bg: #f8fafc;
+    --custom-profile-card-bg: #ffffff;
+    --custom-profile-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);
+    --custom-profile-shadow-lg: 0 10px 25px -5px rgb(0 0 0 / 0.1);
+    --custom-profile-radius: 0.75rem;
+    --custom-profile-transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Container Styles */
+.custom-profile-container {
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+    min-height: calc(100vh - 64px);
+    position: relative;
+    overflow-x: hidden;
+    padding-top: 1rem !important;
+    padding-bottom: 1rem !important;
+}
+
+/* Background Elements */
+.custom-profile-bg-pattern {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image: radial-gradient(var(--custom-profile-primary-light) 0.5px, transparent 0.5px);
+    background-size: 20px 20px;
+    opacity: 0.2;
+    pointer-events: none;
+}
+
+.custom-profile-bg-circle {
+    position: absolute;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--custom-profile-primary) 0%, #6366f1 100%);
+    opacity: 0.03;
+    pointer-events: none;
+}
+
+.custom-profile-bg-circle.circle-1 {
+    width: 300px;
+    height: 300px;
+    top: -150px;
+    right: -50px;
+}
+
+.custom-profile-bg-circle.circle-2 {
+    width: 200px;
+    height: 200px;
+    bottom: -100px;
+    left: -30px;
+}
+
+/* Header Styles */
+.custom-profile-header {
+    position: relative;
+    z-index: 10;
+    margin-bottom: 1rem;
+}
+
+.custom-profile-title {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: #111827;
+    letter-spacing: -0.025em;
+    margin-bottom: 0.125rem;
+}
+
+.custom-profile-subtitle {
+    font-size: 0.875rem;
+    color: var(--custom-profile-secondary);
+}
+
+/* Card Styles */
+.custom-profile-card {
+    border-radius: var(--custom-profile-radius);
+    background: var(--custom-profile-card-bg);
+    border: 1px solid var(--custom-profile-border);
+    box-shadow: var(--custom-profile-shadow);
+    transition: var(--custom-profile-transition);
+    position: relative;
+    z-index: 1;
+    overflow: hidden;
+}
+
+.custom-profile-card-header {
+    padding: 0.75rem 1.25rem;
+    background: #fafafa;
+    border-bottom: 1px solid var(--custom-profile-border);
+}
+
+.custom-profile-card-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #111827;
+    margin-bottom: 0.125rem;
+}
+
+.custom-profile-card-subtitle {
+    font-size: 0.75rem;
+    color: var(--custom-profile-secondary);
+    margin-bottom: 0;
+}
+
+.custom-profile-card-body {
+    padding: 1rem 1.25rem;
+}
+
+/* Form Controls */
+.custom-profile-label {
+    font-weight: 600;
+    font-size: 0.8125rem;
+    color: #374151;
+    margin-bottom: 0.375rem;
+    display: block;
+}
+
+.custom-profile-input {
+    border-radius: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.875rem;
+    border: 1px solid var(--custom-profile-border);
+    transition: var(--custom-profile-transition);
+}
+
+/* Buttons */
+.custom-profile-save-btn {
+    background: linear-gradient(135deg, var(--custom-profile-primary) 0%, #6366f1 100%);
+    border: none;
+    border-radius: 0.5rem;
+    padding: 0.5rem 1.25rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: white;
+    transition: var(--custom-profile-transition);
+}
+
+.custom-profile-delete-btn {
+    background: linear-gradient(135deg, var(--custom-profile-danger) 0%, #dc2626 100%);
+    color: white;
+    border: none;
+    margin-top: 1.5rem;
+}
+
+.custom-profile-delete-btn:hover {
+    background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+    color: white;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+}
+
+/* Section specific */
+.custom-profile-info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1rem;
+    padding: 0.75rem 1rem;
+    background: var(--custom-profile-bg);
+    border-radius: 0.5rem;
+    border: 1px solid var(--custom-profile-border);
+}
+
+.custom-profile-info-item label {
+    font-weight: 700;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--custom-profile-secondary);
+    display: block;
+    margin-bottom: 0.125rem;
+}
+
+.custom-profile-info-item span {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #111827;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .custom-profile-container {
+        padding-top: 1.5rem !important;
+    }
+
+    .custom-profile-title {
+        font-size: 1.75rem;
+    }
+
+    .custom-profile-card-body {
+        padding: 1.5rem;
+    }
+}

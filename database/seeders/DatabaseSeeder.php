@@ -27,7 +27,7 @@ class DatabaseSeeder extends Seeder
 
         // Create admin user
         $adminRole = \App\Models\Role::where('role_name', 'admin')->first();
-        
+
         if ($adminRole) {
             User::create([
                 'name' => 'Admin User',

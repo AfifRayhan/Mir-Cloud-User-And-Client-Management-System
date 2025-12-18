@@ -15,7 +15,9 @@ class RecommendationSubmissionEmail extends Mailable implements ShouldQueue
     use Queueable, SerializesModels;
 
     public $task;
+
     public $sender;
+
     public $actionType;
 
     /**
@@ -34,7 +36,7 @@ class RecommendationSubmissionEmail extends Mailable implements ShouldQueue
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'New Resource ' . ucfirst($this->actionType) . ' Recommendation',
+            subject: 'New Resource '.ucfirst($this->actionType).' Recommendation',
             from: new Address($this->sender->email, $this->sender->name),
         );
     }

@@ -176,7 +176,8 @@ class ResourceAllocationController extends Controller
                 $downgradation = \App\Models\ResourceDowngradation::create([
                     'customer_id' => $lockedCustomer->id,
                     'status_id' => $statusId,
-                    'activation_date' => now(),
+                    'activation_date' => $validated['activation_date'] ?? now(),
+                    'inactivation_date' => $validated['inactivation_date'] ?? '3000-01-01',
                     'task_status_id' => $taskStatusId,
                     'inserted_by' => \Illuminate\Support\Facades\Auth::id(),
                 ]);

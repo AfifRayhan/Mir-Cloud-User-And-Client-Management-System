@@ -130,7 +130,15 @@
                             </thead>
                             <tbody class="custom-task-management-table-body">
                                 @foreach($tasks as $task)
-                                    <tr class="custom-task-management-table-row {{ $task->completed_at ? 'task-completed' : '' }}">
+                                    @php
+                                        $rowClass = '';
+                                        if ($task->completed_at) {
+                                            $rowClass = 'task-completed';
+                                        } elseif ($task->assigned_to) {
+                                            $rowClass = 'task-assigned';
+                                        }
+                                    @endphp
+                                    <tr class="custom-task-management-table-row {{ $rowClass }}">
                                         <td class="custom-task-management-table-cell">
                                             <strong>{{ $task->customer->customer_name }}</strong>
                                         </td>
@@ -196,15 +204,27 @@
                                             @endif
                                         </td>
                                         <td class="custom-task-management-table-cell">
-                                            <button class="custom-task-management-action-btn custom-task-management-edit-btn view-task-btn me-1" data-task-id="{{ $task->id }}">
-                                                <i class="fas fa-eye me-1"></i> <span class="btn-text">View</span>
-                                            </button>
-                                            
-                                            <button type="button" class="custom-task-management-action-btn custom-task-management-edit-btn" 
-                                                    data-bs-toggle="modal" 
-                                                    data-bs-target="#assignModal{{ $task->id }}">
-                                                <i class="fas fa-user-plus me-1"></i> <span class="btn-text">Assign</span>
-                                            </button>
+                                            <div class="d-flex gap-1">
+                                                <button class="custom-task-management-action-btn custom-task-management-edit-btn view-task-btn" data-task-id="{{ $task->id }}">
+                                                    <i class="fas fa-eye me-1"></i> <span class="btn-text">View</span>
+                                                </button>
+                                                
+                                                @if($task->completed_at)
+                                                    <span class="custom-task-management-action-btn btn-complete-status">
+                                                        <i class="fas fa-check-double me-1"></i> <span class="btn-text">Complete</span>
+                                                    </span>
+                                                @elseif($task->assigned_to)
+                                                    <span class="custom-task-management-action-btn btn-assigned-status">
+                                                        <i class="fas fa-user-check me-1"></i> <span class="btn-text">Assigned</span>
+                                                    </span>
+                                                @else
+                                                    <button type="button" class="custom-task-management-action-btn custom-task-management-edit-btn" 
+                                                            data-bs-toggle="modal" 
+                                                            data-bs-target="#assignModal{{ $task->id }}">
+                                                        <i class="fas fa-user-plus me-1"></i> <span class="btn-text">Assign</span>
+                                                    </button>
+                                                @endif
+                                            </div>
                                         </td>
                                     </tr>
                                     <!-- Expandable details row (hidden by default) -->
@@ -286,21 +306,7 @@
 
     @push('styles')
     <style>
-        .table-hover tbody tr.task-completed,
-        .table-hover tbody tr.task-completed>td {
-            background-color: #c3e6cb !important;
-            --bs-table-bg: #c3e6cb !important;
-            --bs-table-accent-bg: #c3e6cb !important;
-        }
-
-        .table-hover tbody tr.task-completed:hover,
-        .table-hover tbody tr.task-completed:hover>td {
-            background-color: #c3e6cb !important;
-            cursor: default;
-            --bs-table-accent-bg: #c3e6cb !important;
-        }
-
-
+        /* Row details loading state */
     </style>
     @endpush
 

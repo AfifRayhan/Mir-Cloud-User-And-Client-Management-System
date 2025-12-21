@@ -287,6 +287,36 @@
     border-bottom: 1px solid var(--custom-task-management-border);
 }
 
+/* Status Row Coloring */
+.custom-task-management-table-row.task-assigned {
+    background-color: #e8f5e9 !important;
+    /* More greenish than before */
+}
+
+.custom-task-management-table-row.task-assigned:hover {
+    background-color: #c8e6c9 !important;
+}
+
+.custom-task-management-table-row.task-completed {
+    background-color: #a5d6a7 !important;
+    /* Darker green (was #c6f6d5) */
+}
+
+.custom-task-management-table-row.task-completed:hover {
+    background-color: #81c784 !important;
+}
+
+/* Button Status Styles */
+.btn-assigned-status {
+    background-color: #81c784 !important;
+    color: white !important;
+}
+
+.btn-complete-status {
+    background-color: #4caf50 !important;
+    color: white !important;
+}
+
 /* Customer */
 
 .custom-task-management-customer-name {
@@ -378,15 +408,15 @@
 /* Action Buttons */
 .custom-task-management-action-btn {
     border-radius: 0.375rem;
-    padding: 0.375rem 0.75rem;
-    font-size: 0.75rem;
+    padding: 0.2rem 0.05rem;
+    font-size: 0.7rem;
     font-weight: 500;
     transition: var(--custom-task-management-transition);
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 0.25rem;
-    width: 105px;
+    gap: 0.1rem;
+    width: 85px;
     border: none;
 }
 

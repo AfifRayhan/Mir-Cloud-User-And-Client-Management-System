@@ -28,30 +28,28 @@
                     </div>
                 @endif
 
-                <div class="mb-4">
-                    <h6 class="fw-bold mb-3">Customer Status</h6>
-                    <div class="badge bg-primary px-3 py-2">
-                        {{ $statusName ?? 'Not Set' }}
+                <div class="row g-3 mb-4">
+                    <div class="col-md-3">
+                        <label class="form-label fw-semibold">Customer Status</label>
+                        <div class="badge bg-primary px-3 py-2 d-block text-center">
+                            {{ $statusName ?? 'Not Set' }}
+                        </div>
                     </div>
-                </div>
-
-                <div class="mb-4">
-                    <h6 class="fw-bold mb-3">Task Status</h6>
-                    <div class="badge bg-secondary px-3 py-2">
-                        {{ $taskStatuses->firstWhere('id', $defaultTaskStatusId)->name ?? 'Proceed from KAM' }}
+                    <div class="col-md-3">
+                        <label class="form-label fw-semibold">Task Status</label>
+                        <div class="badge bg-secondary px-3 py-2 d-block text-center">
+                            {{ $taskStatuses->firstWhere('id', $defaultTaskStatusId)->name ?? 'Proceed from KAM' }}
+                        </div>
+                        <input type="hidden" name="task_status_id" value="{{ $defaultTaskStatusId ?? 1 }}">
                     </div>
-                    <input type="hidden" name="task_status_id" value="{{ $defaultTaskStatusId ?? 1 }}">
-                </div>
-
-                <div class="row mb-4">
-                    <div class="col-md-6">
+                    <div class="col-md-3">
                         <label for="activation_date" class="form-label fw-semibold">Activation Date <span class="text-danger">*</span></label>
                         <input type="date" id="activation_date" name="activation_date" class="form-control" value="{{ $customer->activation_date->format('Y-m-d') }}" required>
                     </div>
-                    <div class="col-md-6">
+                    <div class="col-md-3">
                         <label for="inactivation_date" class="form-label fw-semibold">Inactivation Date</label>
                         <input type="date" id="inactivation_date" name="inactivation_date" class="form-control" value="3000-01-01">
-                        <small class="text-muted">Leave as default (3000-01-01) for no inactivation</small>
+                        <small class="text-muted d-block" style="font-size: 0.7rem;">Default (3000-01-01) for no inactivation</small>
                     </div>
                 </div>
 
@@ -121,19 +119,29 @@
                     <small><strong>Downgrade Mode:</strong> Specify the amount to reduce from each resource.</small>
                 </div>
 
-                <div class="mb-4">
-                    <h6 class="fw-bold mb-3">Customer Status</h6>
-                    <div class="badge bg-primary px-3 py-2">
-                        {{ $statusName ?? 'Not Set' }}
+                <div class="row g-3 mb-4">
+                    <div class="col-md-3">
+                        <label class="form-label fw-semibold">Customer Status</label>
+                        <div class="badge bg-primary px-3 py-2 d-block text-center">
+                            {{ $statusName ?? 'Not Set' }}
+                        </div>
                     </div>
-                </div>
-
-                <div class="mb-4">
-                    <h6 class="fw-bold mb-3">Task Status</h6>
-                    <div class="badge bg-secondary px-3 py-2">
-                        {{ $taskStatuses->firstWhere('id', $defaultTaskStatusId)->name ?? 'Proceed from KAM' }}
+                    <div class="col-md-3">
+                        <label class="form-label fw-semibold">Task Status</label>
+                        <div class="badge bg-secondary px-3 py-2 d-block text-center">
+                            {{ $taskStatuses->firstWhere('id', $defaultTaskStatusId)->name ?? 'Proceed from KAM' }}
+                        </div>
+                        <input type="hidden" name="task_status_id" value="{{ $defaultTaskStatusId ?? 1 }}">
                     </div>
-                    <input type="hidden" name="task_status_id" value="{{ $defaultTaskStatusId ?? 1 }}">
+                    <div class="col-md-3">
+                        <label for="activation_date" class="form-label fw-semibold">Activation Date <span class="text-danger">*</span></label>
+                        <input type="date" id="activation_date" name="activation_date" class="form-control" value="{{ now()->format('Y-m-d') }}" required>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="inactivation_date" class="form-label fw-semibold">Inactivation Date</label>
+                        <input type="date" id="inactivation_date" name="inactivation_date" class="form-control" value="3000-01-01">
+                        <small class="text-muted d-block" style="font-size: 0.7rem;">Default (3000-01-01) for no inactivation</small>
+                    </div>
                 </div>
 
                 <div class="table-responsive">

@@ -140,6 +140,15 @@
                                         <th class="custom-user-management-table-header">
                                             <div class="d-flex align-items-center">
                                                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="me-2 text-muted" viewBox="0 0 16 16">
+                                                    <path d="M6.5 2a.5.5 0 0 0 0 1h3a.5.5 0 0 0 0-1zM11 8a3 3 0 1 1-6 0 3 3 0 0 1 6 0"/>
+                                                    <path d="M4.5 0A2.5 2.5 0 0 0 2 2.5V14a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V2.5A2.5 2.5 0 0 0 11.5 0zM3 2.5A1.5 1.5 0 0 1 4.5 1h7A1.5 1.5 0 0 1 13 2.5v10.795a4.2 4.2 0 0 0-.776-.492C11.392 12.387 10.063 12 8 12s-3.392.387-4.224.803a4.2 4.2 0 0 0-.776.492z"/>
+                                                </svg>
+                                                Role
+                                            </div>
+                                        </th>
+                                        <th class="custom-user-management-table-header">
+                                            <div class="d-flex align-items-center">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="me-2 text-muted" viewBox="0 0 16 16">
                                                     <path d="M1 2.828c.885-.37 2.154-.769 3.388-.893 1.33-.134 2.458.063 3.112.752v9.746c-.935-.53-2.467-.994-3.806-1.127-1.446-.195-2.993-.341-4.033-.363-.464-.027-.886.064-1.257.289V2.828Zm2.5-.5C.5 2.328.5 3.5.5 3.5v9c0 .5.5.5.5.5h1.075c.5 0 .5-.5.5-.5v-9c0-.5-.5-.5-.5-.5h-1Zm6.5-.5c-.885-.37-2.154-.769-3.388-.893-1.33-.134-2.458.063-3.112.752v9.746c.935-.53 2.467-.994 3.806-1.127 1.446-.195 2.993-.341 4.033-.363.464-.027.886.064 1.257.289V2.828Zm-2.5-.5C8.5 2.328 8.5 3.5 8.5 3.5v9c0 .5.5.5.5.5h1.075c.5 0 .5-.5.5-.5v-9c0-.5-.5-.5-.5-.5h-1Z" />
                                                 </svg>
                                                 Department
@@ -180,6 +189,9 @@
                                             </td>
                                             <td class="custom-user-management-table-cell">
                                                 <span class="fw-semibold">{{ $user->username ?? 'N/A' }}</span>
+                                            </td>
+                                            <td class="custom-user-management-table-cell">
+                                                <span class="fw-semibold">{{ $user->role->role_name ?? 'N/A' }}</span>
                                             </td>
                                             <td class="custom-user-management-table-cell">
                                                 <span class="custom-user-management-badge">

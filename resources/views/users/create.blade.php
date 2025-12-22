@@ -7,7 +7,7 @@
         <div class="custom-user-add-bg-circle circle-3"></div>
 
         <div class="custom-user-add-header text-center">
-            <h1 class="custom-user-add-title">Add New User</h1>
+            <h1 class="custom-user-add-title fw-bold">Add New User</h1>
             <p class="custom-user-add-subtitle">Create a new user account</p>
         </div>
 

@@ -26,23 +26,50 @@
             </div>
         </div>
 
+        <!-- Success Alert -->
+        @if(session('success'))
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="custom-user-management-alert alert alert-success alert-dismissible fade show" role="alert">
+                    <div class="d-flex align-items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="me-3" viewBox="0 0 16 16">
+                            <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z" />
+                        </svg>
+                        <div class="flex-grow-1">
+                            <h6 class="alert-heading mb-1">Success!</h6>
+                            <p class="mb-0">{{ session('success') }}</p>
+                        </div>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            </div>
+        </div>
+        @endif
+
+        <!-- Info Alert -->
+        @if(session('info'))
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="custom-user-management-alert alert alert-info alert-dismissible fade show" role="alert">
+                    <div class="d-flex align-items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="me-3" viewBox="0 0 16 16">
+                            <path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zm.93-9.412-1 4.705c-.07.34.029.533.304.533.194 0 .487-.07.686-.246l-.088.416c-.287.346-.92.598-1.465.598-.703 0-1.002-.422-.808-1.319l.738-3.468c.064-.293.006-.399-.287-.47l-.451-.081.082-.381 2.29-.287zM8 5.5a1 1 0 1 1 0-2 1 1 0 0 1 0 2z"/>
+                        </svg>
+                        <div class="flex-grow-1">
+                            <h6 class="alert-heading mb-1">Info</h6>
+                            <p class="mb-0">{{ session('info') }}</p>
+                        </div>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            </div>
+        </div>
+        @endif
+
         <div class="row g-4">
             <div class="col-lg-4">
                 <div class="card border-0 shadow-sm h-100">
                     <div class="card-body p-4">
-                        @if(session('success'))
-                            <div class="alert alert-success alert-dismissible fade show" role="alert">
-                                {{ session('success') }}
-                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                            </div>
-                        @endif
-
-                        @if(session('info'))
-                            <div class="alert alert-info alert-dismissible fade show" role="alert">
-                                {{ session('info') }}
-                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                            </div>
-                        @endif
 
                         @if ($customers->isEmpty())
                             <p class="text-muted mb-0">No customers found. Please create a customer first.</p>
@@ -188,6 +215,11 @@
                         const data = await response.json();
                         container.innerHTML = data.html;
 
+                        // If the backend provided a status_id, update the select
+                        if (data.status_id && actionType === 'upgrade') {
+                            statusSelect.value = data.status_id;
+                        }
+
                         // Attach form submit handler
                         attachFormHandler();
                     } catch (error) {
@@ -219,14 +251,13 @@
                         formData.append('status_id', statusId);
                     }
 
-                    // Clear previous errors and messages
+                    // Clear previous errors
                     document.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
                     document.querySelectorAll('.invalid-feedback').forEach(el => el.textContent = '');
-                    const successMsg = document.getElementById('allocation-success-message');
-                    if (successMsg) {
-                        successMsg.classList.add('d-none');
-                        successMsg.classList.remove('show');
-                    }
+                    
+                    // Clear any existing page-level alerts
+                    const existingAlerts = document.querySelectorAll('.custom-user-management-alert');
+                    existingAlerts.forEach(alert => alert.remove());
 
                     try {
                         const response = await fetch(`{{ url('resource-allocation') }}/${customerId}/allocate`, {
@@ -248,14 +279,9 @@
                                 submitBtn.innerHTML = originalBtnText;
                             }
 
-                            // Handle validation errors
+                            // Handle validation errors - show at top of page
                             if (data.message) {
-                                // Show error in the success message container (but as danger)
-                                if (successMsg) {
-                                    successMsg.classList.remove('alert-success', 'd-none');
-                                    successMsg.classList.add('alert-danger', 'show');
-                                    document.getElementById('success-message-text').textContent = data.message;
-                                }
+                                showPageAlert('danger', 'Error!', data.message);
                             }
                             if (data.errors) {
                                 Object.keys(data.errors).forEach(key => {
@@ -272,15 +298,8 @@
                             return false;
                         }
 
-                        // Success - show inline message
-                        if (successMsg) {
-                            successMsg.classList.remove('alert-danger', 'd-none');
-                            successMsg.classList.add('alert-success', 'show');
-                            document.getElementById('success-message-text').textContent = data.message || 'Resources updated successfully!';
-                            
-                            // Scroll to the success message
-                            successMsg.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-                        }
+                        // Success - show page-level alert
+                        showPageAlert('success', 'Success!', data.message || 'Resources updated successfully!');
 
                         // Reset the form inputs
                         form.reset();
@@ -300,14 +319,44 @@
                             submitBtn.innerHTML = originalBtnText;
                         }
                         
-                        if (successMsg) {
-                            successMsg.classList.remove('alert-success', 'd-none');
-                            successMsg.classList.add('alert-danger', 'show');
-                            document.getElementById('success-message-text').textContent = 'An error occurred while saving the allocation.';
-                        }
+                        showPageAlert('danger', 'Error!', 'An error occurred while saving the allocation.');
                         return false;
                     }
                 };
+
+                // Function to show page-level alert (matching User Management style)
+                function showPageAlert(type, heading, message) {
+                    const alertHtml = `
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <div class="custom-user-management-alert alert alert-${type} alert-dismissible fade show" role="alert">
+                                    <div class="d-flex align-items-center">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="me-3" viewBox="0 0 16 16">
+                                            ${type === 'success' 
+                                                ? '<path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z" />' 
+                                                : '<path d="M8 8a1 1 0 0 1 1 1v.01a1 1 0 1 1-2 0V9a1 1 0 0 1 1-1zm.25-2.25a.75.75 0 0 0-1.5 0v1.5a.75.75 0 0 0 1.5 0v-1.5z" /><path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zM8 4a.75.75 0 0 1 .75.75v4.5a.75.75 0 0 0 1.5 0v-.25a.75.75 0 0 0-.75-.75h-.25a.75.75 0 0 0-.75.75V9a2 2 0 1 1-4 0v-.25a.75.75 0 0 0-.75-.75h-.25a.75.75 0 0 0-.75.75v.25a.75.75 0 0 0 1.5 0v-4.5A.75.75 0 0 1 8 4z" />'}
+                                        </svg>
+                                        <div class="flex-grow-1">
+                                            <h6 class="alert-heading mb-1">${heading}</h6>
+                                            <p class="mb-0">${message}</p>
+                                        </div>
+                                    </div>
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    
+                    // Insert alert after the header section
+                    const headerSection = document.querySelector('.custom-customer-index-header').parentElement.parentElement;
+                    headerSection.insertAdjacentHTML('afterend', alertHtml);
+                    
+                    // Scroll to alert
+                    const newAlert = document.querySelector('.custom-user-management-alert');
+                    if (newAlert) {
+                        newAlert.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                    }
+                }
 
                 function attachFormHandler() {
                     // This function is no longer needed as we use inline handlers
@@ -315,8 +364,44 @@
                 }
 
                 // Event listeners
-                actionSelect.addEventListener('change', function() {
+                actionSelect.addEventListener('change', async function() {
                     toggleStatus();
+                    
+                    // For upgrade, auto-select previous status if available
+                    if (actionSelect.value === 'upgrade' && customerSelect.value) {
+                        try {
+                            const url = new URL(`{{ url('resource-allocation') }}/${customerSelect.value}/allocate`);
+                            url.searchParams.append('action_type', 'upgrade');
+                            
+                            const response = await fetch(url, {
+                                headers: {
+                                    'Accept': 'application/json',
+                                    'X-Requested-With': 'XMLHttpRequest',
+                                },
+                            });
+                            
+                            if (response.ok) {
+                                const data = await response.json();
+                                // Extract status_id from the response HTML if available
+                                const tempDiv = document.createElement('div');
+                                tempDiv.innerHTML = data.html;
+                                const statusBadge = tempDiv.querySelector('.badge.bg-primary');
+                                
+                                // Try to find matching status in dropdown
+                                if (statusBadge) {
+                                    const statusName = statusBadge.textContent.trim();
+                                    const statusOptions = Array.from(statusSelect.options);
+                                    const matchingOption = statusOptions.find(opt => opt.text.trim() === statusName);
+                                    if (matchingOption) {
+                                        statusSelect.value = matchingOption.value;
+                                    }
+                                }
+                            }
+                        } catch (error) {
+                            console.error('Error fetching previous status:', error);
+                        }
+                    }
+                    
                     loadAllocationForm();
                 });
 

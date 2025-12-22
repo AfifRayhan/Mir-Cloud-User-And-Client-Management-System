@@ -53,8 +53,8 @@ class ResourceAllocationController extends Controller
             $statusId = $testStatus ? $testStatus->id : null;
         }
 
-        // For downgrades, get the most recent status from upgradations
-        if ($actionType === 'downgrade' && ! $statusId) {
+        // For upgrades and downgrades, get the most recent status from upgradations if not provided
+        if (($actionType === 'upgrade' || $actionType === 'downgrade') && ! $statusId) {
             $latestUpgradation = \App\Models\ResourceUpgradation::where('customer_id', $customer->id)
                 ->orderBy('created_at', 'desc')
                 ->first();
@@ -76,7 +76,10 @@ class ResourceAllocationController extends Controller
 
         $html = view('resource-allocation.partials.allocation-form', compact('customer', 'services', 'actionType', 'statusId', 'statusName', 'taskStatuses', 'isFirstAllocation', 'defaultTaskStatusId'))->render();
 
-        return response()->json(['html' => $html]);
+        return response()->json([
+            'html' => $html,
+            'status_id' => $statusId,
+        ]);
     }
 
     public function storeAllocation(Request $request, Customer $customer)
@@ -85,8 +88,13 @@ class ResourceAllocationController extends Controller
             'action_type' => 'required|in:upgrade,downgrade',
             'status_id' => $request->action_type === 'upgrade' ? 'required|exists:customer_statuses,id' : 'nullable|exists:customer_statuses,id',
             'task_status_id' => 'nullable|exists:task_statuses,id',
-            'activation_date' => $request->action_type === 'upgrade' ? 'required|date' : 'nullable|date',
-            'inactivation_date' => $request->action_type === 'upgrade' ? 'nullable|date' : 'nullable|date',
+            'activation_date' => $request->action_type === 'upgrade' ? 'required|date|after_or_equal:'.$customer->activation_date->format('Y-m-d') : 'nullable|date',
+            'inactivation_date' => [
+                'nullable',
+                'date',
+                'after_or_equal:activation_date',
+                'after_or_equal:'.$customer->activation_date->format('Y-m-d'),
+            ],
             'services' => 'nullable|array',
             'services.*' => 'nullable|integer|min:0',
         ]);
@@ -237,6 +245,9 @@ class ResourceAllocationController extends Controller
                 \Illuminate\Support\Facades\Log::error('Failed to send recommendation email: '.$e->getMessage());
             }
 
+            // Update summary table with latest service values
+            $this->updateCustomerSummary($lockedCustomer->id);
+
             $actionName = $actionType === 'upgrade' ? 'upgraded' : 'downgraded';
 
             return response()->json([
@@ -244,5 +255,34 @@ class ResourceAllocationController extends Controller
                 'message' => "Resources {$actionName} successfully for {$lockedCustomer->customer_name}.",
             ]);
         });
+    }
+
+    /**
+     * Update the summary table with latest service values for a customer
+     */
+    protected function updateCustomerSummary(int $customerId): void
+    {
+        $customer = \App\Models\Customer::find($customerId);
+        if (! $customer) {
+            return;
+        }
+
+        // Get all services
+        $services = \App\Models\Service::all();
+
+        foreach ($services as $service) {
+            $quantity = $customer->getResourceQuantity($service->service_name);
+
+            // Upsert summary record
+            \App\Models\Summary::updateOrCreate(
+                [
+                    'customer_id' => $customerId,
+                    'service_id' => $service->id,
+                ],
+                [
+                    'quantity' => $quantity,
+                ]
+            );
+        }
     }
 }

@@ -17,17 +17,45 @@
             </div>
         </div>
 
-        <!-- Success/Error Messages -->
+        <!-- Success Alert -->
         @if(session('success'))
-            <div class="custom-task-management-alert" role="alert">
-                <i class="fas fa-check-circle me-2"></i>{{ session('success') }}
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="custom-user-management-alert alert alert-success alert-dismissible fade show" role="alert">
+                    <div class="d-flex align-items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="me-3" viewBox="0 0 16 16">
+                            <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z" />
+                        </svg>
+                        <div class="flex-grow-1">
+                            <h6 class="alert-heading mb-1">Success!</h6>
+                            <p class="mb-0">{{ session('success') }}</p>
+                        </div>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
             </div>
+        </div>
         @endif
 
+        <!-- Error Alert -->
         @if(session('error'))
-            <div class="custom-task-management-alert" role="alert">
-                <i class="fas fa-exclamation-circle me-2"></i>{{ session('error') }}
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="custom-user-management-alert alert alert-danger alert-dismissible fade show" role="alert">
+                    <div class="d-flex align-items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="me-3" viewBox="0 0 16 16">
+                            <path d="M8 8a1 1 0 0 1 1 1v.01a1 1 0 1 1-2 0V9a1 1 0 0 1 1-1zm.25-2.25a.75.75 0 0 0-1.5 0v1.5a.75.75 0 0 0 1.5 0v-1.5z" />
+                            <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zM8 4a.75.75 0 0 1 .75.75v4.5a.75.75 0 0 0 1.5 0v-.25a.75.75 0 0 0-.75-.75h-.25a.75.75 0 0 0-.75.75V9a2 2 0 1 1-4 0v-.25a.75.75 0 0 0-.75-.75h-.25a.75.75 0 0 0-.75.75v.25a.75.75 0 0 0 1.5 0v-4.5A.75.75 0 0 1 8 4z" />
+                        </svg>
+                        <div class="flex-grow-1">
+                            <h6 class="alert-heading mb-1">Error!</h6>
+                            <p class="mb-0">{{ session('error') }}</p>
+                        </div>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
             </div>
+        </div>
         @endif
 
         <!-- Filters -->
@@ -315,8 +343,32 @@
         document.addEventListener('DOMContentLoaded', function() {
             const viewButtons = document.querySelectorAll('.view-task-btn');
             const params = new URLSearchParams(window.location.search);
-    
+            const deepTaskId = params.get('dtid');
+            const deepAction = params.get('da');
 
+            if (deepTaskId) {
+                console.log('Deep link detected:', { dtid: deepTaskId, da: deepAction });
+                if (deepAction === 'view') {
+                    const targetBtn = document.querySelector(`.view-task-btn[data-task-id="${deepTaskId}"]`);
+                    console.log('Target view button:', targetBtn);
+                    if (targetBtn) {
+                        setTimeout(() => {
+                            console.log('Clicking target button');
+                            targetBtn.click();
+                            targetBtn.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        }, 1200);
+                    }
+                } else if (deepAction === 'assign') {
+                    const assignBtn = document.querySelector(`button[data-bs-target="#assignModal${deepTaskId}"]`);
+                    console.log('Target assign button:', assignBtn);
+                    if (assignBtn) {
+                        setTimeout(() => {
+                            console.log('Clicking assign button');
+                            assignBtn.click();
+                        }, 1200);
+                    }
+                }
+            }
             
             viewButtons.forEach(button => {
                 button.addEventListener('click', function() {

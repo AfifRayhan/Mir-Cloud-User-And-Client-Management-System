@@ -211,21 +211,17 @@
                                                     </svg>
                                                     <span class="d-none d-sm-inline">Edit</span>
                                                 </a>
-                                                <form method="POST" action="{{ route('customers.destroy', $customer->id) }}"
-                                                    class="d-inline custom-customer-index-delete-form"
-                                                    onsubmit="return customCustomerIndexConfirmDelete('{{ addslashes($customer->customer_name) }}');">
-                                                    @csrf
-                                                    @method('DELETE')
-                                                    <button type="submit"
+                                                <button type="button"
                                                         class="btn btn-sm custom-customer-index-action-btn custom-customer-index-delete-btn"
+                                                        data-bs-toggle="modal" 
+                                                        data-bs-target="#deleteCustomerModal{{ $customer->id }}"
                                                         title="Delete Customer">
-                                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
-                                                            <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z" />
-                                                            <path d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z" />
-                                                        </svg>
-                                                        <span class="d-none d-sm-inline">Delete</span>
-                                                    </button>
-                                                </form>
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+                                                        <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z" />
+                                                        <path d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z" />
+                                                    </svg>
+                                                    <span class="d-none d-sm-inline">Delete</span>
+                                                </button>
                                             </div>
                                         </td>
                                     </tr>
@@ -245,4 +241,47 @@
             </div>
         </div>
     </div>
+
+    <!-- Delete Confirmation Modals -->
+    @foreach($customers as $customer)
+    <div class="modal fade text-start" id="deleteCustomerModal{{ $customer->id }}" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg">
+                <div class="modal-header bg-danger text-white border-0">
+                    <h5 class="modal-title fw-bold">
+                        <i class="fas fa-exclamation-triangle me-2"></i>Delete Customer
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4 text-center">
+                    <div class="mb-3">
+                        <i class="fas fa-user-minus fa-3x text-danger opacity-25"></i>
+                    </div>
+                    <h5 class="fw-bold mb-3">Confirm Deletion</h5>
+                    <p class="text-muted mb-3">
+                        Are you sure you want to permanently delete <strong>{{ $customer->customer_name }}</strong>?
+                    </p>
+                    <div class="alert alert-warning border-0 small text-start mb-0">
+                        <i class="fas fa-exclamation-circle me-2"></i>This will also delete all related:
+                        <ul class="mb-0 mt-2 list-unstyled ps-3">
+                            <li>• Cloud details</li>
+                            <li>• Resource allocations</li>
+                            <li>• All associated data</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 bg-light">
+                    <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">Cancel</button>
+                    <form method="POST" action="{{ route('customers.destroy', $customer->id) }}" class="d-inline">
+                        @csrf
+                        @method('DELETE')
+                        <button type="submit" class="btn btn-danger px-4">
+                            <i class="fas fa-trash-alt me-1"></i> Delete Permanent
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    @endforeach
 </x-app-layout>

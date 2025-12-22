@@ -12,21 +12,6 @@
                 </h5>
             </div>
             <div class="card-body p-4">
-                <!-- Success Message Container -->
-                <div id="allocation-success-message" class="alert alert-success alert-dismissible fade d-none" role="alert">
-                    <strong>Success!</strong> <span id="success-message-text"></span>
-                    <button type="button" class="btn-close" onclick="this.parentElement.classList.add('d-none')"></button>
-                </div>
-                
-                @if($isFirstAllocation ?? false)
-                    <div class="alert alert-info mb-4">
-                        <small><strong>Initial Allocation:</strong> This is the first resource allocation for this customer. Specify the initial quantity for each resource.</small>
-                    </div>
-                @else
-                    <div class="alert alert-success mb-4">
-                        <small><strong>Upgrade Mode:</strong> Specify the amount to increase for each resource.</small>
-                    </div>
-                @endif
 
                 <div class="row g-3 mb-4">
                     <div class="col-md-3">
@@ -44,7 +29,7 @@
                     </div>
                     <div class="col-md-3">
                         <label for="activation_date" class="form-label fw-semibold">Activation Date <span class="text-danger">*</span></label>
-                        <input type="date" id="activation_date" name="activation_date" class="form-control" value="{{ $customer->activation_date->format('Y-m-d') }}" required>
+                        <input type="date" id="activation_date" name="activation_date" class="form-control" value="{{ $customer->activation_date->format('Y-m-d') }}" min="{{ $customer->activation_date->format('Y-m-d') }}" required>
                     </div>
                     <div class="col-md-3">
                         <label for="inactivation_date" class="form-label fw-semibold">Inactivation Date</label>
@@ -109,15 +94,6 @@
                 </h5>
             </div>
             <div class="card-body p-4">
-                <!-- Success Message Container -->
-                <div id="allocation-success-message" class="alert alert-success alert-dismissible fade d-none" role="alert">
-                    <strong>Success!</strong> <span id="success-message-text"></span>
-                    <button type="button" class="btn-close" onclick="this.parentElement.classList.add('d-none')"></button>
-                </div>
-                
-                <div class="alert alert-warning mb-4">
-                    <small><strong>Downgrade Mode:</strong> Specify the amount to reduce from each resource.</small>
-                </div>
 
                 <div class="row g-3 mb-4">
                     <div class="col-md-3">
@@ -135,7 +111,7 @@
                     </div>
                     <div class="col-md-3">
                         <label for="activation_date" class="form-label fw-semibold">Activation Date <span class="text-danger">*</span></label>
-                        <input type="date" id="activation_date" name="activation_date" class="form-control" value="{{ now()->format('Y-m-d') }}" required>
+                        <input type="date" id="activation_date" name="activation_date" class="form-control" value="{{ now()->format('Y-m-d') }}" min="{{ $customer->activation_date->format('Y-m-d') }}" required>
                     </div>
                     <div class="col-md-3">
                         <label for="inactivation_date" class="form-label fw-semibold">Inactivation Date</label>

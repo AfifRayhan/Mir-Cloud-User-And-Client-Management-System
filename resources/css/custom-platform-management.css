@@ -211,24 +211,7 @@
     transform: translateY(-1px);
 }
 
-/* Alert Styles */
-.custom-platform-management-alert {
-    border-radius: var(--custom-platform-management-radius);
-    border: none;
-    box-shadow: var(--custom-platform-management-shadow);
-    padding: 1rem 1.5rem;
-    border-left: 4px solid var(--custom-platform-management-success);
-    background-color: white;
-    margin-bottom: 1.5rem;
-    position: relative;
-    z-index: 1;
-    display: flex;
-    align-items: center;
-}
 
-.custom-platform-management-alert-error {
-    border-left-color: var(--custom-platform-management-danger);
-}
 
 /* Stats */
 .custom-platform-management-stat-number {

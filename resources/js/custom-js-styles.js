@@ -32,7 +32,7 @@ document.addEventListener("DOMContentLoaded", function () {
             if (inputGroup) {
                 const inputIcon = inputGroup.querySelector(".custom-login-input-icon");
                 const passwordToggle = inputGroup.querySelector(".custom-login-password-toggle");
-                
+
                 if (type === "text") {
                     // Show password - switch borders to white
                     if (inputIcon) {
@@ -767,13 +767,6 @@ document.addEventListener("DOMContentLoaded", function () {
  * Custom Customer Index Styles Starts
  * ----------------------------------------------------
  */
-
-// Custom confirm delete function
-function customCustomerIndexConfirmDelete(customerName) {
-    return confirm(
-        `Are you sure you want to permanently delete "${customerName}"?\n\nThis will also delete all related:\n• Cloud details\n• Resource allocations\n• All associated data`
-    );
-}
 
 // Initialize table interactions
 document.addEventListener("DOMContentLoaded", function () {

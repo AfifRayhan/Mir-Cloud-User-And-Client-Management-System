@@ -222,24 +222,7 @@
     transform: translateY(-1px);
 }
 
-/* Alert Styles */
-.custom-service-management-alert {
-    border-radius: var(--custom-service-management-radius);
-    border: none;
-    box-shadow: var(--custom-service-management-shadow);
-    padding: 1rem 1.5rem;
-    border-left: 4px solid var(--custom-service-management-success);
-    background-color: white;
-    margin-bottom: 1.5rem;
-    position: relative;
-    z-index: 10;
-    display: flex;
-    align-items: center;
-}
 
-.custom-service-management-alert-error {
-    border-left-color: var(--custom-service-management-danger);
-}
 
 /* Stats */
 .custom-service-management-stat-number {

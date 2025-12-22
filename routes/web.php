@@ -75,7 +75,11 @@ Route::middleware('auth')->group(function () {
     // My Tasks (All authenticated users)
     Route::get('my-tasks', [\App\Http\Controllers\MyTaskController::class, 'index'])->name('my-tasks.index');
     Route::get('my-tasks/{task}/details', [\App\Http\Controllers\MyTaskController::class, 'getDetails'])->name('my-tasks.details');
-    Route::get('my-tasks/{task}/complete', [\App\Http\Controllers\MyTaskController::class, 'complete'])->name('my-tasks.complete')->middleware('signed');
+    Route::get('my-tasks/{task}/complete', function (App\Models\Task $task) {
+        return redirect()->route('my-tasks.index', ['dtid' => $task->id, 'da' => 'complete']);
+    });
+    Route::post('my-tasks/{task}/complete', [\App\Http\Controllers\MyTaskController::class, 'complete'])->name('my-tasks.complete');
+    Route::get('my-tasks/customer/{customerId}/vdcs', [\App\Http\Controllers\MyTaskController::class, 'getCustomerVdcs'])->name('my-tasks.customer-vdcs');
 });
 
 require __DIR__.'/auth.php';

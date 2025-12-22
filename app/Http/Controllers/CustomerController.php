@@ -36,7 +36,7 @@ class CustomerController extends Controller
     {
         $validated = $request->validate([
             'customer_name' => 'required|string|max:255',
-            'activation_date' => 'required|date',
+            'activation_date' => 'required|date|after_or_equal:today',
             'customer_address' => 'nullable|string',
             'bin_number' => 'nullable|string|max:255',
             'po_number' => 'nullable|string|max:255',

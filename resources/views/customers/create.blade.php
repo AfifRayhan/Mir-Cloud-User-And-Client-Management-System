@@ -79,6 +79,7 @@
                                                id="activation_date" 
                                                name="activation_date" 
                                                value="{{ old('activation_date', now()->format('Y-m-d')) }}" 
+                                               min="{{ now()->format('Y-m-d') }}"
                                                required>
                                         @error('activation_date')
                                             <div class="invalid-feedback">{{ $message }}</div>

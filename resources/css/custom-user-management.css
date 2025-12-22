@@ -115,6 +115,15 @@
     z-index: 1;
 }
 
+.custom-user-management-alert.alert-danger {
+    border-left-color: var(--custom-user-management-danger);
+}
+
+.custom-user-management-alert.alert-info {
+    border-left-color: #0ea5e9;
+    /* Sky blue for info */
+}
+
 .custom-user-management-alert .alert-heading {
     font-size: 1rem;
     font-weight: 600;

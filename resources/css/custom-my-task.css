@@ -103,22 +103,7 @@
     box-shadow: 0 10px 25px rgba(79, 70, 229, 0.3);
 }
 
-/* Alert Styles */
-.custom-my-task-alert {
-    border-radius: var(--custom-my-task-radius);
-    border: none;
-    box-shadow: var(--custom-my-task-shadow);
-    padding: 1.25rem 1.5rem;
-    border-left: 4px solid var(--custom-my-task-success);
-    position: relative;
-    z-index: 1;
-}
 
-.custom-my-task-alert .alert-heading {
-    font-size: 1rem;
-    font-weight: 600;
-    color: #1f2937;
-}
 
 /* Empty State */
 .custom-my-task-empty-card {

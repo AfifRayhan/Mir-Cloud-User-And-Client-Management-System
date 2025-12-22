@@ -225,17 +225,16 @@
                                                     </a>
 
                                                     @if($user->id !== auth()->id())
-                                                        <form action="{{ route('users.destroy', $user) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this user?');">
-                                                            @csrf
-                                                            @method('DELETE')
-                                                            <button type="submit" class="custom-user-management-action-btn custom-user-management-delete-btn">
-                                                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="me-1" viewBox="0 0 16 16">
-                                                                    <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z" />
-                                                                    <path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z" />
-                                                                </svg>
-                                                                <span class="btn-text">Delete</span>
-                                                            </button>
-                                                        </form>
+                                                        <button type="button" 
+                                                                class="custom-user-management-action-btn custom-user-management-delete-btn"
+                                                                data-bs-toggle="modal" 
+                                                                data-bs-target="#deleteUserModal{{ $user->id }}">
+                                                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="me-1" viewBox="0 0 16 16">
+                                                                <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z" />
+                                                                <path d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z" />
+                                                            </svg>
+                                                            <span class="btn-text">Delete</span>
+                                                        </button>
                                                     @endif
                                                 </div>
                                             </td>
@@ -263,3 +262,43 @@
         </div>
     </div>
 </x-app-layout>
+
+    <!-- Delete Confirmation Modals -->
+    @foreach($users as $user)
+    @if($user->id !== auth()->id())
+    <div class="modal fade text-start" id="deleteUserModal{{ $user->id }}" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg">
+                <div class="modal-header bg-danger text-white border-0">
+                    <h5 class="modal-title fw-bold">
+                        <i class="fas fa-exclamation-triangle me-2"></i>Delete User
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4 text-center">
+                    <div class="mb-3">
+                        <i class="fas fa-user-slash fa-3x text-danger opacity-25"></i>
+                    </div>
+                    <h5 class="fw-bold mb-3">Are you sure?</h5>
+                    <p class="text-muted mb-0">
+                        Are you sure you want to delete user <strong>{{ $user->name }}</strong>?
+                    </p>
+                    <p class="text-danger small mt-2">
+                        <i class="fas fa-info-circle me-1"></i>This action cannot be undone and will remove all access.
+                    </p>
+                </div>
+                <div class="modal-footer border-0 bg-light">
+                    <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">Cancel</button>
+                    <form method="POST" action="{{ route('users.destroy', $user) }}" class="d-inline">
+                        @csrf
+                        @method('DELETE')
+                        <button type="submit" class="btn btn-danger px-4">
+                            <i class="fas fa-trash-alt me-1"></i> Delete User
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    @endif
+    @endforeach

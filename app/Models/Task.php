@@ -18,6 +18,7 @@ class Task extends Model
         'assigned_by',
         'assigned_at',
         'completed_at',
+        'vdc_id',
     ];
 
     protected $casts = [
@@ -59,6 +60,11 @@ class Task extends Model
     public function assignedBy()
     {
         return $this->belongsTo(User::class, 'assigned_by');
+    }
+
+    public function vdc()
+    {
+        return $this->belongsTo(Vdc::class);
     }
 
     // Get the resource details based on allocation type

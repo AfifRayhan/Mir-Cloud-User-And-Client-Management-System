@@ -301,6 +301,32 @@
     color: var(--custom-my-task-secondary);
 }
 
+
+/* Custom Select for Dropdowns in Table */
+.custom-my-task-select {
+    border: 1px solid var(--custom-my-task-border);
+    border-radius: 0.5rem;
+    padding: 0.375rem 2rem 0.375rem 0.75rem;
+    font-size: 0.85rem;
+    transition: var(--custom-my-task-transition);
+    width: 100%;
+    background-color: white;
+    cursor: pointer;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    background-size: 16px 12px;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+}
+
+.custom-my-task-select:focus {
+    border-color: var(--custom-my-task-primary);
+    box-shadow: 0 0 0 3px var(--custom-my-task-primary-light);
+    outline: none;
+}
+
 /* Badges */
 .custom-my-task-badge {
     display: inline-block;

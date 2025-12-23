@@ -87,6 +87,7 @@ Route::middleware('auth')->group(function () {
         return redirect()->route('my-tasks.index', ['dtid' => $task->id, 'da' => 'complete']);
     });
     Route::post('my-tasks/{task}/complete', [\App\Http\Controllers\MyTaskController::class, 'complete'])->name('my-tasks.complete');
+    Route::post('my-tasks/{task}/platform', [\App\Http\Controllers\MyTaskController::class, 'updatePlatform'])->name('my-tasks.update-platform');
     Route::get('my-tasks/customer/{customerId}/vdcs', [\App\Http\Controllers\MyTaskController::class, 'getCustomerVdcs'])->name('my-tasks.customer-vdcs');
 });
 

@@ -23,7 +23,9 @@ class MyTaskController extends Controller
             ->select('tasks.*')
             ->paginate(10);
 
-        return view('my-tasks.index', compact('tasks'));
+        $platforms = \App\Models\Platform::all();
+
+        return view('my-tasks.index', compact('tasks', 'platforms'));
     }
 
     /**
@@ -57,6 +59,30 @@ class MyTaskController extends Controller
         $task->load(['customer', 'status', 'assignedTo', 'assignedBy', 'resourceUpgradation.details.service', 'resourceDowngradation.details.service']);
 
         return view('my-tasks.show', compact('task'));
+    }
+
+    /**
+     * Update the platform for a task's customer
+     */
+    public function updatePlatform(Request $request, Task $task)
+    {
+        if ($task->assigned_to !== Auth::id() && ! Auth::user()->isAdmin()) {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+
+        $validated = $request->validate([
+            'platform_id' => 'required|exists:platforms,id',
+        ]);
+
+        $task->customer->update([
+            'platform_id' => $validated['platform_id'],
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Platform updated successfully.',
+            'platform_name' => $task->customer->platform->platform_name,
+        ]);
     }
 
     /**

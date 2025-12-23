@@ -40,6 +40,10 @@
                     <li class="nav-item">
                         <a class="nav-link {{ request()->routeIs('my-tasks.*') ? 'active' : '' }}" href="{{ route('my-tasks.index') }}">Task</a>
                     </li>
+                @elseif(Auth::user()->isKam() || Auth::user()->isProKam())
+                    <li class="nav-item">
+                        <a class="nav-link {{ request()->routeIs('kam-task-management.*') ? 'active' : '' }}" href="{{ route('kam-task-management.index') }}">Task</a>
+                    </li>
                 @elseif(Auth::user()->isAdmin() || Auth::user()->isProTech() || Auth::user()->isManagement())
                     <li class="nav-item">
                         <a class="nav-link {{ request()->routeIs('task-management.*') ? 'active' : '' }}" href="{{ route('task-management.index') }}">Task</a>

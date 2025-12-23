@@ -101,7 +101,8 @@
                                             <input class="form-check-input custom-login-checkbox" 
                                                    type="checkbox" 
                                                    id="remember_me" 
-                                                   name="remember">
+                                                   name="remember"
+                                                   value="1">
                                             <label class="form-check-label custom-login-checkbox-label" for="remember_me">
                                                 Remember me
                                             </label>

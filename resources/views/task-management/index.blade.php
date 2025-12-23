@@ -203,7 +203,7 @@
                                                 </div>
                                             </div>
                                         </td>
-                                        <td class="custom-task-management-table-cell">{{ $task->created_at->format('M d, Y H:i') }}</td>
+                                        <td class="custom-task-management-table-cell">{{ $task->created_at->format('M d, Y H:i:s') }}</td>
                                         <td class="custom-task-management-table-cell">
                                             @if($task->status)
                                                 <span class="custom-task-management-badge">{{ $task->status->name }}</span>
@@ -246,11 +246,19 @@
                                                         <i class="fas fa-user-check me-1"></i> <span class="btn-text">Assigned</span>
                                                     </span>
                                                 @else
-                                                    <button type="button" class="custom-task-management-action-btn custom-task-management-edit-btn" 
-                                                            data-bs-toggle="modal" 
-                                                            data-bs-target="#assignModal{{ $task->id }}">
-                                                        <i class="fas fa-user-plus me-1"></i> <span class="btn-text">Assign</span>
-                                                    </button>
+                                                    @if($task->isEligibleForAction())
+                                                        <button type="button" class="custom-task-management-action-btn custom-task-management-edit-btn" 
+                                                                data-bs-toggle="modal" 
+                                                                data-bs-target="#assignModal{{ $task->id }}">
+                                                            <i class="fas fa-user-plus me-1"></i> <span class="btn-text">Assign</span>
+                                                        </button>
+                                                    @else
+                                                        <button type="button" class="custom-task-management-action-btn custom-task-management-edit-btn btn-warning" 
+                                                                data-bs-toggle="modal" 
+                                                                data-bs-target="#consistencyWarningModal{{ $task->id }}">
+                                                            <i class="fas fa-exclamation-triangle me-1"></i> <span class="btn-text">Assign</span>
+                                                        </button>
+                                                    @endif
                                                 @endif
                                             </div>
                                         </td>
@@ -327,6 +335,38 @@
                         </button>
                     </div>
                 </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Consistency Warning Modals -->
+    <div class="modal fade" id="consistencyWarningModal{{ $task->id }}" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg">
+                <div class="modal-header bg-warning text-dark border-0">
+                    <h5 class="modal-title fw-bold">
+                        <i class="fas fa-exclamation-triangle me-2"></i>Consistency Check
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4 text-center">
+                    <div class="mb-3">
+                        <i class="fas fa-clock fa-3x text-warning opacity-50"></i>
+                    </div>
+                    <h5 class="fw-bold mb-3">Order of Operations</h5>
+                    <p class="text-muted mb-0">
+                        Assign the first task to ensure consistency.
+                    </p>
+                </div>
+                <div class="modal-footer border-0 bg-light d-flex gap-2">
+                    <button type="button" class="btn btn-secondary px-4 flex-grow-1" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-warning px-4 flex-grow-1" 
+                            data-bs-dismiss="modal" 
+                            data-bs-toggle="modal" 
+                            data-bs-target="#assignModal{{ $task->id }}">
+                        Assign Anyway
+                    </button>
+                </div>
             </div>
         </div>
     </div>

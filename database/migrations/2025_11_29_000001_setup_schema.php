@@ -164,6 +164,34 @@ return new class extends Migration
 
             $table->timestamps();
         });
+
+        // 15. VDCs
+        Schema::create('vdcs', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('customer_id')->constrained('customers')->onDelete('cascade');
+            $table->string('vdc_name');
+            $table->timestamps();
+
+            // Unique constraint: one VDC name per customer
+            $table->unique(['customer_id', 'vdc_name']);
+        });
+
+        // 16. Summaries
+        Schema::create('summaries', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('customer_id')->constrained('customers')->onDelete('cascade');
+            $table->foreignId('service_id')->constrained('services')->onDelete('cascade');
+            $table->integer('quantity')->default(0);
+            $table->timestamps();
+
+            // Unique constraint: one summary record per customer-service pair
+            $table->unique(['customer_id', 'service_id']);
+        });
+
+        // 17. Add VDC to Tasks
+        Schema::table('tasks', function (Blueprint $table) {
+            $table->foreignId('vdc_id')->nullable()->after('task_status_id')->constrained('vdcs')->nullOnDelete();
+        });
     }
 
     /**
@@ -171,6 +199,13 @@ return new class extends Migration
      */
     public function down(): void
     {
+        Schema::table('tasks', function (Blueprint $table) {
+            $table->dropForeign(['vdc_id']);
+            $table->dropColumn('vdc_id');
+        });
+
+        Schema::dropIfExists('summaries');
+        Schema::dropIfExists('vdcs');
         Schema::dropIfExists('tasks');
         Schema::dropIfExists('resource_downgradation_details');
         Schema::dropIfExists('resource_downgradations');

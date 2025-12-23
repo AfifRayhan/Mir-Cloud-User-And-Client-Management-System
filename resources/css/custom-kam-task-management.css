@@ -1,0 +1,275 @@
+/* Custom KAM Task Management Variables */
+:root {
+    --custom-kam-task-management-primary: #10b981;
+    --custom-kam-task-management-primary-light: #d1fae5;
+    --custom-kam-task-management-success: #10b981;
+    --custom-kam-task-management-success-light: #d1fae5;
+    --custom-kam-task-management-danger: #ef4444;
+    --custom-kam-task-management-danger-light: #fee2e2;
+    --custom-kam-task-management-warning: #f59e0b;
+    --custom-kam-task-management-warning-light: #fef3c7;
+    --custom-kam-task-management-secondary: #6b7280;
+    --custom-kam-task-management-secondary-light: #f3f4f6;
+    --custom-kam-task-management-border: #e5e7eb;
+    --custom-kam-task-management-bg: #f8fafc;
+    --custom-kam-task-management-card-bg: #ffffff;
+    --custom-kam-task-management-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);
+    --custom-kam-task-management-shadow-lg: 0 10px 25px -5px rgb(0 0 0 / 0.1);
+    --custom-kam-task-management-radius: 0.75rem;
+    --custom-kam-task-management-transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Container Styles */
+.custom-kam-task-management-container {
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+    min-height: calc(100vh - 76px);
+    position: relative;
+    overflow-x: hidden;
+}
+
+/* Background Elements */
+.custom-kam-task-management-bg-pattern {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image: radial-gradient(var(--custom-kam-task-management-primary-light) 1px, transparent 1px);
+    background-size: 30px 30px;
+    opacity: 0.3;
+    pointer-events: none;
+}
+
+.custom-kam-task-management-bg-circle {
+    position: absolute;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--custom-kam-task-management-primary) 0%, #34d399 100%);
+    opacity: 0.05;
+    pointer-events: none;
+}
+
+.custom-kam-task-management-bg-circle.circle-1 {
+    width: 300px;
+    height: 300px;
+    top: -150px;
+    right: -150px;
+}
+
+.custom-kam-task-management-bg-circle.circle-2 {
+    width: 200px;
+    height: 200px;
+    bottom: -100px;
+    left: -100px;
+    background: linear-gradient(135deg, var(--custom-kam-task-management-success) 0%, #34d399 100%);
+}
+
+/* Header Styles */
+.custom-kam-task-management-header {
+    position: relative;
+    z-index: 1;
+    margin-bottom: 1.5rem;
+}
+
+.custom-kam-task-management-title {
+    font-size: 2rem;
+    color: #1f2937;
+    letter-spacing: -0.025em;
+    margin-bottom: 0.5rem;
+}
+
+.custom-kam-task-management-subtitle {
+    font-size: 1.125rem;
+    color: var(--custom-kam-task-management-secondary);
+    max-width: 600px;
+}
+
+/* Filter Button */
+.custom-kam-task-management-filter-btn {
+    background: linear-gradient(135deg, var(--custom-kam-task-management-primary) 0%, #34d399 100%);
+    border: none;
+    border-radius: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    font-weight: 500;
+    color: white;
+    transition: var(--custom-kam-task-management-transition);
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.custom-kam-task-management-filter-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px rgba(16, 185, 129, 0.3);
+}
+
+/* Reset Button */
+.custom-kam-task-management-reset-btn {
+    background: linear-gradient(135deg, var(--custom-kam-task-management-secondary) 0%, #9ca3af 100%);
+    border: none;
+    border-radius: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    font-weight: 500;
+    color: white;
+    transition: var(--custom-kam-task-management-transition);
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.custom-kam-task-management-reset-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px rgba(107, 114, 128, 0.3);
+}
+
+/* Card Styles */
+.custom-kam-task-management-card {
+    border-radius: var(--custom-kam-task-management-radius);
+    background: var(--custom-kam-task-management-card-bg);
+    border: 1px solid var(--custom-kam-task-management-border);
+    transition: var(--custom-kam-task-management-transition);
+    position: relative;
+    z-index: 1;
+    overflow: hidden;
+    margin-bottom: 2rem;
+    padding: 1.5rem;
+}
+
+.custom-kam-task-management-card:hover {
+    box-shadow: var(--custom-kam-task-management-shadow-lg) !important;
+}
+
+.custom-kam-task-management-card-header {
+    padding: 0 0 1rem;
+    border-bottom: 1px solid var(--custom-kam-task-management-border);
+    margin-bottom: 1.5rem;
+}
+
+.custom-kam-task-management-card-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #1f2937;
+    margin: 0;
+}
+
+/* Table Styles */
+.custom-kam-task-management-table-responsive {
+    overflow-x: auto;
+}
+
+.custom-kam-task-management-table {
+    width: 100%;
+    margin: 0;
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+.custom-kam-task-management-table-head {
+    background: var(--custom-kam-task-management-bg);
+}
+
+.custom-kam-task-management-table-header {
+    padding: 1rem;
+    font-weight: 600;
+    color: #374151;
+    font-size: 0.8125rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 1px solid var(--custom-kam-task-management-border);
+    white-space: nowrap;
+}
+
+.custom-kam-task-management-table-cell {
+    padding: 1rem;
+    vertical-align: middle;
+    border-bottom: 1px solid var(--custom-kam-task-management-border);
+}
+
+.custom-kam-task-management-table-row:hover {
+    background: var(--custom-kam-task-management-bg);
+}
+
+/* Action Buttons */
+.custom-kam-task-management-action-btn {
+    border-radius: 0.375rem;
+    padding: 0.375rem 0.75rem;
+    font-size: 0.75rem;
+    font-weight: 500;
+    transition: var(--custom-kam-task-management-transition);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.25rem;
+    border: none;
+}
+
+.custom-kam-task-management-view-btn {
+    background: #e0e7ff;
+    color: #4f46e5;
+}
+
+.custom-kam-task-management-edit-btn {
+    background: var(--custom-kam-task-management-primary-light);
+    color: var(--custom-kam-task-management-primary);
+}
+
+.custom-kam-task-management-delete-btn {
+    background: var(--custom-kam-task-management-danger-light);
+    color: var(--custom-kam-task-management-danger);
+}
+
+.custom-kam-task-management-view-btn:hover { background: #4f46e5; color: white; transform: translateY(-1px); }
+.custom-kam-task-management-edit-btn:hover { background: var(--custom-kam-task-management-primary); color: white; transform: translateY(-1px); }
+.custom-kam-task-management-delete-btn:hover { background: var(--custom-kam-task-management-danger); color: white; transform: translateY(-1px); }
+
+/* Badges */
+.custom-kam-task-management-badge {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    font-size: 0.75rem;
+    font-weight: 500;
+    border-radius: 50px;
+    white-space: nowrap;
+}
+
+.custom-kam-task-management-badge-upgrade {
+    background-color: var(--custom-kam-task-management-success-light);
+    color: var(--custom-kam-task-management-success);
+    border: 1px solid var(--custom-kam-task-management-success);
+}
+
+.custom-kam-task-management-badge-downgrade {
+    background-color: var(--custom-kam-task-management-warning-light);
+    color: var(--custom-kam-task-management-warning);
+    border: 1px solid var(--custom-kam-task-management-warning);
+}
+
+/* Date Display */
+.custom-kam-task-management-date {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.custom-kam-task-management-date-day {
+    width: 36px;
+    height: 36px;
+    background: var(--custom-kam-task-management-primary-light);
+    color: var(--custom-kam-task-management-primary);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 0.875rem;
+}
+
+/* Empty State */
+.custom-kam-task-management-empty-card {
+    border-radius: var(--custom-kam-task-management-radius);
+    background: var(--custom-kam-task-management-card-bg);
+    border: 1px solid var(--custom-kam-task-management-border);
+    padding: 3rem;
+    text-align: center;
+}

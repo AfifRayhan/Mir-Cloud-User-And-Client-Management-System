@@ -19,6 +19,7 @@ class Task extends Model
         'assigned_at',
         'completed_at',
         'vdc_id',
+        'has_resource_conflict',
     ];
 
     protected $casts = [
@@ -101,5 +102,30 @@ class Task extends Model
     public function scopeAssignedToUser($query, $userId)
     {
         return $query->where('assigned_to', $userId);
+    }
+
+    /**
+     * Check if this task is eligible for action (assignment or completion).
+     * It must be the oldest task of its kind (unassigned or uncompleted) for its customer.
+     */
+    public function isEligibleForAction(): bool
+    {
+        if ($this->completed_at) {
+            return true;
+        }
+
+        $query = self::where('customer_id', $this->customer_id)
+            ->whereNull('completed_at')
+            ->where('id', '<', $this->id);
+
+        if ($this->assigned_to) {
+            // If assigned, we check if there are older assigned but uncompleted tasks
+            $query->whereNotNull('assigned_to');
+        } else {
+            // If unassigned, we check if there are older unassigned tasks
+            $query->whereNull('assigned_to');
+        }
+
+        return $query->count() === 0;
     }
 }

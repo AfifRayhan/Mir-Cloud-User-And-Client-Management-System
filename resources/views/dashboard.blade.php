@@ -224,7 +224,7 @@
                 @endif
 
                 <!-- Services Card -->
-               @if(Auth::user()->isAdmin() || Auth::user()->isProTech() || Auth::user()->isProKam() || Auth::user()->isManagement())
+                @if(Auth::user()->isAdmin() || Auth::user()->isProTech() || Auth::user()->isProKam() || Auth::user()->isManagement())
                     <div class="col-12 col-md-6 col-lg-4">
                         <a href="{{ route('services.index') }}" class="custom-dashboard-card-link">
                             <div class="card custom-dashboard-card custom-dashboard-card-warning border-0 shadow-sm h-100">
@@ -254,21 +254,53 @@
                 @endif
             
 
-            <!-- Task Management Card -->
-            @if(Auth::user()->isAdmin() || Auth::user()->isProTech() || Auth::user()->isManagement())
+                
+ 
+             <!-- Task Management Card -->
+                @if(Auth::user()->isAdmin() || Auth::user()->isProTech() || Auth::user()->isManagement())
+                    <div class="col-12 col-md-6 col-lg-4">
+                        <a href="{{ route('task-management.index') }}" class="custom-dashboard-card-link">
+                            <div class="card custom-dashboard-card custom-dashboard-card-danger border-0 shadow-sm h-100">
+                                <div class="card-body p-4">
+                                    <div class="d-flex align-items-start mb-4">
+                                        <div class="custom-dashboard-icon-wrapper bg-danger bg-opacity-10">
+                                            <i class="fas fa-tasks text-danger"></i>
+                                        </div>
+                                        <div class="ms-3">
+                                            <h5 class="custom-dashboard-card-title mb-1">Task Management</h5>
+                                            <p class="custom-dashboard-card-subtitle text-muted mb-0">
+                                                View and assign tasks
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div class="custom-dashboard-card-footer">
+                                        <span class="custom-dashboard-card-action">
+                                            Manage Tasks
+                                            <i class="fas fa-arrow-right ms-2"></i>
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="custom-dashboard-card-hover"></div>
+                            </div>
+                        </a>
+                    </div>
+                @endif
+
+            <!-- KAM Task Management Card -->
+            @if(Auth::user()->isAdmin() || Auth::user()->isProKam() || Auth::user()->isKam())
                 <div class="col-12 col-md-6 col-lg-4">
-                    <a href="{{ route('task-management.index') }}" class="custom-dashboard-card-link">
-                        <div class="card custom-dashboard-card custom-dashboard-card-danger border-0 shadow-sm h-100">
+                    <a href="{{ route('kam-task-management.index') }}" class="custom-dashboard-card-link">
+                        <div class="card custom-dashboard-card custom-dashboard-card-success border-0 shadow-sm h-100">
                             <div class="card-body p-4">
                                 <div class="d-flex align-items-start mb-4">
-                                    <div class="custom-dashboard-icon-wrapper bg-danger bg-opacity-10">
-                                        <i class="fas fa-tasks text-danger"></i>
+                                    <div class="custom-dashboard-icon-wrapper bg-success bg-opacity-10">
+                                        <i class="fas fa-tasks text-success"></i>
                                     </div>
                                     <div class="ms-3">
-                                        <h5 class="custom-dashboard-card-title mb-1">Task Management</h5>
+                                        <h5 class="custom-dashboard-card-title mb-1">KAM Task Management</h5>
                                         <p class="custom-dashboard-card-subtitle text-muted mb-0">
-                                            View and assign tasks
-                                        </p>
+                                            Edit or delete unassigned tasks
+                                         </p>
                                     </div>
                                 </div>
                                 <div class="custom-dashboard-card-footer">

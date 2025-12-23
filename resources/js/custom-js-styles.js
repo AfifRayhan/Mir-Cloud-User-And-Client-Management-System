@@ -62,14 +62,38 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 
+    // Form validation feedback
+    const usernameInput = document.getElementById("username");
+    const passwordInputField = document.getElementById("password");
+
     // Form submission animation
     const loginForm = document.getElementById("loginForm");
     const submitBtn = loginForm?.querySelector(".custom-login-submit-btn");
 
     if (loginForm && submitBtn) {
+        // Auto-fill logic
+        const rememberMeCheckbox = document.getElementById("remember_me");
+        const savedUsername = localStorage.getItem("remembered_username");
+        const savedPassword = localStorage.getItem("remembered_password");
+
+        if (savedUsername && savedPassword && usernameInput && passwordInputField) {
+            usernameInput.value = savedUsername;
+            passwordInputField.value = savedPassword;
+            if (rememberMeCheckbox) rememberMeCheckbox.checked = true;
+        }
+
         loginForm.addEventListener("submit", function (e) {
             const btnText = submitBtn.querySelector(".custom-login-btn-text");
             const btnIcon = submitBtn.querySelector("i");
+
+            // Save credentials if "Remember me" is checked
+            if (rememberMeCheckbox?.checked && usernameInput?.value && passwordInputField?.value) {
+                localStorage.setItem("remembered_username", usernameInput.value);
+                localStorage.setItem("remembered_password", passwordInputField.value);
+            } else if (rememberMeCheckbox && !rememberMeCheckbox.checked) {
+                localStorage.removeItem("remembered_username");
+                localStorage.removeItem("remembered_password");
+            }
 
             // Show loading state
             if (btnText) btnText.textContent = "Signing In...";
@@ -196,10 +220,6 @@ document.addEventListener("DOMContentLoaded", function () {
             });
         }
     }
-
-    // Form validation feedback
-    const usernameInput = document.getElementById("username");
-    const passwordInputField = document.getElementById("password");
 
     if (usernameInput && passwordInputField) {
         [usernameInput, passwordInputField].forEach((input) => {

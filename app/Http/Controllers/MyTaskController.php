@@ -15,9 +15,12 @@ class MyTaskController extends Controller
     public function index()
     {
         $tasks = Task::with(['customer', 'status', 'assignedBy', 'resourceUpgradation.details.service', 'resourceDowngradation.details.service'])
-            ->where('assigned_to', Auth::id())
-            ->orderByRaw('CASE WHEN id = ? THEN 0 ELSE 1 END', [request('dtid')])
-            ->orderBy('assigned_at', 'desc')
+            ->leftJoin('resource_upgradations', 'tasks.resource_upgradation_id', '=', 'resource_upgradations.id')
+            ->leftJoin('resource_downgradations', 'tasks.resource_downgradation_id', '=', 'resource_downgradations.id')
+            ->where('tasks.assigned_to', Auth::id())
+            ->orderByRaw('CASE WHEN tasks.id = ? THEN 0 ELSE 1 END', [request('dtid')])
+            ->orderByRaw('COALESCE(resource_upgradations.created_at, resource_downgradations.created_at) ASC')
+            ->select('tasks.*')
             ->paginate(10);
 
         return view('my-tasks.index', compact('tasks'));

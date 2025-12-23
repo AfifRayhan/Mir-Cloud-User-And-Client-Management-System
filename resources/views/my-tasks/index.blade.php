@@ -194,37 +194,6 @@
                                         </td>
                                     </tr>
 
-                                    <!-- Consistency Warning Modals -->
-                                    <div class="modal fade" id="consistencyWarningModal{{ $task->id }}" tabindex="-1">
-                                        <div class="modal-dialog modal-dialog-centered">
-                                            <div class="modal-content border-0 shadow-lg">
-                                                <div class="modal-header bg-warning text-dark border-0">
-                                                    <h5 class="modal-title fw-bold">
-                                                        <i class="fas fa-exclamation-triangle me-2"></i>Consistency Check
-                                                    </h5>
-                                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                                                </div>
-                                                <div class="modal-body p-4 text-center">
-                                                    <div class="mb-3">
-                                                        <i class="fas fa-clock fa-3x text-warning opacity-50"></i>
-                                                    </div>
-                                                    <h5 class="fw-bold mb-3">Order of Operations</h5>
-                                                    <p class="text-muted mb-0">
-                                                        Complete the first task for this customer to ensure consistency.
-                                                    </p>
-                                                </div>
-                                                <div class="modal-footer border-0 bg-light d-flex gap-2">
-                                                    <button type="button" class="btn btn-secondary px-4 flex-grow-1" data-bs-dismiss="modal">Cancel</button>
-                                                    <button type="button" class="btn btn-warning px-4 flex-grow-1 complete-task-anyway-btn" 
-                                                            data-task-id="{{ $task->id }}"
-                                                            data-customer-id="{{ $task->customer_id }}"
-                                                            data-bs-dismiss="modal">
-                                                        Complete Anyway
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
 
                                     <!-- Expandable details row (hidden by default) -->
                                     <tr class="task-details-row" id="details-{{ $task->id }}" style="display: none;">
@@ -261,6 +230,40 @@
             </div>
         </div>
     </div>
+
+    <!-- Consistency Warning Modals -->
+    @foreach($tasks as $task)
+        <div class="modal fade" id="consistencyWarningModal{{ $task->id }}" tabindex="-1">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content border-0 shadow-lg">
+                    <div class="modal-header bg-warning text-dark border-0">
+                        <h5 class="modal-title fw-bold">
+                            <i class="fas fa-exclamation-triangle me-2"></i>Consistency Check
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body p-4 text-center">
+                        <div class="mb-3">
+                            <i class="fas fa-clock fa-3x text-warning opacity-50"></i>
+                        </div>
+                        <h5 class="fw-bold mb-3">Order of Operations</h5>
+                        <p class="text-muted mb-0">
+                            Complete the first task for this customer to ensure consistency.
+                        </p>
+                    </div>
+                    <div class="modal-footer border-0 bg-light d-flex gap-2">
+                        <button type="button" class="btn btn-secondary px-4 flex-grow-1" data-bs-dismiss="modal">Cancel</button>
+                        <button type="button" class="btn btn-warning px-4 flex-grow-1 complete-task-anyway-btn" 
+                                data-task-id="{{ $task->id }}"
+                                data-customer-id="{{ $task->customer_id }}"
+                                data-bs-dismiss="modal">
+                            Complete Anyway
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    @endforeach
 
     <!-- VDC Selection Modal -->
     <div class="modal fade" id="vdcModal" tabindex="-1" aria-labelledby="vdcModalLabel" aria-hidden="true">

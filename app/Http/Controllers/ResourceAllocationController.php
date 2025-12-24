@@ -12,8 +12,29 @@ class ResourceAllocationController extends Controller
 {
     public function index(): View
     {
-        $customers = Customer::orderBy('customer_name')
-            ->get();
+        $customersRaw = Customer::orderBy('customer_name')->get();
+        $customers = collect();
+
+        // Group by name to identify duplicates
+        $grouped = $customersRaw->groupBy('customer_name');
+
+        foreach ($grouped as $name => $group) {
+            if ($group->count() > 1) {
+                // If duplicates exist, append index to each
+                $index = 1;
+                foreach ($group as $customer) {
+                    $customer->customer_name = $customer->customer_name.'-'.$index;
+                    $customers->push($customer);
+                    $index++;
+                }
+            } else {
+                // No duplicates, just add
+                $customers->push($group->first());
+            }
+        }
+
+        // Re-sort entire collection by modified name so they appear in order
+        $customers = $customers->sortBy('customer_name', SORT_NATURAL | SORT_FLAG_CASE);
 
         $customerStatuses = \App\Models\CustomerStatus::all();
 
@@ -79,6 +100,8 @@ class ResourceAllocationController extends Controller
         return response()->json([
             'html' => $html,
             'status_id' => $statusId,
+            'customer_name' => $customer->customer_name,
+            'action_type' => $actionType,
         ]);
     }
 
@@ -245,9 +268,6 @@ class ResourceAllocationController extends Controller
                 \Illuminate\Support\Facades\Log::error('Failed to send recommendation email: '.$e->getMessage());
             }
 
-            // Update summary table with latest service values
-            $this->updateCustomerSummary($lockedCustomer->id);
-
             $actionName = $actionType === 'upgrade' ? 'upgraded' : 'downgraded';
 
             return response()->json([
@@ -255,34 +275,5 @@ class ResourceAllocationController extends Controller
                 'message' => "Resources {$actionName} successfully for {$lockedCustomer->customer_name}.",
             ]);
         });
-    }
-
-    /**
-     * Update the summary table with latest service values for a customer
-     */
-    protected function updateCustomerSummary(int $customerId): void
-    {
-        $customer = \App\Models\Customer::find($customerId);
-        if (! $customer) {
-            return;
-        }
-
-        // Get all services
-        $services = \App\Models\Service::all();
-
-        foreach ($services as $service) {
-            $quantity = $customer->getResourceQuantity($service->service_name);
-
-            // Upsert summary record
-            \App\Models\Summary::updateOrCreate(
-                [
-                    'customer_id' => $customerId,
-                    'service_id' => $service->id,
-                ],
-                [
-                    'quantity' => $quantity,
-                ]
-            );
-        }
     }
 }

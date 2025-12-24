@@ -1,5 +1,6 @@
 <x-app-layout>
     @push('styles')
+    @vite(['resources/css/custom-resource-allocation.css'])
     <style>
         .kam-task-details-row {
             display: none !important;
@@ -124,9 +125,10 @@
                         <thead class="custom-kam-task-management-table-head">
                             <tr>
                                 <th class="custom-kam-task-management-table-header">Customer</th>
+                                <th class="custom-kam-task-management-table-header">Inserted By</th>
                                 <th class="custom-kam-task-management-table-header">Platform</th>
                                 <th class="custom-kam-task-management-table-header">Type</th>
-                                <th class="custom-kam-task-management-table-header">Activation Date</th>
+                                <th class="custom-kam-task-management-table-header">Resource Activation</th>
                                 <th class="custom-kam-task-management-table-header">Status</th>
                                 <th class="custom-kam-task-management-table-header">Assigned To</th>
                                 <th class="custom-kam-task-management-table-header">Actions</th>
@@ -143,6 +145,16 @@
                                                     <i class="fas fa-exclamation-triangle me-1"></i> Resource Conflict
                                                 </span>
                                             </div>
+                                        @endif
+                                    </td>
+                                    <td class="custom-kam-task-management-table-cell">
+                                        @if($task->insertedBy)
+                                            <div class="d-flex align-items-center">
+                                                <i class="fas fa-user-circle text-secondary me-2"></i>
+                                                {{ $task->insertedBy->name }}
+                                            </div>
+                                        @else
+                                            <span class="text-muted">System</span>
                                         @endif
                                     </td>
                                     <td class="custom-kam-task-management-table-cell">
@@ -169,7 +181,7 @@
                                                 {{ $task->activation_date->format('d') }}
                                             </div>
                                             <div class="d-flex flex-column ms-2">
-                                                <span class="fw-bold">{{ $task->activation_date->format('M') }}</span>
+                                                <span class="fw-bold">{{ $task->activation_date->format('F') }}</span>
                                                 <span class="text-muted small">{{ $task->activation_date->format('Y') }}</span>
                                             </div>
                                         </div>
@@ -266,16 +278,107 @@
                                 <table class="table table-bordered">
                                     <thead>
                                         <tr class="table-light">
-                                            <th>Service</th>
-                                            <th>{{ $task->allocation_type === 'upgrade' ? 'Upgrade Amount' : 'Downgrade Amount' }}</th>
+                                            <th class="resource-alloc-service-cell"><i class="fas fa-tools me-2"></i>Service</th>
+                                            <th><i class="fas fa-chart-line me-2"></i>Current</th>
+                                            <th>
+                                                @if($task->allocation_type === 'upgrade')
+                                                    <i class="fas fa-arrow-up me-2"></i>Increase By
+                                                @else
+                                                    <i class="fas fa-arrow-down me-2"></i>Reduce By
+                                                @endif
+                                            </th>
+                                            <th><i class="fas fa-equals me-2"></i>New Total</th>
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        @foreach($task->resourceDetails as $detail)
+                                        @php
+                                            // Create a map of existing details by service_id
+                                            $detailsMap = $task->resourceDetails->keyBy('service_id');
+                                        @endphp
+                                        @foreach($services as $service)
+                                            @php
+                                                $existingDetail = $detailsMap->get($service->id);
+                                                $amount = 0;
+                                                $detailId = null;
+                                                
+                                                    if ($existingDetail) {
+                                                        $amount = $task->allocation_type === 'upgrade' 
+                                                            ? $existingDetail->upgrade_amount 
+                                                            : $existingDetail->downgrade_amount;
+                                                        $detailId = $existingDetail->id;
+                                                    }
+
+                                                    // Calculate current value relative to this task
+                                                    // For upgrades: current = quantity - upgrade_amount
+                                                    // For downgrades: current = quantity + downgrade_amount
+                                                    // But wait, $task->customer->getResourceQuantity($service->service_name) gives the LIVE current quantity
+                                                    // which might include this task's changes if it's already active? 
+                                                    // No, getResourceQuantity usually returns the CURRENT TOTAL from the customer_services table.
+                                                    // If the task is PENDING, the changes haven't been applied to the live validation? 
+                                                    // Actually, let's use the logic we used in the controller or assume getResourceQuantity is the baseline.
+                                                    // In ResourceAllocation, we use $customer->getResourceQuantity().
+                                                    
+                                                    // However, for an existing task edit, we want the "Baseline" value BEFORE this task's effect.
+                                                    // If the task is already "active" or "completed", the logic changes.
+                                                    // But here we are editing a task. Usually this is for tasks that are "Applied" or "Pending"?
+                                                    // Let's assume the baseline is:
+                                                    // If detail exists: 
+                                                    //    Upgrade: current = detail->quantity - detail->upgrade_amount
+                                                    //    Downgrade: current = detail->quantity + detail->downgrade_amount
+                                                    // If detail doesn't exist:
+                                                    //    It's a new service being added. Current is whatever the customer has now.
+                                                    
+                                                    $currentValue = 0;
+                                                    if ($existingDetail) {
+                                                        $currentValue = $task->allocation_type === 'upgrade'
+                                                            ? $existingDetail->quantity - $existingDetail->upgrade_amount
+                                                            : $existingDetail->quantity + $existingDetail->downgrade_amount;
+                                                    } else {
+                                                        // Fallback to customer's current quantity for this service
+                                                        $currentValue = $task->customer->getResourceQuantity($service->service_name);
+                                                    }
+                                                @endphp
                                             <tr>
-                                                <td>{{ $detail->service->service_name }}</td>
+                                                <td class="resource-alloc-service-cell">
+                                                    <span class="resource-alloc-service-name">
+                                                        {{ $service->service_name }}
+                                                        @if($service->unit)
+                                                            <span class="resource-alloc-service-unit">({{ $service->unit }})</span>
+                                                        @endif
+                                                    </span>
+                                                </td>
                                                 <td>
-                                                    <input type="number" name="services[{{ $detail->id }}]" class="form-control" value="{{ $task->allocation_type === 'upgrade' ? $detail->upgrade_amount : $detail->downgrade_amount }}" min="0" required>
+                                                    <span class="badge bg-secondary">{{ $currentValue }} {{ $service->unit }}</span>
+                                                </td>
+                                                <td>
+                                                    <div class="resource-alloc-stepper-group">
+                                                        <button type="button" class="resource-alloc-stepper-btn" onclick="decrementValue(this)">−</button>
+                                                        <input 
+                                                            type="number" 
+                                                            name="services[{{ $service->id }}]" 
+                                                            data-detail-id="{{ $detailId }}"
+                                                            data-current="{{ $currentValue }}"
+                                                            data-service-id="{{ $service->id }}"
+                                                            data-task-id="{{ $task->id }}"
+                                                            class="form-control resource-alloc-stepper-input" 
+                                                            value="{{ $amount }}" 
+                                                            min="0"
+                                                            oninput="{{ $task->allocation_type === 'upgrade' ? 'updateNewTotal(this)' : 'updateNewTotalDowngrade(this)' }}"
+                                                        >
+                                                        <button type="button" class="resource-alloc-stepper-btn" onclick="incrementValue(this)">+</button>
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    <div class="resource-alloc-new-total">
+                                                        <span class="resource-alloc-new-total-arrow">→</span>
+                                                        @php
+                                                            $newTotal = $task->allocation_type === 'upgrade' 
+                                                                ? $currentValue + $amount 
+                                                                : max(0, $currentValue - $amount);
+                                                        @endphp
+                                                        <span class="resource-alloc-new-total-value" data-new-total-for="{{ $service->id }}-{{ $task->id }}">{{ $newTotal }}</span>
+                                                        <span class="resource-alloc-new-total-unit">{{ $service->unit }}</span>
+                                                    </div>
                                                 </td>
                                             </tr>
                                         @endforeach
@@ -325,6 +428,62 @@
 
 @push('scripts')
 <script>
+    // Stepper functions for resource allocation inputs
+    window.incrementValue = function(button) {
+        const input = button.parentElement.querySelector('.resource-alloc-stepper-input');
+        const currentVal = parseInt(input.value) || 0;
+        const max = input.hasAttribute('max') ? parseInt(input.max) : Infinity;
+        
+        if (currentVal < max) {
+            input.value = currentVal + 1;
+            // Trigger input event for real-time updates
+            const event = new Event('input', { bubbles: true });
+            input.dispatchEvent(event);
+        }
+    };
+
+    window.decrementValue = function(button) {
+        const input = button.parentElement.querySelector('.resource-alloc-stepper-input');
+        const currentVal = parseInt(input.value) || 0;
+        const min = parseInt(input.min) || 0;
+        
+        if (currentVal > min) {
+            input.value = currentVal - 1;
+            // Trigger input event for real-time updates
+            const event = new Event('input', { bubbles: true });
+            input.dispatchEvent(event);
+        }
+    };
+
+    // Update new total for upgrade
+    window.updateNewTotal = function(input) {
+        const serviceId = input.dataset.serviceId;
+        const taskId = input.dataset.taskId;
+        const currentValue = parseInt(input.dataset.current) || 0;
+        const increaseBy = parseInt(input.value) || 0;
+        const newTotal = currentValue + increaseBy;
+        
+        // Scope to the specific modal/task using service-id and task-id
+        const newTotalElement = document.querySelector(`[data-new-total-for="${serviceId}-${taskId}"]`);
+        if (newTotalElement) {
+            newTotalElement.textContent = newTotal;
+        }
+    };
+
+    // Update new total for downgrade
+    window.updateNewTotalDowngrade = function(input) {
+        const serviceId = input.dataset.serviceId;
+        const taskId = input.dataset.taskId;
+        const currentValue = parseInt(input.dataset.current) || 0;
+        const reduceBy = parseInt(input.value) || 0;
+        const newTotal = Math.max(0, currentValue - reduceBy);
+        
+        const newTotalElement = document.querySelector(`[data-new-total-for="${serviceId}-${taskId}"]`);
+        if (newTotalElement) {
+            newTotalElement.textContent = newTotal;
+        }
+    };
+
     document.addEventListener('DOMContentLoaded', function() {
         const viewButtons = document.querySelectorAll('.view-task-btn');
         const params = new URLSearchParams(window.location.search);
@@ -412,18 +571,20 @@
                         const isUpgrade = task.allocation_type === 'upgrade';
                         const label = isUpgrade ? 'Increase By' : 'Reduce By';
                         const badgeClass = isUpgrade ? 'badge bg-success' : 'badge bg-warning text-dark';
+                        const arrowIcon = isUpgrade ? '<i class="fas fa-arrow-up me-2"></i>' : '<i class="fas fa-arrow-down me-2"></i>';
                         
                         html += `
-                            <table class="table table-sm table-bordered mb-0">
-                                <thead class="table-light">
-                                    <tr>
-                                        <th>Service</th>
-                                        <th>Current</th>
-                                        <th>${label}</th>
-                                        <th>New</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
+                            <div class="table-responsive">
+                                <table class="table table-bordered align-middle mb-0">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th class="resource-alloc-service-cell"><i class="fas fa-tools me-2"></i>Service</th>
+                                            <th><i class="fas fa-chart-line me-2"></i>Current</th>
+                                            <th>${arrowIcon}${label}</th>
+                                            <th><i class="fas fa-equals me-2"></i>New Total</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
                         `;
                         
                         resourceDetails.forEach(detail => {
@@ -432,23 +593,42 @@
                             
                             const prevDisplay = prev < 0 
                                 ? `<span class="text-danger fw-bold">${prev}</span>` 
-                                : prev;
+                                : `<span class="badge bg-secondary">${prev}</span>`;
                                 
                             const newDisplay = detail.quantity < 0 
                                 ? `<span class="text-danger fw-bold">${detail.quantity}</span>` 
-                                : `<span class="badge bg-primary">${detail.quantity}</span>`;
+                                : `<span class="resource-alloc-new-total-value">${detail.quantity}</span>`;
+
+                            // Display service name with unit inline
+                            const serviceName = detail.service.service_name;
+                            const serviceUnit = detail.service.unit ? ` <span class="resource-alloc-service-unit">(${detail.service.unit})</span>` : '';
+                            const serviceDisplay = `<span class="resource-alloc-service-name">${serviceName}${serviceUnit}</span>`;
 
                             html += `
                                 <tr>
-                                    <td>${detail.service.service_name}</td>
-                                    <td>${prevDisplay}</td>
-                                    <td><span class="${badgeClass}">${amount}</span></td>
-                                    <td>${newDisplay}</td>
+                                    <td class="resource-alloc-service-cell">${serviceDisplay}</td>
+                                    <td>${prevDisplay} ${detail.service.unit || ''}</td>
+                                    <td>
+                                        <span class="${badgeClass}">
+                                            ${isUpgrade ? '+' : '-'}${amount}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <div class="resource-alloc-new-total">
+                                            <span class="resource-alloc-new-total-arrow">→</span>
+                                            ${newDisplay}
+                                            <span class="resource-alloc-new-total-unit">${detail.service.unit || ''}</span>
+                                        </div>
+                                    </td>
                                 </tr>
                             `;
                         });
                         
-                        html += `</tbody></table>`;
+                        html += `
+                                    </tbody>
+                                </table>
+                            </div>
+                        `;
                     } else {
                         html = '<p class="text-center text-muted mb-0">No resource details found.</p>';
                     }

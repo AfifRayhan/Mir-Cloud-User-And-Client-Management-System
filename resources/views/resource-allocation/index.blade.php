@@ -85,7 +85,7 @@
                                         <option value="" disabled {{ old('customer_id') ? '' : 'selected' }}>Choose a customer</option>
                                         @foreach($customers as $customer)
                                             <option value="{{ $customer->id }}" {{ old('customer_id') == $customer->id ? 'selected' : '' }}>
-                                                {{ $customer->customer_name }} @if($customer->hasResourceAllocations()) - Active Resources @else - No Resources @endif
+                                                {{ $customer->customer_name }}
                                             </option>
                                         @endforeach
                                     </select>
@@ -455,6 +455,95 @@
                     statusSelect.value = '';
                     toggleStatus();
                 };
+
+                // Stepper functions for resource allocation inputs
+                window.incrementValue = function(button) {
+                    const input = button.parentElement.querySelector('.resource-alloc-stepper-input');
+                    const currentVal = parseInt(input.value) || 0;
+                    const max = input.hasAttribute('max') ? parseInt(input.max) : Infinity;
+                    
+                    if (currentVal < max) {
+                        input.value = currentVal + 1;
+                        // Trigger input event for real-time updates
+                        const event = new Event('input', { bubbles: true });
+                        input.dispatchEvent(event);
+                    }
+                };
+
+                window.decrementValue = function(button) {
+                    const input = button.parentElement.querySelector('.resource-alloc-stepper-input');
+                    const currentVal = parseInt(input.value) || 0;
+                    const min = parseInt(input.min) || 0;
+                    
+                    if (currentVal > min) {
+                        input.value = currentVal - 1;
+                        // Trigger input event for real-time updates
+                        const event = new Event('input', { bubbles: true });
+                        input.dispatchEvent(event);
+                    }
+                };
+
+                // Update new total for upgrade
+                window.updateNewTotal = function(input) {
+                    const serviceId = input.dataset.serviceId;
+                    const currentValue = parseInt(input.dataset.current) || 0;
+                    const increaseBy = parseInt(input.value) || 0;
+                    const newTotal = currentValue + increaseBy;
+                    
+                    const newTotalElement = document.querySelector(`[data-new-total-for="${serviceId}"]`);
+                    if (newTotalElement) {
+                        newTotalElement.textContent = newTotal;
+                    }
+                    
+                    // Inline validation
+                    if (increaseBy < 0) {
+                        input.classList.add('is-invalid');
+                        input.parentElement.classList.add('has-error');
+                    } else {
+                        input.classList.remove('is-invalid');
+                        input.parentElement.classList.remove('has-error');
+                    }
+                };
+
+                // Update new total for downgrade
+                window.updateNewTotalDowngrade = function(input) {
+                    const serviceId = input.dataset.serviceId;
+                    const currentValue = parseInt(input.dataset.current) || 0;
+                    const reduceBy = parseInt(input.value) || 0;
+                    const newTotal = Math.max(0, currentValue - reduceBy);
+                    
+                    const newTotalElement = document.querySelector(`[data-new-total-for="${serviceId}"]`);
+                    if (newTotalElement) {
+                        newTotalElement.textContent = newTotal;
+                    }
+                    
+                    // Inline validation - highlight if exceeds current value
+                    if (reduceBy > currentValue) {
+                        input.classList.add('is-invalid');
+                        input.parentElement.classList.add('has-error');
+                    } else {
+                        input.classList.remove('is-invalid');
+                        input.parentElement.classList.remove('has-error');
+                    }
+                };
+
+                // Disable arrow keys and mouse wheel on stepper inputs
+                document.addEventListener('DOMContentLoaded', function() {
+                    // Use event delegation for dynamically loaded inputs
+                    document.body.addEventListener('keydown', function(e) {
+                        if (e.target.classList.contains('resource-alloc-stepper-input')) {
+                            if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+                                e.preventDefault();
+                            }
+                        }
+                    });
+                    
+                    document.body.addEventListener('wheel', function(e) {
+                        if (e.target.classList.contains('resource-alloc-stepper-input')) {
+                            e.preventDefault();
+                        }
+                    }, { passive: false });
+                });
 
                 // Initialize
                 toggleStatus();

@@ -15,7 +15,9 @@ Route::get('/dashboard', function () {
         ->whereNull('completed_at')
         ->count();
 
-    return view('dashboard', compact('incompleteTaskCount'));
+    $unassignedTaskCount = \App\Models\Task::whereNull('assigned_to')->count();
+
+    return view('dashboard', compact('incompleteTaskCount', 'unassignedTaskCount'));
 })->middleware(['auth'])->name('dashboard');
 
 Route::middleware('auth')->group(function () {

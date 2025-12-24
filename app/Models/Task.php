@@ -68,6 +68,20 @@ class Task extends Model
         return $this->belongsTo(Vdc::class);
     }
 
+    /**
+     * Get the user who inserted this task (via resource allocation).
+     */
+    public function getInsertedByAttribute()
+    {
+        if ($this->allocation_type === 'upgrade' && $this->resourceUpgradation) {
+            return $this->resourceUpgradation->insertedBy;
+        } elseif ($this->allocation_type === 'downgrade' && $this->resourceDowngradation) {
+            return $this->resourceDowngradation->insertedBy;
+        }
+        
+        return null;
+    }
+
     // Get the resource details based on allocation type
     public function getResourceDetailsAttribute()
     {

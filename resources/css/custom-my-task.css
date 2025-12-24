@@ -252,6 +252,23 @@
     border-bottom: 1px solid var(--custom-my-task-border);
 }
 
+/* Status Row Coloring */
+.custom-my-task-table-row.task-assigned {
+    background-color: #e8f5e9 !important;
+}
+
+.custom-my-task-table-row.task-assigned:hover {
+    background-color: #c8e6c9 !important;
+}
+
+.custom-my-task-table-row.task-completed {
+    background-color: #a5d6a7 !important;
+}
+
+.custom-my-task-table-row.task-completed:hover {
+    background-color: #81c784 !important;
+}
+
 /* Customer */
 
 .custom-my-task-customer-name {
@@ -273,7 +290,7 @@
 }
 
 .custom-my-task-date-day {
-    width: 36px;
+    width: 50px;
     height: 36px;
     background: var(--custom-my-task-primary-light);
     color: var(--custom-my-task-primary);

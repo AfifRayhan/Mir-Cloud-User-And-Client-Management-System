@@ -131,17 +131,20 @@
                                         <i class="fas fa-building me-2"></i>Customer
                                     </th>
                                     <th class="custom-task-management-table-header">
+                                        <i class="fas fa-user-edit me-2"></i>Inserted By
+                                    </th>
+                                    <th class="custom-task-management-table-header">
                                         <i class="fas fa-server me-2"></i>Platform
                                     </th>
                                     <th class="custom-task-management-table-header">
                                         <i class="fas fa-exchange-alt me-2"></i>Type
                                     </th>
                                     <th class="custom-task-management-table-header">
-                                        <i class="fas fa-calendar-check me-2"></i>Activation Date
+                                        <i class="fas fa-calendar-check me-2"></i>Resource Activation
                                     </th>
-                                    <th class="custom-task-management-table-header">
+                                    <!-- <th class="custom-task-management-table-header">
                                         <i class="fas fa-clock me-2"></i>Created At
-                                    </th>
+                                    </th> -->
                                     <th class="custom-task-management-table-header">
                                         <i class="fas fa-info-circle me-2"></i>Status
                                     </th>
@@ -171,6 +174,16 @@
                                             <strong>{{ $task->customer->customer_name }}</strong>
                                         </td>
                                         <td class="custom-task-management-table-cell">
+                                            @if($task->insertedBy)
+                                                <div class="d-flex align-items-center">
+                                                    <i class="fas fa-user-circle text-secondary me-2"></i>
+                                                    {{ $task->insertedBy->name }}
+                                                </div>
+                                            @else
+                                                <span class="text-muted">System</span>
+                                            @endif
+                                        </td>
+                                        <td class="custom-task-management-table-cell">
                                             @if($task->customer->platform)
                                                 <span class="custom-task-management-badge">{{ $task->customer->platform->platform_name }}</span>
                                             @else
@@ -194,8 +207,8 @@
                                                     {{ $task->activation_date->format('d') }}
                                                 </div>
                                                 <div class="custom-task-management-date-details">
-                                                    <div class="custom-task-management-date-month">
-                                                        {{ $task->activation_date->format('M') }}
+                                                    <div class="custom-task-management-date-month fw-bold">
+                                                        {{ $task->activation_date->format('F') }}
                                                     </div>
                                                     <div class="custom-task-management-date-year">
                                                         {{ $task->activation_date->format('Y') }}
@@ -203,7 +216,7 @@
                                                 </div>
                                             </div>
                                         </td>
-                                        <td class="custom-task-management-table-cell">{{ $task->created_at->format('M d, Y H:i:s') }}</td>
+                                        <!-- <td class="custom-task-management-table-cell">{{ $task->created_at->format('M d, Y H:i:s') }}</td> -->
                                         <td class="custom-task-management-table-cell">
                                             @if($task->status)
                                                 <span class="custom-task-management-badge">{{ $task->status->name }}</span>
@@ -232,7 +245,7 @@
                                             @endif
                                         </td>
                                         <td class="custom-task-management-table-cell">
-                                            <div class="d-flex gap-1">
+                                            <div class="d-flex flex-column gap-1">
                                                 <button class="custom-task-management-action-btn custom-task-management-edit-btn view-task-btn" data-task-id="{{ $task->id }}">
                                                     <i class="fas fa-eye me-1"></i> <span class="btn-text">View</span>
                                                 </button>
@@ -468,18 +481,19 @@
                         
                         if (resourceDetails && resourceDetails.length > 0) {
                             const isUpgrade = task.allocation_type === 'upgrade';
-                            const headerLabel = isUpgrade ? 'Increase By' : 'Reduce By';
-                            const headerClass = isUpgrade ? 'text-success' : 'text-warning';
+                            const label = isUpgrade ? 'Increase By' : 'Reduce By';
+                            const badgeClass = isUpgrade ? 'badge bg-success' : 'badge bg-warning text-dark';
+                            const arrowIcon = isUpgrade ? '<i class="fas fa-arrow-up me-2"></i>' : '<i class="fas fa-arrow-down me-2"></i>';
                             
                             html += `
                                 <div class="table-responsive">
                                     <table class="table table-bordered align-middle mb-0">
                                         <thead class="table-light">
                                             <tr>
-                                                <th style="width: 40%;">Service</th>
-                                                <th>Current Value</th>
-                                                <th class="${headerClass}">${headerLabel}</th>
-                                                <th class="text-primary">New Value</th>
+                                                <th class="resource-alloc-service-cell"><i class="fas fa-tools me-2"></i>Service</th>
+                                                <th><i class="fas fa-chart-line me-2"></i>Current</th>
+                                                <th>${arrowIcon}${label}</th>
+                                                <th><i class="fas fa-equals me-2"></i>New Total</th>
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -487,24 +501,36 @@
                             
                             resourceDetails.forEach(detail => {
                                 const amount = isUpgrade ? detail.upgrade_amount : detail.downgrade_amount;
-                                const badgeClass = isUpgrade ? 'custom-task-management-badge custom-task-management-badge-upgrade' : 'custom-task-management-badge custom-task-management-badge-downgrade';
-                                const currentValue = isUpgrade
-                                    ? detail.quantity - amount     // upgrade → previous = quantity - upgrade amount
-                                    : detail.quantity + amount;    // downgrade → previous = quantity + downgrade amount
+                                const prev = isUpgrade ? (detail.quantity - amount) : (detail.quantity + amount);
+                                
+                                const prevDisplay = prev < 0 
+                                    ? `<span class="text-danger fw-bold">${prev}</span>` 
+                                    : `<span class="badge bg-secondary">${prev}</span>`;
+                                    
+                                const newDisplay = detail.quantity < 0 
+                                    ? `<span class="text-danger fw-bold">${detail.quantity}</span>` 
+                                    : `<span class="resource-alloc-new-total-value">${detail.quantity}</span>`;
+
+                                // Display service name with unit inline
+                                const serviceName = detail.service.service_name;
+                                const serviceUnit = detail.service.unit ? ` <span class="resource-alloc-service-unit">(${detail.service.unit})</span>` : '';
+                                const serviceDisplay = `<span class="resource-alloc-service-name">${serviceName}${serviceUnit}</span>`;
+
                                 html += `
                                     <tr>
+                                        <td class="resource-alloc-service-cell">${serviceDisplay}</td>
+                                        <td>${prevDisplay} ${detail.service.unit || ''}</td>
                                         <td>
-                                            <span class="fw-semibold">${detail.service.service_name}</span>
-                                            ${detail.service.unit ? `<span class="text-muted small"> (${detail.service.unit})</span>` : ''}
+                                            <span class="${badgeClass}">
+                                                ${isUpgrade ? '+' : '-'}${amount}
+                                            </span>
                                         </td>
                                         <td>
-                                            <span class="badge bg-secondary">${currentValue} ${detail.service.unit || ''}</span>
-                                        </td>
-                                        <td>
-                                            <span class="badge ${badgeClass}">${amount} ${detail.service.unit || ''}</span>
-                                        </td>
-                                        <td>
-                                            <span class="badge bg-primary">${detail.quantity} ${detail.service.unit || ''}</span>
+                                            <div class="resource-alloc-new-total">
+                                                <span class="resource-alloc-new-total-arrow">→</span>
+                                                ${newDisplay}
+                                                <span class="resource-alloc-new-total-unit">${detail.service.unit || ''}</span>
+                                            </div>
                                         </td>
                                     </tr>
                                 `;

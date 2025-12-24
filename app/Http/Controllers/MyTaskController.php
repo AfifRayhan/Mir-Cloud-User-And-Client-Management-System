@@ -19,6 +19,7 @@ class MyTaskController extends Controller
             ->leftJoin('resource_downgradations', 'tasks.resource_downgradation_id', '=', 'resource_downgradations.id')
             ->where('tasks.assigned_to', Auth::id())
             ->orderByRaw('CASE WHEN tasks.id = ? THEN 0 ELSE 1 END', [request('dtid')])
+            ->orderByRaw('tasks.completed_at IS NOT NULL')
             ->orderByRaw('COALESCE(resource_upgradations.created_at, resource_downgradations.created_at) ASC')
             ->select('tasks.*')
             ->paginate(10);
@@ -144,6 +145,9 @@ class MyTaskController extends Controller
                 'vdc_id' => $vdcId,
             ]);
 
+            // Update summary table with latest service values now that task is complete
+            $this->updateCustomerSummary($lockedTask->customer_id);
+
             // Send email notification
             $sender = Auth::user();
 
@@ -197,5 +201,34 @@ class MyTaskController extends Controller
         $vdcs = Vdc::where('customer_id', $customerId)->get();
 
         return response()->json(['vdcs' => $vdcs]);
+    }
+
+    /**
+     * Update the summary table with latest service values for a customer
+     */
+    protected function updateCustomerSummary(int $customerId): void
+    {
+        $customer = \App\Models\Customer::find($customerId);
+        if (! $customer) {
+            return;
+        }
+
+        // Get all services
+        $services = \App\Models\Service::all();
+
+        foreach ($services as $service) {
+            $quantity = $customer->getResourceQuantity($service->service_name);
+
+            // Upsert summary record
+            \App\Models\Summary::updateOrCreate(
+                [
+                    'customer_id' => $customerId,
+                    'service_id' => $service->id,
+                ],
+                [
+                    'quantity' => $quantity,
+                ]
+            );
+        }
     }
 }

@@ -11,6 +11,10 @@ use App\Models\Summary;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Log;
+use App\Models\User;
+use App\Mail\RecommendationSubmissionEmail;
 
 class KamTaskManagementController extends Controller
 {
@@ -60,7 +64,10 @@ class KamTaskManagementController extends Controller
 
         $tasks = $query->paginate(10)->appends($request->query());
 
-        return view('task-management.kam-index', compact('tasks'));
+        // Get all services for the edit modal
+        $services = Service::all();
+
+        return view('task-management.kam-index', compact('tasks', 'services'));
     }
 
     /**
@@ -75,9 +82,36 @@ class KamTaskManagementController extends Controller
 
         $task->load(['customer', 'status', 'assignedTo', 'assignedBy', 'resourceUpgradation.details.service', 'resourceDowngradation.details.service']);
 
+        // Get all services
+        $allServices = Service::all();
+        $existingDetails = $task->resourceDetails;
+        
+        // Create a map of existing details by service_id
+        $detailsMap = $existingDetails->keyBy('service_id');
+        
+        // Build complete resource details array with all services
+        $completeResourceDetails = $allServices->map(function($service) use ($detailsMap, $task) {
+            $existingDetail = $detailsMap->get($service->id);
+            
+            if ($existingDetail) {
+                // Service has existing data
+                return $existingDetail;
+            } else {
+                // Service doesn't exist in task, create a placeholder with 0 values
+                $isUpgrade = $task->allocation_type === 'upgrade';
+                return (object) [
+                    'service' => $service,
+                    'service_id' => $service->id,
+                    'upgrade_amount' => 0,
+                    'downgrade_amount' => 0,
+                    'quantity' => $task->customer->getResourceQuantity($service->service_name),
+                ];
+            }
+        });
+
         return response()->json([
             'task' => $task,
-            'resourceDetails' => $task->resourceDetails,
+            'resourceDetails' => $completeResourceDetails,
         ]);
     }
 
@@ -91,10 +125,10 @@ class KamTaskManagementController extends Controller
             abort(403, 'Unauthorized access.');
         }
 
-        // Only unassigned tasks can be edited
-        if ($task->assigned_to) {
-            return back()->with('error', 'Cannot edit a task that has already been assigned.');
-        }
+        // Only unassigned tasks can be edited CHECK REMOVED per user request
+        // if ($task->assigned_to) {
+        //     return back()->with('error', 'Cannot edit a task that has already been assigned.');
+        // }
 
         $validated = $request->validate([
             'activation_date' => 'required|date',
@@ -117,29 +151,60 @@ class KamTaskManagementController extends Controller
                     'activation_date' => $validated['activation_date'],
                 ]);
 
-                foreach ($validated['services'] as $detailId => $amount) {
-                    $detail = $task->resourceUpgradation->details()->find($detailId);
-                    if ($detail) {
-                        $detail->update([
+                // Get existing details mapped by service_id
+                $existingDetails = $task->resourceUpgradation->details()->get()->keyBy('service_id');
+
+                foreach ($validated['services'] as $serviceId => $amount) {
+                    $affectedServiceIds[] = $serviceId;
+                    
+                    if ($existingDetails->has($serviceId)) {
+                        // Update existing detail
+                        $existingDetails[$serviceId]->update([
                             'upgrade_amount' => $amount,
                         ]);
-                        $affectedServiceIds[] = $detail->service_id;
+                    } else if ($amount > 0) {
+                        // Create new detail only if amount > 0
+                        ResourceUpgradationDetail::create([
+                            'resource_upgradation_id' => $task->resourceUpgradation->id,
+                            'service_id' => $serviceId,
+                            'upgrade_amount' => $amount,
+                            'quantity' => 0, // Will be updated by sync
+                        ]);
                     }
                 }
+                
+                // Delete details with 0 amount
+                $task->resourceUpgradation->details()->where('upgrade_amount', 0)->delete();
+
             } elseif ($task->allocation_type === 'downgrade' && $task->resourceDowngradation) {
                 $task->resourceDowngradation->update([
                     'activation_date' => $validated['activation_date'],
                 ]);
 
-                foreach ($validated['services'] as $detailId => $amount) {
-                    $detail = $task->resourceDowngradation->details()->find($detailId);
-                    if ($detail) {
-                        $detail->update([
+                // Get existing details mapped by service_id
+                $existingDetails = $task->resourceDowngradation->details()->get()->keyBy('service_id');
+
+                foreach ($validated['services'] as $serviceId => $amount) {
+                    $affectedServiceIds[] = $serviceId;
+                    
+                    if ($existingDetails->has($serviceId)) {
+                        // Update existing detail
+                        $existingDetails[$serviceId]->update([
                             'downgrade_amount' => $amount,
                         ]);
-                        $affectedServiceIds[] = $detail->service_id;
+                    } else if ($amount > 0) {
+                        // Create new detail only if amount > 0
+                        ResourceDowngradationDetail::create([
+                            'resource_downgradation_id' => $task->resourceDowngradation->id,
+                            'service_id' => $serviceId,
+                            'downgrade_amount' => $amount,
+                            'quantity' => 0, // Will be updated by sync
+                        ]);
                     }
                 }
+                
+                // Delete details with 0 amount
+                $task->resourceDowngradation->details()->where('downgrade_amount', 0)->delete();
             }
 
             // Sync the entire chain for affected services to ensure all quantities are correct
@@ -149,6 +214,21 @@ class KamTaskManagementController extends Controller
 
             // Re-sync summary table
             $this->updateCustomerSummary($customerId);
+
+            // Send recommendation email to Pro-Techs (like a new resource allocation)
+            $proTechUsers = User::where('role_id', 4)->get(); // Pro-Tech Role ID is 4
+            
+            foreach ($proTechUsers as $recipient) {
+                try {
+                    Mail::to($recipient->email)->send(new RecommendationSubmissionEmail(
+                        $task,
+                        Auth::user(),
+                        $task->allocation_type
+                    ));
+                } catch (\Exception $e) {
+                    Log::error('Failed to send email: ' . $e->getMessage());
+                }
+            }
 
             return back()->with('success', 'Task and resource details updated successfully.');
         });

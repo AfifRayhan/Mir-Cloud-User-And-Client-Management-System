@@ -75,7 +75,7 @@
                                         <i class="fas fa-exchange-alt me-2"></i>Type
                                     </th>
                                     <th class="custom-my-task-table-header">
-                                        <i class="fas fa-calendar-check me-2"></i>Activation Date
+                                        <i class="fas fa-calendar-check me-2"></i>Resource Activation
                                     </th>
                                     <th class="custom-my-task-table-header">
                                         <i class="fas fa-user-clock me-2"></i>Assigned At
@@ -96,13 +96,14 @@
                             </thead>
                             <tbody class="custom-my-task-table-body">
                                 @foreach($tasks as $task)
-                                    <tr class="custom-my-task-table-row" data-task-id="{{ $task->id }}">
+                                    <tr class="custom-my-task-table-row {{ $task->completed_at ? 'task-completed' : '' }}" data-task-id="{{ $task->id }}">
                                         <td class="custom-my-task-table-cell">
                                             <strong>{{ $task->customer->customer_name }}</strong>
                                         </td>
                                         <td class="custom-my-task-table-cell">
                                             <select class="custom-my-task-select platform-select" 
-                                                    data-task-id="{{ $task->id }}">
+                                                    data-task-id="{{ $task->id }}"
+                                                    {{ $task->completed_at ? 'disabled' : '' }}>
                                                 @foreach($platforms as $platform)
                                                     <option value="{{ $platform->id }}" 
                                                         {{ $task->customer->platform_id == $platform->id ? 'selected' : '' }}>
@@ -131,8 +132,8 @@
                                                     {{ $task->activation_date->format('d') }}
                                                 </div>
                                                 <div class="custom-my-task-date-details">
-                                                    <div class="custom-my-task-date-month">
-                                                        {{ $task->activation_date->format('M') }}
+                                                    <div class="custom-my-task-date-month fw-bold">
+                                                        {{ $task->activation_date->format('F') }}
                                                     </div>
                                                     <div class="custom-my-task-date-year">
                                                         {{ $task->activation_date->format('Y') }}
@@ -172,32 +173,34 @@
                                             @endif
                                         </td>
                                         <td class="custom-my-task-table-cell">
-                                            <button class="custom-my-task-action-btn custom-my-task-edit-btn view-task-btn me-1" data-task-id="{{ $task->id }}">
-                                                <i class="fas fa-eye me-1"></i> <span class="btn-text">View</span>
-                                            </button>
-                                            @if(!$task->completed_at)
-                                                @if($task->isEligibleForAction())
-                                                    <button type="button" 
-                                                        class="custom-my-task-action-btn custom-my-task-edit-btn complete-task-btn"
-                                                        data-task-id="{{ $task->id }}"
-                                                        data-customer-id="{{ $task->customer_id }}"
-                                                        data-bs-toggle="modal"
-                                                        data-bs-target="#vdcModal">
-                                                        <i class="fas fa-check me-1"></i> <span class="btn-text">Complete</span>
-                                                    </button>
+                                            <div class="d-flex flex-column gap-1">
+                                                <button class="custom-my-task-action-btn custom-my-task-edit-btn view-task-btn" data-task-id="{{ $task->id }}">
+                                                    <i class="fas fa-eye me-1"></i> <span class="btn-text">View</span>
+                                                </button>
+                                                @if(!$task->completed_at)
+                                                    @if($task->isEligibleForAction())
+                                                        <button type="button" 
+                                                            class="custom-my-task-action-btn custom-my-task-edit-btn complete-task-btn"
+                                                            data-task-id="{{ $task->id }}"
+                                                            data-customer-id="{{ $task->customer_id }}"
+                                                            data-bs-toggle="modal"
+                                                            data-bs-target="#vdcModal">
+                                                            <i class="fas fa-check me-1"></i> <span class="btn-text">Complete</span>
+                                                        </button>
+                                                    @else
+                                                        <button type="button" 
+                                                            class="custom-my-task-action-btn custom-my-task-edit-btn btn-warning"
+                                                            data-bs-toggle="modal"
+                                                            data-bs-target="#consistencyWarningModal{{ $task->id }}">
+                                                            <i class="fas fa-exclamation-triangle me-1"></i> <span class="btn-text">Complete</span>
+                                                        </button>
+                                                    @endif
                                                 @else
-                                                    <button type="button" 
-                                                        class="custom-my-task-action-btn custom-my-task-edit-btn btn-warning"
-                                                        data-bs-toggle="modal"
-                                                        data-bs-target="#consistencyWarningModal{{ $task->id }}">
-                                                        <i class="fas fa-exclamation-triangle me-1"></i> <span class="btn-text">Complete</span>
-                                                    </button>
+                                                    <span class="custom-my-task-action-btn custom-my-task-badge-upgrade">
+                                                        <i class="fas fa-check-circle me-1"></i> <span class="btn-text">Completed</span>
+                                                    </span>
                                                 @endif
-                                            @else
-                                                <span class="custom-my-task-action-btn custom-my-task-badge-upgrade">
-                                                    <i class="fas fa-check-circle me-1"></i> <span class="btn-text">Completed</span>
-                                                </span>
-                                            @endif
+                                            </div>
                                         </td>
                                     </tr>
 
@@ -408,19 +411,20 @@
                         
                         if (resourceDetails && resourceDetails.length > 0) {
                             const isUpgrade = task.allocation_type === 'upgrade';
-                            const headerLabel = isUpgrade ? 'Increase By' : 'Reduce By';
-                            const headerClass = isUpgrade ? 'text-success' : 'text-warning';
+                            const label = isUpgrade ? 'Increase By' : 'Reduce By';
+                            const badgeClass = isUpgrade ? 'badge bg-success' : 'badge bg-warning text-dark';
+                            const arrowIcon = isUpgrade ? '<i class="fas fa-arrow-up me-2"></i>' : '<i class="fas fa-arrow-down me-2"></i>';
                             
                             html += `
                                 <div class="table-responsive">
                                     <table class="table table-bordered align-middle mb-0">
                                         <thead class="table-light">
                                             <tr>
-                                                <th>VDC</th>
-                                                <th style="width: 40%;">Service</th>
-                                                <th>Current Value</th>
-                                                <th class="${headerClass}">${headerLabel}</th>
-                                                <th class="text-primary">New Value</th>
+                                                <th><i class="fas fa-server me-2"></i>VDC</th>
+                                                <th class="resource-alloc-service-cell"><i class="fas fa-tools me-2"></i>Service</th>
+                                                <th><i class="fas fa-chart-line me-2"></i>Current</th>
+                                                <th>${arrowIcon}${label}</th>
+                                                <th><i class="fas fa-equals me-2"></i>New Total</th>
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -428,25 +432,39 @@
                             
                             resourceDetails.forEach(detail => {
                                 const amount = isUpgrade ? detail.upgrade_amount : detail.downgrade_amount;
-                                const badgeClass = isUpgrade ? 'custom-my-task-badge custom-my-task-badge-upgrade' : 'custom-my-task-badge custom-my-task-badge-downgrade';
+                                const prev = isUpgrade ? (detail.quantity - amount) : (detail.quantity + amount);
                                 
+                                const prevDisplay = prev < 0 
+                                    ? `<span class="text-danger fw-bold">${prev}</span>` 
+                                    : `<span class="badge bg-secondary">${prev}</span>`;
+                                    
+                                const newDisplay = detail.quantity < 0 
+                                    ? `<span class="text-danger fw-bold">${detail.quantity}</span>` 
+                                    : `<span class="resource-alloc-new-total-value">${detail.quantity}</span>`;
+
+                                // Display service name with unit inline
+                                const serviceName = detail.service.service_name;
+                                const serviceUnit = detail.service.unit ? ` <span class="resource-alloc-service-unit">(${detail.service.unit})</span>` : '';
+                                const serviceDisplay = `<span class="resource-alloc-service-name">${serviceName}${serviceUnit}</span>`;
+
                                 html += `
                                     <tr>
                                         <td>
                                             <span class="badge bg-info text-dark">${vdcName}</span>
                                         </td>
+                                        <td class="resource-alloc-service-cell">${serviceDisplay}</td>
+                                        <td>${prevDisplay} ${detail.service.unit || ''}</td>
                                         <td>
-                                            <span class="fw-semibold">${detail.service.service_name}</span>
-                                            ${detail.service.unit ? `<span class="text-muted small"> (${detail.service.unit})</span>` : ''}
+                                            <span class="${badgeClass}">
+                                                ${isUpgrade ? '+' : '-'}${amount}
+                                            </span>
                                         </td>
                                         <td>
-                                            <span class="badge bg-secondary">${detail.quantity - amount} ${detail.service.unit || ''}</span>
-                                        </td>
-                                        <td>
-                                            <span class="badge ${badgeClass}">${amount} ${detail.service.unit || ''}</span>
-                                        </td>
-                                        <td>
-                                            <span class="badge bg-primary">${detail.quantity} ${detail.service.unit || ''}</span>
+                                            <div class="resource-alloc-new-total">
+                                                <span class="resource-alloc-new-total-arrow">→</span>
+                                                ${newDisplay}
+                                                <span class="resource-alloc-new-total-unit">${detail.service.unit || ''}</span>
+                                            </div>
                                         </td>
                                     </tr>
                                 `;
@@ -546,6 +564,11 @@
                             option.textContent = vdc.vdc_name;
                             vdcSelect.appendChild(option);
                         });
+
+                        // Select the first VDC by default if available
+                        if (data.vdcs.length > 0) {
+                            vdcSelect.value = data.vdcs[0].id;
+                        }
                     })
                     .catch(error => {
                         console.error('Error loading VDCs:', error);

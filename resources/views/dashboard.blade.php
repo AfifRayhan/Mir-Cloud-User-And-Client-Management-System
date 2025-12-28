@@ -114,9 +114,9 @@
                                         <i class="fas fa-server text-info"></i>
                                     </div>
                                     <div class="ms-3">
-                                        <h5 class="custom-dashboard-card-title mb-1">Customer Resource Management</h5>
+                                        <h5 class="custom-dashboard-card-title mb-1">Resource Allocation</h5>
                                         <p class="custom-dashboard-card-subtitle text-muted mb-0">
-                                            Dismantle or rewrite customer resources
+                                            Update or dismantle customer resources
                                         </p>
                                     </div>
                                 </div>
@@ -194,7 +194,7 @@
 
 
                 <!-- Platforms Card -->
-                @if(Auth::user()->isAdmin() || Auth::user()->isProTech() || Auth::user()->isProKam() || Auth::user()->isManagement())
+                @if(Auth::user()->isAdmin() || Auth::user()->isProTechOrTech() || Auth::user()->isManagement())
                     <div class="col-12 col-md-6 col-lg-4">
                         <a href="{{ route('platforms.index') }}" class="custom-dashboard-card-link">
                             <div class="card custom-dashboard-card custom-dashboard-card-secondary border-0 shadow-sm h-100">
@@ -224,7 +224,7 @@
                 @endif
 
                 <!-- Services Card -->
-                @if(Auth::user()->isAdmin() || Auth::user()->isProTech() || Auth::user()->isProKam() || Auth::user()->isManagement())
+                @if(Auth::user()->isAdmin() || Auth::user()->isProTech() || Auth::user()->isManagement())
                     <div class="col-12 col-md-6 col-lg-4">
                         <a href="{{ route('services.index') }}" class="custom-dashboard-card-link">
                             <div class="card custom-dashboard-card custom-dashboard-card-warning border-0 shadow-sm h-100">
@@ -314,6 +314,36 @@
                                 <div class="custom-dashboard-card-footer">
                                     <span class="custom-dashboard-card-action">
                                         Manage Tasks
+                                        <i class="fas fa-arrow-right ms-2"></i>
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="custom-dashboard-card-hover"></div>
+                        </div>
+                    </a>
+                </div>
+            @endif
+ 
+            <!-- Tech Resource Management Card -->
+            @if(Auth::user()->isTech() || Auth::user()->isAdmin())
+                <div class="col-12 col-md-6 col-lg-4">
+                    <a href="{{ route('tech-resource-allocation.index') }}" class="custom-dashboard-card-link">
+                        <div class="card custom-dashboard-card custom-dashboard-card-purple border-0 shadow-sm h-100">
+                            <div class="card-body p-4">
+                                <div class="d-flex align-items-start mb-4">
+                                    <div class="custom-dashboard-icon-wrapper bg-purple bg-opacity-10" style="background-color: rgba(139, 92, 246, 0.1);">
+                                        <i class="fas fa-server text-info-purple" style="color: #8b5cf6;"></i>
+                                    </div>
+                                    <div class="ms-3">
+                                        <h5 class="custom-dashboard-card-title mb-1">Tech Resource Allocation</h5>
+                                        <p class="custom-dashboard-card-subtitle text-muted mb-0">
+                                            Rapid allocation and auto-completion
+                                        </p>
+                                    </div>
+                                </div>
+                                <div class="custom-dashboard-card-footer">
+                                    <span class="custom-dashboard-card-action">
+                                        Quick Allocation
                                         <i class="fas fa-arrow-right ms-2"></i>
                                     </span>
                                 </div>

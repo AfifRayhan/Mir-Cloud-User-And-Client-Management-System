@@ -1,0 +1,156 @@
+/* Custom Tech Resource Allocation Variables */
+:root {
+    --tech-resource-primary: #8b5cf6;
+    --tech-resource-primary-light: #ede9fe;
+    --tech-resource-primary-dark: #6d28d9;
+    --tech-resource-secondary: #a78bfa;
+    --tech-resource-bg: #f5f3ff;
+    --tech-resource-card-bg: #ffffff;
+    --tech-resource-border: #ddd6fe;
+    --tech-resource-shadow: 0 4px 6px -1px rgba(139, 92, 246, 0.1), 0 2px 4px -1px rgba(139, 92, 246, 0.06);
+    --tech-resource-shadow-lg: 0 10px 15px -3px rgba(139, 92, 246, 0.1), 0 4px 6px -2px rgba(139, 92, 246, 0.05);
+}
+
+.tech-resource-container {
+    background: linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%);
+    min-height: calc(100vh - 76px);
+    position: relative;
+    overflow-x: hidden;
+}
+
+.tech-resource-bg-pattern {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image: radial-gradient(var(--tech-resource-primary-light) 1px, transparent 1px);
+    background-size: 30px 30px;
+    opacity: 0.4;
+    pointer-events: none;
+}
+
+.tech-resource-header {
+    position: relative;
+    z-index: 1;
+    margin-bottom: 2rem;
+}
+
+.tech-resource-title {
+    font-size: 2.25rem;
+    color: #1a1f44;
+    letter-spacing: -0.025em;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.tech-resource-card {
+    border-radius: 1rem;
+    background: var(--tech-resource-card-bg);
+    border: 1px solid var(--tech-resource-border);
+    box-shadow: var(--tech-resource-shadow);
+    transition: all 0.3s ease;
+}
+
+.tech-resource-card:hover {
+    box-shadow: var(--tech-resource-shadow-lg);
+    transform: translateY(-2px);
+}
+
+.tech-resource-btn-primary {
+    background: linear-gradient(135deg, var(--tech-resource-primary) 0%, var(--tech-resource-primary-dark) 100%);
+    border: none;
+    color: white;
+    font-weight: 600;
+    padding: 0.75rem 1.5rem;
+    border-radius: 0.5rem;
+    transition: all 0.3s ease;
+}
+
+.tech-resource-btn-primary:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(139, 92, 246, 0.4);
+    color: white;
+}
+
+.tech-resource-form-label {
+    color: #1f2937;
+    font-weight: 600;
+}
+
+.tech-resource-select {
+    border-color: var(--tech-resource-border);
+}
+
+.tech-resource-select:focus {
+    border-color: var(--tech-resource-primary);
+    box-shadow: 0 0 0 0.25rem rgba(139, 92, 246, 0.25);
+}
+
+/* Override existing styles for this specific page */
+.tech-resource-container .resource-alloc-stepper-btn {
+    background-color: var(--tech-resource-primary-light);
+    color: #1f2937;
+}
+
+.tech-resource-container .resource-alloc-stepper-btn:hover {
+    background-color: var(--tech-resource-primary);
+    color: white;
+}
+
+.tech-resource-container .badge.bg-primary {
+    background-color: var(--tech-resource-primary) !important;
+}
+
+.tech-resource-container .text-primary {
+    color: #1f2937 !important;
+}
+
+.tech-resource-container .btn-outline-secondary {
+    border-color: var(--tech-resource-border);
+    color: #1f2937;
+}
+
+.tech-resource-container .btn-outline-secondary:hover {
+    background-color: var(--tech-resource-primary-light);
+    border-color: var(--tech-resource-primary);
+}
+
+/* VDC Modal Styling */
+#vdcModal .modal-content {
+    border-radius: 1rem;
+    border: none;
+    box-shadow: var(--tech-resource-shadow-lg);
+}
+
+#vdcModal .modal-header {
+    background: linear-gradient(135deg, var(--tech-resource-primary) 0%, var(--tech-resource-primary-dark) 100%);
+    color: white;
+    border-radius: 1rem 1rem 0 0;
+    border: none;
+}
+
+#vdcModal .modal-header .btn-close {
+    filter: brightness(0) invert(1);
+}
+
+#vdcModal .btn-success {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    border: none;
+    font-weight: 600;
+}
+
+#vdcModal .btn-outline-primary {
+    color: #1f2937;
+    border-color: var(--tech-resource-primary);
+}
+
+#vdcModal .btn-outline-primary:hover {
+    background-color: var(--tech-resource-primary);
+    color: white;
+}
+
+#vdcModal .form-select:focus,
+#vdcModal .form-control:focus {
+    border-color: var(--tech-resource-primary);
+    box-shadow: 0 0 0 0.25rem rgba(139, 92, 246, 0.25);
+}

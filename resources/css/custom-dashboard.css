@@ -19,6 +19,8 @@
     --custom-dashboard-info-light: #e0f2fe;
     --custom-dashboard-danger: #ef4444;
     --custom-dashboard-danger-light: #fee2e2;
+    --custom-dashboard-purple: #8b5cf6;
+    --custom-dashboard-purple-light: #ede9fe;
     --custom-dashboard-dark: #1f2937;
     --custom-dashboard-light: #f9fafb;
     --custom-dashboard-border: #e5e7eb;
@@ -43,7 +45,7 @@
 
 .custom-dashboard-title {
     font-size: 2rem;
-    color: var(--custom-dashboard-dark);
+    color: #1a1f44;
     letter-spacing: -0.025em;
 }
 
@@ -142,6 +144,10 @@
 
 .custom-dashboard-card-danger::before {
     background: linear-gradient(90deg, var(--custom-dashboard-danger) 0%, #ef4444 100%);
+}
+
+.custom-dashboard-card-purple::before {
+    background: linear-gradient(90deg, var(--custom-dashboard-purple) 0%, #a78bfa 100%);
 }
 
 /* Icon Wrapper */

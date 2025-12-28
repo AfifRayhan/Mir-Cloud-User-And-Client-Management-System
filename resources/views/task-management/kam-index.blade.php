@@ -136,7 +136,15 @@
                         </thead>
                         <tbody>
                             @foreach($tasks as $task)
-                                <tr class="custom-kam-task-management-table-row">
+                                @php
+                                    $rowClass = '';
+                                    if ($task->completed_at) {
+                                        $rowClass = 'task-completed';
+                                    } elseif ($task->assigned_to) {
+                                        $rowClass = 'task-assigned';
+                                    }
+                                @endphp
+                                <tr class="custom-kam-task-management-table-row {{ $rowClass }}">
                                     <td class="custom-kam-task-management-table-cell">
                                         <strong>{{ $task->customer->customer_name }}</strong>
                                         @if($task->has_resource_conflict)
@@ -196,7 +204,14 @@
                                         @endif
                                     </td>
                                     <td class="custom-kam-task-management-table-cell">
-                                        {{ $task->assignedTo->name ?? 'Unassigned' }}
+                                        @if($task->assignedTo)
+                                            <div class="d-flex align-items-center">
+                                                <i class="fas fa-user-circle text-primary me-2"></i>
+                                                {{ $task->assignedTo->name }}
+                                            </div>
+                                        @else
+                                            <span class="custom-kam-task-management-badge">Unassigned</span>
+                                        @endif
                                     </td>
                                     <td class="custom-kam-task-management-table-cell">
                                         <div class="d-flex gap-2">
@@ -500,7 +515,7 @@
                     setTimeout(() => {
                         targetBtn.click();
                         targetBtn.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    }, 800);
+                    }, 500);
                 }
             } else if (deepAction === 'edit') {
                 const editBtn = document.querySelector(`button[data-bs-target="#editModal${deepTaskId}"]`);

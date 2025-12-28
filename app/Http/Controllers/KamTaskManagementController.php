@@ -2,19 +2,19 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Task;
-use App\Models\ResourceUpgradationDetail;
-use App\Models\ResourceDowngradationDetail;
+use App\Mail\RecommendationSubmissionEmail;
 use App\Models\Customer;
+use App\Models\ResourceDowngradationDetail;
+use App\Models\ResourceUpgradationDetail;
 use App\Models\Service;
 use App\Models\Summary;
+use App\Models\Task;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
-use App\Models\User;
-use App\Mail\RecommendationSubmissionEmail;
+use Illuminate\Support\Facades\Mail;
 
 class KamTaskManagementController extends Controller
 {
@@ -31,7 +31,7 @@ class KamTaskManagementController extends Controller
         $query = Task::with(['customer', 'status', 'assignedTo', 'resourceUpgradation.details.service', 'resourceDowngradation.details.service'])
             ->leftJoin('resource_upgradations', 'tasks.resource_upgradation_id', '=', 'resource_upgradations.id')
             ->leftJoin('resource_downgradations', 'tasks.resource_downgradation_id', '=', 'resource_downgradations.id')
-            ->orderByRaw('CASE WHEN tasks.assigned_to IS NULL THEN 0 ELSE 1 END')
+            ->orderByRaw('CASE WHEN tasks.assigned_to IS NULL THEN 0 WHEN tasks.completed_at IS NULL THEN 1 ELSE 2 END')
             ->orderByRaw('COALESCE(resource_upgradations.created_at, resource_downgradations.created_at) ASC');
 
         // Prioritize specific task if provided (for deep linking)
@@ -85,20 +85,21 @@ class KamTaskManagementController extends Controller
         // Get all services
         $allServices = Service::all();
         $existingDetails = $task->resourceDetails;
-        
+
         // Create a map of existing details by service_id
         $detailsMap = $existingDetails->keyBy('service_id');
-        
+
         // Build complete resource details array with all services
-        $completeResourceDetails = $allServices->map(function($service) use ($detailsMap, $task) {
+        $completeResourceDetails = $allServices->map(function ($service) use ($detailsMap, $task) {
             $existingDetail = $detailsMap->get($service->id);
-            
+
             if ($existingDetail) {
                 // Service has existing data
                 return $existingDetail;
             } else {
                 // Service doesn't exist in task, create a placeholder with 0 values
                 $isUpgrade = $task->allocation_type === 'upgrade';
+
                 return (object) [
                     'service' => $service,
                     'service_id' => $service->id,
@@ -156,13 +157,13 @@ class KamTaskManagementController extends Controller
 
                 foreach ($validated['services'] as $serviceId => $amount) {
                     $affectedServiceIds[] = $serviceId;
-                    
+
                     if ($existingDetails->has($serviceId)) {
                         // Update existing detail
                         $existingDetails[$serviceId]->update([
                             'upgrade_amount' => $amount,
                         ]);
-                    } else if ($amount > 0) {
+                    } elseif ($amount > 0) {
                         // Create new detail only if amount > 0
                         ResourceUpgradationDetail::create([
                             'resource_upgradation_id' => $task->resourceUpgradation->id,
@@ -172,7 +173,7 @@ class KamTaskManagementController extends Controller
                         ]);
                     }
                 }
-                
+
                 // Delete details with 0 amount
                 $task->resourceUpgradation->details()->where('upgrade_amount', 0)->delete();
 
@@ -186,13 +187,13 @@ class KamTaskManagementController extends Controller
 
                 foreach ($validated['services'] as $serviceId => $amount) {
                     $affectedServiceIds[] = $serviceId;
-                    
+
                     if ($existingDetails->has($serviceId)) {
                         // Update existing detail
                         $existingDetails[$serviceId]->update([
                             'downgrade_amount' => $amount,
                         ]);
-                    } else if ($amount > 0) {
+                    } elseif ($amount > 0) {
                         // Create new detail only if amount > 0
                         ResourceDowngradationDetail::create([
                             'resource_downgradation_id' => $task->resourceDowngradation->id,
@@ -202,13 +203,13 @@ class KamTaskManagementController extends Controller
                         ]);
                     }
                 }
-                
+
                 // Delete details with 0 amount
                 $task->resourceDowngradation->details()->where('downgrade_amount', 0)->delete();
             }
 
             // Sync the entire chain for affected services to ensure all quantities are correct
-            if (!empty($affectedServiceIds)) {
+            if (! empty($affectedServiceIds)) {
                 $this->syncCustomerResourceChains($customerId, array_unique($affectedServiceIds));
             }
 
@@ -217,7 +218,7 @@ class KamTaskManagementController extends Controller
 
             // Send recommendation email to Pro-Techs (like a new resource allocation)
             $proTechUsers = User::where('role_id', 4)->get(); // Pro-Tech Role ID is 4
-            
+
             foreach ($proTechUsers as $recipient) {
                 try {
                     Mail::to($recipient->email)->send(new RecommendationSubmissionEmail(
@@ -226,7 +227,7 @@ class KamTaskManagementController extends Controller
                         $task->allocation_type
                     ));
                 } catch (\Exception $e) {
-                    Log::error('Failed to send email: ' . $e->getMessage());
+                    Log::error('Failed to send email: '.$e->getMessage());
                 }
             }
 
@@ -268,7 +269,7 @@ class KamTaskManagementController extends Controller
             $task->delete();
 
             // Sync the entire chain for affected services
-            if (!empty($affectedServiceIds)) {
+            if (! empty($affectedServiceIds)) {
                 $this->syncCustomerResourceChains($customerId, array_unique($affectedServiceIds));
             }
 
@@ -287,36 +288,41 @@ class KamTaskManagementController extends Controller
         foreach ($serviceIds as $serviceId) {
             // Get all upgrades for this customer and service
             $upgrades = ResourceUpgradationDetail::where('service_id', $serviceId)
-                ->whereHas('resourceUpgradation', function($q) use ($customerId) {
+                ->whereHas('resourceUpgradation', function ($q) use ($customerId) {
                     $q->where('customer_id', $customerId);
                 })
                 ->with(['resourceUpgradation.task'])
                 ->get()
-                ->map(function($detail) {
+                ->map(function ($detail) {
                     $detail->xtype = 'upgrade';
                     $detail->sort_date = $detail->resourceUpgradation->activation_date;
                     $detail->sort_created = $detail->resourceUpgradation->created_at;
+
                     return $detail;
                 });
 
             // Get all downgrades for this customer and service
             $downgrades = ResourceDowngradationDetail::where('service_id', $serviceId)
-                ->whereHas('resourceDowngradation', function($q) use ($customerId) {
+                ->whereHas('resourceDowngradation', function ($q) use ($customerId) {
                     $q->where('customer_id', $customerId);
                 })
                 ->with(['resourceDowngradation.task'])
                 ->get()
-                ->map(function($detail) {
+                ->map(function ($detail) {
                     $detail->xtype = 'downgrade';
                     $detail->sort_date = $detail->resourceDowngradation->activation_date;
                     $detail->sort_created = $detail->resourceDowngradation->created_at;
+
                     return $detail;
                 });
 
             // Merge and sort chronologically ASC
-            $all = $upgrades->concat($downgrades)->sort(function($a, $b) {
+            $all = $upgrades->concat($downgrades)->sort(function ($a, $b) {
                 $dateCompare = strcmp($a->sort_date, $b->sort_date);
-                if ($dateCompare !== 0) return $dateCompare;
+                if ($dateCompare !== 0) {
+                    return $dateCompare;
+                }
+
                 return strcmp($a->sort_created, $b->sort_created);
             });
 
@@ -326,7 +332,7 @@ class KamTaskManagementController extends Controller
 
                 if ($item->xtype === 'upgrade') {
                     $runningQuantity += $item->upgrade_amount;
-                    
+
                     // Clear conflict flag for upgrades if it was set (though upgrades rarely cause conflicts themselves)
                     if ($item->resourceUpgradation && $item->resourceUpgradation->task) {
                         $item->resourceUpgradation->task->update(['has_resource_conflict' => false]);
@@ -343,10 +349,10 @@ class KamTaskManagementController extends Controller
 
                     // Update Task Conflict Status
                     if ($item->resourceDowngradation && $item->resourceDowngradation->task) {
-                         $item->resourceDowngradation->task->update(['has_resource_conflict' => $hasConflict]);
+                        $item->resourceDowngradation->task->update(['has_resource_conflict' => $hasConflict]);
                     }
                 }
-                
+
                 // Update quantity in DB
                 DB::table($item->xtype === 'upgrade' ? 'resource_upgradation_details' : 'resource_downgradation_details')
                     ->where('id', $item->id)

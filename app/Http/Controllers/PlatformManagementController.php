@@ -52,7 +52,7 @@ class PlatformManagementController extends Controller
     private function authorizeAccess(): void
     {
         $user = Auth::user();
-        if (! ($user?->isAdmin() || $user?->isProKam() || $user?->isProTech() || $user?->isManagement())) {
+        if (! ($user?->isAdmin() || $user?->isProTechOrTech() || $user?->isManagement())) {
             abort(403, 'Unauthorized access.');
         }
     }

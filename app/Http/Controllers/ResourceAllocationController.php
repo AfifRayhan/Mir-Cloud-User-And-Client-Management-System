@@ -24,11 +24,17 @@ class ResourceAllocationController extends Controller
                 $index = 1;
                 foreach ($group as $customer) {
                     $customer->customer_name = $customer->customer_name.'-'.$index;
+                    if (! $customer->hasResourceAllocations()) {
+                        $customer->customer_name .= ' (No Resources)';
+                    }
                     $customers->push($customer);
                     $index++;
                 }
             } else {
                 // No duplicates, just add
+                if (! $group->first()->hasResourceAllocations()) {
+                    $group->first()->customer_name .= ' (No Resources)';
+                }
                 $customers->push($group->first());
             }
         }

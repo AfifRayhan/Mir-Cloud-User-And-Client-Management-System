@@ -60,7 +60,9 @@ class CustomerController extends Controller
             'submitted_by' => Auth::id(),
         ]);
 
-        return redirect()->route('resource-allocation.index')
+        $redirectRoute = Auth::user()->isTech() ? 'tech-resource-allocation.index' : 'resource-allocation.index';
+
+        return redirect()->route($redirectRoute)
             ->with('success', 'Customer created successfully. Please allocate resources.')
             ->with('new_customer_id', $customer->id);
     }

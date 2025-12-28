@@ -85,6 +85,8 @@
                                                 data-current="{{ $currentValue }}"
                                                 data-service-id="{{ $service->id }}"
                                                 oninput="updateNewTotal(this)"
+                                                onfocus="this.value == '0' ? this.value = '' : null"
+                                                onblur="this.value == '' ? this.value = '0' : null"
                                                 placeholder="0"
                                             >
                                             <button type="button" class="resource-alloc-stepper-btn" onclick="incrementValue(this)">+</button>
@@ -198,6 +200,8 @@
                                                 data-current-value="{{ $currentValue }}"
                                                 data-service-id="{{ $service->id }}"
                                                 oninput="updateNewTotalDowngrade(this)"
+                                                onfocus="this.value == '0' ? this.value = '' : null"
+                                                onblur="this.value == '' ? this.value = '0' : null"
                                                 placeholder="0"
                                             >
                                             <button type="button" class="resource-alloc-stepper-btn" onclick="incrementValue(this)">+</button>

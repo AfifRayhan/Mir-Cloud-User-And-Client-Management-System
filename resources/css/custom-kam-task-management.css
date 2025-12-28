@@ -72,7 +72,7 @@
 
 .custom-kam-task-management-title {
     font-size: 2rem;
-    color: #1f2937;
+    color: #1a1f44;
     letter-spacing: -0.025em;
     margin-bottom: 0.5rem;
 }
@@ -188,6 +188,23 @@
 
 .custom-kam-task-management-table-row:hover {
     background: var(--custom-kam-task-management-bg);
+}
+
+/* Status Row Coloring */
+.custom-kam-task-management-table-row.task-assigned {
+    background-color: #e8f5e9 !important;
+}
+
+.custom-kam-task-management-table-row.task-assigned:hover {
+    background-color: #c8e6c9 !important;
+}
+
+.custom-kam-task-management-table-row.task-completed {
+    background-color: #a5d6a7 !important;
+}
+
+.custom-kam-task-management-table-row.task-completed:hover {
+    background-color: #81c784 !important;
 }
 
 /* Action Buttons */

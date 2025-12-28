@@ -12,7 +12,7 @@
                     <div>
                         <h1 class="custom-service-management-title fw-bold mb-2">Service Management</h1>
                         <p class="custom-service-management-subtitle text-muted">
-                            Define reusable services like vCPU, RAM, Storage, and more.
+                            Define reusable services like vCPU, Memory, SAS, SSD, BS, PI, SS, EIP, VPN, BDIX, BW, and more.
                         </p>
                     </div>
                 </div>
@@ -81,7 +81,7 @@
                                 <input type="text" id="service_name" name="service_name" 
                                        class="form-control @error('service_name') is-invalid @enderror" 
                                        value="{{ old('service_name', $editableService->service_name ?? '') }}" 
-                                       placeholder="e.g. vCPU" required autofocus>
+                                       placeholder="e.g. Memory, SAS, EIP" required autofocus>
                                 @error('service_name')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror

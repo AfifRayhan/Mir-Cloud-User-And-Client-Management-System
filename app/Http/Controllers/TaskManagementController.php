@@ -22,7 +22,7 @@ class TaskManagementController extends Controller
         $query = Task::with(['customer', 'status', 'assignedTo', 'resourceUpgradation.details.service', 'resourceDowngradation.details.service'])
             ->leftJoin('resource_upgradations', 'tasks.resource_upgradation_id', '=', 'resource_upgradations.id')
             ->leftJoin('resource_downgradations', 'tasks.resource_downgradation_id', '=', 'resource_downgradations.id')
-            ->orderByRaw('CASE WHEN tasks.assigned_to IS NULL THEN 0 ELSE 1 END')
+            ->orderByRaw('CASE WHEN tasks.assigned_to IS NULL THEN 0 WHEN tasks.completed_at IS NULL THEN 1 ELSE 2 END')
             ->orderByRaw('COALESCE(resource_upgradations.created_at, resource_downgradations.created_at) ASC');
 
         // Prioritize specific task if provided (for deep linking)

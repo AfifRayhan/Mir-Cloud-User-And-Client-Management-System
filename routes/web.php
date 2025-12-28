@@ -40,20 +40,27 @@ Route::middleware('auth')->group(function () {
         Route::post('resource-allocation/{customer}/allocate', [ResourceAllocationController::class, 'storeAllocation'])->name('resource-allocation.store');
     });
 
+    // Tech resource allocation (Tech only)
+    Route::middleware('role:tech,admin')->group(function () {
+        Route::get('tech-resource-allocation', [\App\Http\Controllers\TechResourceAllocationController::class, 'index'])->name('tech-resource-allocation.index');
+        Route::get('tech-resource-allocation/{customer}/allocate', [\App\Http\Controllers\TechResourceAllocationController::class, 'allocationForm'])->name('tech-resource-allocation.allocate');
+        Route::post('tech-resource-allocation/{customer}/allocate', [\App\Http\Controllers\TechResourceAllocationController::class, 'storeAllocation'])->name('tech-resource-allocation.store');
+    });
+
     // User management (Admin only)
     Route::middleware('role:admin')->group(function () {
         Route::resource('users', \App\Http\Controllers\UserManagementController::class);
     });
 
-    // Platform management (Admin, Pro-Tech, Pro-KAM, Management)
-    Route::middleware('role:admin,pro-tech,pro-kam,management')->group(function () {
+    // Platform management (Admin, Pro-Tech, Tech, Management)
+    Route::middleware('role:admin,pro-tech,tech,management')->group(function () {
         Route::get('platforms', [PlatformManagementController::class, 'index'])->name('platforms.index');
         Route::post('platforms', [PlatformManagementController::class, 'store'])->name('platforms.store');
         Route::delete('platforms/{platform}', [PlatformManagementController::class, 'destroy'])->name('platforms.destroy');
     });
 
-    // Service management (Admin, Pro-Tech, Pro-KAM, Management)
-    Route::middleware('role:admin,pro-tech,pro-kam,management')->group(function () {
+    // Service management (Admin, Pro-Tech, Management)
+    Route::middleware('role:admin,pro-tech,management')->group(function () {
         Route::get('services', [ServiceManagementController::class, 'index'])->name('services.index');
         Route::post('services', [ServiceManagementController::class, 'store'])->name('services.store');
         Route::put('services/{service}', [ServiceManagementController::class, 'update'])->name('services.update');
@@ -91,6 +98,10 @@ Route::middleware('auth')->group(function () {
     Route::post('my-tasks/{task}/complete', [\App\Http\Controllers\MyTaskController::class, 'complete'])->name('my-tasks.complete');
     Route::post('my-tasks/{task}/platform', [\App\Http\Controllers\MyTaskController::class, 'updatePlatform'])->name('my-tasks.update-platform');
     Route::get('my-tasks/customer/{customerId}/vdcs', [\App\Http\Controllers\MyTaskController::class, 'getCustomerVdcs'])->name('my-tasks.customer-vdcs');
+
+    // Task Actions (Email links)
+    Route::get('tasks/{task}/approve', [\App\Http\Controllers\TaskActionController::class, 'approve'])->name('tasks.approve');
+    Route::get('tasks/{task}/undo', [\App\Http\Controllers\TaskActionController::class, 'undo'])->name('tasks.undo');
 });
 
 require __DIR__.'/auth.php';

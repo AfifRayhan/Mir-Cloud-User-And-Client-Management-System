@@ -204,11 +204,11 @@
         width: 100%;
         margin: 1rem 0;
     }
-    
+
     .nav-centered-desktop .nav-item {
         width: 100%;
     }
-    
+
     .nav-centered-desktop .nav-link {
         justify-content: flex-start;
     }

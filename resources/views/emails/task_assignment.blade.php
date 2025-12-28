@@ -217,7 +217,9 @@
        ">
         ✅ Complete Task
     </a>
-    
+    <p style="margin-top: 30px; font-size: 0.9em; color: #666;">
+        This is an automated notification from Mir Cloud Management System.
+    </p>
 </div>
 </body>
 </html>

@@ -338,7 +338,7 @@
                             console.log('Clicking view button');
                             targetBtn.click();
                             targetBtn.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                        }, 1200);
+                        }, 500);
                     }
                 } else if (deepAction === 'complete') {
                     const completeBtn = document.querySelector(`.complete-task-btn[data-task-id="${deepTaskId}"]`);
@@ -348,7 +348,7 @@
                             console.log('Clicking complete button');
                             completeBtn.click();
                             completeBtn.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                        }, 1200);
+                        }, 500);
                     }
                 }
             }            

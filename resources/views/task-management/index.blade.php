@@ -409,7 +409,7 @@
                             console.log('Clicking target button');
                             targetBtn.click();
                             targetBtn.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                        }, 1200);
+                        }, 500);
                     }
                 } else if (deepAction === 'assign') {
                     const assignBtn = document.querySelector(`button[data-bs-target="#assignModal${deepTaskId}"]`);
@@ -418,7 +418,7 @@
                         setTimeout(() => {
                             console.log('Clicking assign button');
                             assignBtn.click();
-                        }, 1200);
+                        }, 500);
                     }
                 }
             }

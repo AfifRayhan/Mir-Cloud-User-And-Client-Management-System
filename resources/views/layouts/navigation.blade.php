@@ -34,6 +34,10 @@
                     <li class="nav-item">
                         <a class="nav-link {{ request()->routeIs('resource-allocation.*') ? 'active' : '' }}" href="{{ route('resource-allocation.index') }}">Resource</a>
                     </li>
+                @elseif(Auth::user()->isTech())
+                    <li class="nav-item">
+                        <a class="nav-link {{ request()->routeIs('tech-resource-allocation.*') ? 'active' : '' }}" href="{{ route('tech-resource-allocation.index') }}">Resource</a>
+                    </li>
                 @endif
                 {{-- Task Management --}}
                 @if(Auth::user()->isTech())
@@ -50,14 +54,13 @@
                     </li>
                 @endif
                 {{-- Service Management --}}
-                {{-- Service Management --}}
-                @if(Auth::user()->isAdmin() || Auth::user()->isProKam() || Auth::user()->isProTech() || Auth::user()->isManagement())
+                @if(Auth::user()->isAdmin() || Auth::user()->isProTech() || Auth::user()->isManagement())
                     <li class="nav-item">
                         <a class="nav-link {{ request()->routeIs('services.*') ? 'active' : '' }}" href="{{ route('services.index') }}">Service</a>
                     </li>
                 @endif
                 {{-- Platform Management --}}
-                @if(Auth::user()->isAdmin() || Auth::user()->isProKam() || Auth::user()->isProTech() || Auth::user()->isManagement())
+                @if(Auth::user()->isAdmin() || Auth::user()->isProTechOrTech() || Auth::user()->isManagement())
                     <li class="nav-item">
                         <a class="nav-link {{ request()->routeIs('platforms.*') ? 'active' : '' }}" href="{{ route('platforms.index') }}">Platform</a>
                     </li>

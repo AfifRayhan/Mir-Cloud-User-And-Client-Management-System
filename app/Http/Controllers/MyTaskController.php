@@ -150,34 +150,45 @@ class MyTaskController extends Controller
 
             // Send email notification
             $sender = Auth::user();
-
-            // Find management users
-            $managementUsers = \App\Models\User::whereHas('role', function ($q) {
-                $q->where('role_name', 'management');
-            })->get();
+            $sender->load('role');
 
             // Load relationships required by the email template and determine action type
-            $lockedTask->load(['customer', 'customer.platform', 'resourceUpgradation.details.service', 'resourceDowngradation.details.service', 'assignedBy', 'vdc']);
+            $lockedTask->load(['customer', 'customer.platform', 'resourceUpgradation.details.service', 'resourceDowngradation.details.service', 'assignedBy', 'vdc', 'assignedBy.role']);
             $actionType = $lockedTask->allocation_type ?? 'allocation';
 
-            // Prepare CC list (assigned_by user)
-            $ccUsers = [];
-            if ($lockedTask->assignedBy) {
-                $ccUsers[] = $lockedTask->assignedBy->email;
-            }
-
-            // Send email to each management user
-            foreach ($managementUsers as $manager) {
+            if ($sender->role->role_name === 'tech' && $lockedTask->assignedBy && in_array($lockedTask->assignedBy->role->role_name, ['kam', 'pro-kam', 'admin'])) {
+                // Send specific confirmation email to KAM
                 try {
-                    $mail = \Illuminate\Support\Facades\Mail::to($manager->email);
-
-                    if (! empty($ccUsers)) {
-                        $mail->cc($ccUsers);
-                    }
-
-                    $mail->send(new \App\Mail\TaskCompletionEmail($lockedTask, $sender, $actionType));
+                    \Illuminate\Support\Facades\Mail::to($lockedTask->assignedBy->email)
+                        ->send(new \App\Mail\TechResourceConfirmationEmail($lockedTask, $sender, $actionType));
                 } catch (\Exception $e) {
-                    \Illuminate\Support\Facades\Log::error('Failed to send completion email to '.$manager->email.': '.$e->getMessage());
+                    \Illuminate\Support\Facades\Log::error('Failed to send tech confirmation email to '.$lockedTask->assignedBy->email.': '.$e->getMessage());
+                }
+            } else {
+                // Original logic for other cases: Find management users
+                $managementUsers = \App\Models\User::whereHas('role', function ($q) {
+                    $q->where('role_name', 'management');
+                })->get();
+
+                // Prepare CC list (assigned_by user)
+                $ccUsers = [];
+                if ($lockedTask->assignedBy) {
+                    $ccUsers[] = $lockedTask->assignedBy->email;
+                }
+
+                // Send email to each management user
+                foreach ($managementUsers as $manager) {
+                    try {
+                        $mail = \Illuminate\Support\Facades\Mail::to($manager->email);
+
+                        if (! empty($ccUsers)) {
+                            $mail->cc($ccUsers);
+                        }
+
+                        $mail->send(new \App\Mail\TaskCompletionEmail($lockedTask, $sender, $actionType));
+                    } catch (\Exception $e) {
+                        \Illuminate\Support\Facades\Log::error('Failed to send completion email to '.$manager->email.': '.$e->getMessage());
+                    }
                 }
             }
 

@@ -8,7 +8,7 @@
         <div class="row mb-5">
             <div class="col-12">
                 <div class="custom-customer-index-header">
-                    <div class="d-flex flex-column flex-md-row align-items-start align-items-md-center justify-content-between gap-3">
+                    <div class="d-flex flex-column flex-md-row align-items-center align-items-md-center justify-content-between gap-3">
                         <div>
                             <h1 class="custom-customer-index-title fw-bold mb-2">Resource Allocation</h1>
                             <p class="custom-customer-index-subtitle text-muted">

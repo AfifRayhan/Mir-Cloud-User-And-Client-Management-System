@@ -450,6 +450,7 @@
     .custom-customer-index-subtitle {
         text-align: center;
         font-size: 0.9375rem;
+        margin: 0 auto;
     }
 
     .custom-customer-index-header {

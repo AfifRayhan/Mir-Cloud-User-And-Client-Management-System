@@ -41,6 +41,13 @@
     color: #1a1f44;
     letter-spacing: -0.025em;
     text-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    margin-bottom: 0.5rem;
+}
+
+.tech-resource-subtitle {
+    font-size: 1.125rem;
+    color: #6b7280;
+    max-width: 600px;
 }
 
 .tech-resource-card {
@@ -153,4 +160,22 @@
 #vdcModal .form-control:focus {
     border-color: var(--tech-resource-primary);
     box-shadow: 0 0 0 0.25rem rgba(139, 92, 246, 0.25);
+}
+
+/* Responsive Design */
+@media (max-width: 767.98px) {
+    .tech-resource-title {
+        font-size: 1.375rem;
+        text-align: center;
+    }
+
+    .tech-resource-subtitle {
+        text-align: center;
+        font-size: 0.9375rem;
+        margin: 0 auto;
+    }
+
+    .tech-resource-header {
+        text-align: center;
+    }
 }

@@ -461,6 +461,7 @@
     .custom-user-management-subtitle {
         text-align: center;
         font-size: 0.9375rem;
+        margin: 0 auto;
     }
 
     .custom-user-management-header {

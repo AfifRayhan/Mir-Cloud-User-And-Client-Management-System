@@ -12,7 +12,7 @@
                     <div class="d-flex flex-column flex-md-row align-items-start align-items-md-center justify-content-between gap-3">
                         <div>
                             <h1 class="tech-resource-title fw-bold mb-2">Tech Resource Management</h1>
-                            <p class="text-muted">
+                            <p class="text-muted tech-resource-subtitle">
                                 Rapid resource allocation and automated task completion for tech users.
                             </p>
                         </div>

@@ -767,6 +767,11 @@ document.addEventListener("DOMContentLoaded", function () {
 
         navLinks.forEach((link) => {
             link.addEventListener("click", () => {
+                // Don't close the menu if clicking a dropdown toggle
+                if (link.classList.contains('dropdown-toggle')) {
+                    return;
+                }
+
                 if (navbarCollapse.classList.contains("show")) {
                     const bsCollapse = new bootstrap.Collapse(navbarCollapse);
                     bsCollapse.hide();

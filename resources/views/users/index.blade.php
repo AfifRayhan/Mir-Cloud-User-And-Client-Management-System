@@ -9,7 +9,7 @@
         <div class="row mb-5">
             <div class="col-12">
                 <div class="custom-user-management-header">
-                    <div class="d-flex flex-column flex-md-row align-items-start align-items-md-center justify-content-between gap-3">
+                    <div class="d-flex flex-column flex-md-row align-items-center align-items-md-center justify-content-between gap-3">
                         <div>
                             <h1 class="custom-user-management-title fw-bold mb-2">User Management</h1>
                             <p class="custom-user-management-subtitle text-muted">

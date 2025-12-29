@@ -14,12 +14,6 @@
                                 <span class="text-primary fw-semibold">{{ Auth::user()->name }}</span>!
                             </p>
                         </div>
-                        <div class="custom-dashboard-date position-absolute end-0">
-                            <span class="badge custom-dashboard-date-badge bg-light text-dark">
-                                <i class="fas fa-calendar-alt me-2"></i>
-                                {{ now()->format('F j, Y') }}
-                            </span>
-                        </div>
                     </div>
                 </div>
             </div>

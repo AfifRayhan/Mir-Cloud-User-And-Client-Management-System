@@ -84,7 +84,9 @@
                                     <select id="customer_id" name="customer_id" class="form-select form-select-lg @error('customer_id') is-invalid @enderror" required>
                                         <option value="" disabled {{ old('customer_id') ? '' : 'selected' }}>Choose a customer</option>
                                         @foreach($customers as $customer)
-                                            <option value="{{ $customer->id }}" {{ old('customer_id') == $customer->id ? 'selected' : '' }}>
+                                            <option value="{{ $customer->id }}" 
+                                                    data-is-new="{{ $customer->is_new ? 'true' : 'false' }}"
+                                                    {{ old('customer_id') == $customer->id ? 'selected' : '' }}>
                                                 {{ $customer->customer_name }}
                                             </option>
                                         @endforeach
@@ -94,7 +96,7 @@
                                     @enderror
                                 </div>
 
-                                <div class="mb-4">
+                                <div class="mb-4" id="action-type-container">
                                     <label for="action_type" class="form-label fw-semibold">Action</label>
                                     <select id="action_type" name="action_type" class="form-select form-select-lg @error('action_type') is-invalid @enderror" required>
                                         <option value="" disabled selected>Select Action</option>
@@ -141,14 +143,16 @@
     @push('scripts')
         <script>
             (function() {
+                const actionTypeContainer = document.getElementById('action-type-container');
                 const customerSelect = document.getElementById('customer_id');
                 const actionSelect = document.getElementById('action_type');
                 const statusContainer = document.getElementById('status-container');
                 const statusSelect = document.getElementById('status_id');
                 const container = document.getElementById('cloud-detail-container');
                 const resourceForm = document.getElementById('resource-action-form');
+                const testStatusId = {{ \App\Models\CustomerStatus::where('name', 'Test')->first()?->id ?? 1 }};
 
-                if (!customerSelect || !actionSelect || !container) {
+                if (!customerSelect || !actionSelect || !container || !actionTypeContainer) {
                     return;
                 }
 
@@ -164,7 +168,8 @@
 
                 function toggleStatus() {
                     console.log('toggleStatus called, action:', actionSelect.value);
-                    if (actionSelect.value === 'upgrade') {
+                    const action = actionSelect.value;
+                    if (action === 'upgrade' || action === 'downgrade') {
                         statusContainer.classList.remove('d-none');
                         statusSelect.required = true;
                         console.log('Status container shown');
@@ -186,9 +191,9 @@
                         return;
                     }
 
-                    // For upgrade, require status selection
-                    if (actionType === 'upgrade' && !statusId) {
-                        renderPlaceholder('Please select a customer status to proceed with upgrade.');
+                    // For upgrade and downgrade, require status selection
+                    if ((actionType === 'upgrade' || actionType === 'downgrade') && !statusId) {
+                        renderPlaceholder(`Please select a customer status to proceed with ${actionType}.`);
                         return;
                     }
 
@@ -218,6 +223,11 @@
                         // If the backend provided a status_id, update the select
                         if (data.status_id && actionType === 'upgrade') {
                             statusSelect.value = data.status_id;
+                        }
+
+                        // Store testStatusId if provided
+                        if (data.test_status_id) {
+                            window.currentTestStatusId = data.test_status_id;
                         }
 
                         // Attach form submit handler
@@ -282,6 +292,17 @@
                             // Handle validation errors - show at top of page
                             if (data.message) {
                                 showPageAlert('danger', 'Error!', data.message);
+                                // Update column highlighting
+                                const currentTestStatusId = window.currentTestStatusId || testStatusId;
+                                const isTest = statusId == currentTestStatusId;
+                                document.querySelectorAll('.resource-alloc-test-col').forEach(el => {
+                                    if (isTest) el.classList.add('status-highlighted');
+                                    else el.classList.remove('status-highlighted');
+                                });
+                                document.querySelectorAll('.resource-alloc-billable-col').forEach(el => {
+                                    if (!isTest && statusId) el.classList.add('status-highlighted');
+                                    else el.classList.remove('status-highlighted');
+                                });
                             }
                             if (data.errors) {
                                 Object.keys(data.errors).forEach(key => {
@@ -406,14 +427,21 @@
                 });
 
                 customerSelect.addEventListener('change', function() {
-                    // Get the selected option text to check if customer has resources
+                    // Get the selected option to check if customer is new
                     const selectedOption = customerSelect.options[customerSelect.selectedIndex];
-                    const optionText = selectedOption.text;
+                    const isNew = selectedOption.getAttribute('data-is-new') === 'true';
                     
-                    // Auto-select upgrade if customer has no resources
-                    if (optionText.includes('No Resources')) {
+                    if (isNew) {
+                        actionTypeContainer.style.display = 'none';
                         actionSelect.value = 'upgrade';
                         toggleStatus();
+                    } else {
+                        actionTypeContainer.style.display = 'block';
+                        // Auto-select upgrade if customer text indicates no resources (legacy backup check)
+                        if (selectedOption.text.includes('No Resources')) {
+                            actionSelect.value = 'upgrade';
+                            toggleStatus();
+                        }
                     }
                     
                     if (actionSelect.value) {
@@ -422,7 +450,7 @@
                 });
 
                 statusSelect.addEventListener('change', function() {
-                    if (actionSelect.value === 'upgrade') {
+                    if (actionSelect.value === 'upgrade' || actionSelect.value === 'downgrade') {
                         loadAllocationForm();
                     }
                 });
@@ -486,13 +514,25 @@
                 // Update new total for upgrade
                 window.updateNewTotal = function(input) {
                     const serviceId = input.dataset.serviceId;
-                    const currentValue = parseInt(input.dataset.current) || 0;
+                    const statusId = parseInt(input.dataset.statusId) || 0;
+                    const currentTestValue = parseInt(input.dataset.currentTest) || 0;
+                    const currentBillableValue = parseInt(input.dataset.currentBillable) || 0;
                     const increaseBy = parseInt(input.value) || 0;
-                    const newTotal = currentValue + increaseBy;
                     
-                    const newTotalElement = document.querySelector(`[data-new-total-for="${serviceId}"]`);
-                    if (newTotalElement) {
-                        newTotalElement.textContent = newTotal;
+                    // Determine if adding to test or billable based on status
+                    const currentTestStatusId = window.currentTestStatusId || testStatusId;
+                    const isTest = statusId == currentTestStatusId;
+                    const newTestTotal = currentTestValue + (isTest ? increaseBy : 0);
+                    const newBillableTotal = currentBillableValue + (isTest ? 0 : increaseBy);
+                    
+                    const newTestElement = document.querySelector(`[data-new-test-for="${serviceId}"]`);
+                    const newBillableElement = document.querySelector(`[data-new-billable-for="${serviceId}"]`);
+                    
+                    if (newTestElement) {
+                        newTestElement.textContent = newTestTotal;
+                    }
+                    if (newBillableElement) {
+                        newBillableElement.textContent = newBillableTotal;
                     }
                     
                     // Inline validation
@@ -508,17 +548,30 @@
                 // Update new total for downgrade
                 window.updateNewTotalDowngrade = function(input) {
                     const serviceId = input.dataset.serviceId;
-                    const currentValue = parseInt(input.dataset.current) || 0;
+                    const statusId = parseInt(input.dataset.statusId) || 0;
+                    const currentTestValue = parseInt(input.dataset.currentTest) || 0;
+                    const currentBillableValue = parseInt(input.dataset.currentBillable) || 0;
                     const reduceBy = parseInt(input.value) || 0;
-                    const newTotal = Math.max(0, currentValue - reduceBy);
                     
-                    const newTotalElement = document.querySelector(`[data-new-total-for="${serviceId}"]`);
-                    if (newTotalElement) {
-                        newTotalElement.textContent = newTotal;
+                    // Determine if reducing from test or billable based on status
+                    const currentTestStatusId = window.currentTestStatusId || testStatusId;
+                    const isTest = statusId == currentTestStatusId;
+                    const newTestTotal = Math.max(0, currentTestValue - (isTest ? reduceBy : 0));
+                    const newBillableTotal = Math.max(0, currentBillableValue - (isTest ? 0 : reduceBy));
+                    
+                    const newTestElement = document.querySelector(`[data-new-test-for="${serviceId}"]`);
+                    const newBillableElement = document.querySelector(`[data-new-billable-for="${serviceId}"]`);
+                    
+                    if (newTestElement) {
+                        newTestElement.textContent = newTestTotal;
+                    }
+                    if (newBillableElement) {
+                        newBillableElement.textContent = newBillableTotal;
                     }
                     
-                    // Inline validation - highlight if exceeds current value
-                    if (reduceBy > currentValue) {
+                    // Inline validation - highlight if exceeds current value for the selected status
+                    const maxAllowed = isTest ? currentTestValue : currentBillableValue;
+                    if (reduceBy > maxAllowed) {
                         input.classList.add('is-invalid');
                         input.parentElement.classList.add('has-error');
                     } else {
@@ -543,6 +596,7 @@
                             e.preventDefault();
                         }
                     }, { passive: false });
+
                 });
 
                 // Initialize

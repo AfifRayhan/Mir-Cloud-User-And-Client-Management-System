@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Platform;
 use App\Models\Service;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -15,16 +16,23 @@ class ServiceManagementController extends Controller
     {
         $this->authorizeAccess();
 
-        $services = Service::with('insertedBy')
-            ->orderBy('service_name')
-            ->get();
+        $query = Service::with(['insertedBy', 'platform'])
+            ->orderBy('service_name');
+
+        if ($request->filled('platform_id')) {
+            $query->where('platform_id', $request->platform_id);
+        }
+
+        $services = $query->get();
+
+        $platforms = Platform::orderBy('platform_name')->get();
         $editableService = null;
 
         if ($request->query('service')) {
             $editableService = Service::findOrFail($request->query('service'));
         }
 
-        return view('services.index', compact('services', 'editableService'));
+        return view('services.index', compact('services', 'editableService', 'platforms'));
     }
 
     public function store(Request $request): RedirectResponse
@@ -32,12 +40,21 @@ class ServiceManagementController extends Controller
         $this->authorizeAccess();
 
         $validated = $request->validate([
-            'service_name' => 'required|string|max:255|unique:services,service_name',
+            'platform_id' => 'required|exists:platforms,id',
+            'service_name' => [
+                'required',
+                'string',
+                'max:255',
+                Rule::unique('services')->where(function ($query) use ($request) {
+                    return $query->where('platform_id', $request->platform_id);
+                }),
+            ],
             'unit' => 'nullable|string|max:255',
             'unit_price' => 'nullable|numeric|min:0',
         ]);
 
         Service::create([
+            'platform_id' => $validated['platform_id'],
             'service_name' => $validated['service_name'],
             'unit' => $validated['unit'] ?? null,
             'unit_price' => $validated['unit_price'] ?? null,
@@ -52,17 +69,21 @@ class ServiceManagementController extends Controller
         $this->authorizeAccess();
 
         $validated = $request->validate([
+            'platform_id' => 'required|exists:platforms,id',
             'service_name' => [
                 'required',
                 'string',
                 'max:255',
-                Rule::unique('services', 'service_name')->ignore($service->id),
+                Rule::unique('services')->where(function ($query) use ($request) {
+                    return $query->where('platform_id', $request->platform_id);
+                })->ignore($service->id),
             ],
             'unit' => 'nullable|string|max:255',
             'unit_price' => 'nullable|numeric|min:0',
         ]);
 
         $service->update([
+            'platform_id' => $validated['platform_id'],
             'service_name' => $validated['service_name'],
             'unit' => $validated['unit'] ?? null,
             'unit_price' => $validated['unit_price'] ?? null,

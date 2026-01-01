@@ -23,6 +23,7 @@ class DatabaseSeeder extends Seeder
             CustomerStatusSeeder::class,
             TaskStatusSeeder::class,
             UserDepartmentSeeder::class,
+            UserSeeder::class,
         ]);
 
         // Create admin user
@@ -31,8 +32,8 @@ class DatabaseSeeder extends Seeder
         if ($adminRole) {
             User::create([
                 'name' => 'Admin User',
-                'email' => 'admin@example.com',
-                'username' => 'admin',
+                'email' => 'admin@gmail.com',
+                'username' => 'admin@gmail.com',
                 'password' => \Illuminate\Support\Facades\Hash::make('password'),
                 'role_id' => $adminRole->id,
             ]);

@@ -64,7 +64,7 @@ class TaskActionController extends Controller
         $actionType = $task->allocation_type ?? 'allocation';
         $ccUsers = $kam ? [$kam->email] : [];
 
-        $lockedTask = $task->load(['customer', 'customer.platform', 'resourceUpgradation.details.service', 'resourceDowngradation.details.service', 'assignedBy', 'vdc']);
+        $lockedTask = $task->load(['customer', 'customer.platform', 'resourceUpgradation.details.service', 'resourceDowngradation.details.service', 'assignedBy', 'vdc', 'assignedBy.role']);
 
         foreach ($managementUsers as $manager) {
             try {
@@ -188,6 +188,7 @@ class TaskActionController extends Controller
 
             // 3. Send TaskAssignmentEmail to Tech
             try {
+                $newTask->load('customer');
                 Mail::to($techUser->email)->send(new TaskAssignmentEmail($newTask, $kam, $newType));
             } catch (\Exception $e) {
                 Log::error('Failed to send assignment email to '.$techUser->email.' during undo: '.$e->getMessage());

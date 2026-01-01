@@ -122,6 +122,27 @@
     font-size: 0.875rem;
 }
 
+/* Current Value Display (Text based, matching New Total) */
+.resource-alloc-current-display {
+    font-weight: 500;
+    color: var(--resource-alloc-secondary);
+    font-size: 0.9375rem;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.resource-alloc-current-value {
+    color: #1f2937;
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+.resource-alloc-current-unit {
+    font-size: 0.8125rem;
+    color: var(--resource-alloc-secondary);
+}
+
 /* Service Column Spacing */
 .resource-alloc-service-cell {
     padding: 0.875rem 1rem !important;
@@ -297,6 +318,25 @@
     padding: 0.75rem 1rem;
     vertical-align: middle;
     border-bottom: 1px solid var(--resource-alloc-border);
+}
+
+/* Status-based Column Highlighting */
+.resource-alloc-test-col.status-highlighted {
+    background-color: var(--resource-alloc-warning-light) !important;
+    border-left: 3px solid var(--resource-alloc-warning);
+    font-weight: 600;
+}
+
+.resource-alloc-billable-col.status-highlighted {
+    background-color: var(--resource-alloc-success-light) !important;
+    border-left: 3px solid var(--resource-alloc-success);
+    font-weight: 600;
+}
+
+.resource-alloc-test-col.status-highlighted .resource-alloc-current-value,
+.resource-alloc-billable-col.status-highlighted .resource-alloc-current-value {
+    color: #1f2937;
+    font-weight: 700;
 }
 
 /* Responsive Adjustments */

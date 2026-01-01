@@ -100,6 +100,7 @@ class MyTaskController extends Controller
         $validated = $request->validate([
             'vdc_id' => 'nullable|exists:vdcs,id',
             'new_vdc_name' => 'nullable|string|max:255',
+            'source' => 'nullable|string',
         ]);
 
         return \Illuminate\Support\Facades\DB::transaction(function () use ($task, $validated) {
@@ -156,16 +157,20 @@ class MyTaskController extends Controller
             $lockedTask->load(['customer', 'customer.platform', 'resourceUpgradation.details.service', 'resourceDowngradation.details.service', 'assignedBy', 'vdc', 'assignedBy.role']);
             $actionType = $lockedTask->allocation_type ?? 'allocation';
 
-            if ($sender->role->role_name === 'tech' && $lockedTask->assignedBy && in_array($lockedTask->assignedBy->role->role_name, ['kam', 'pro-kam', 'admin'])) {
-                // Send specific confirmation email to KAM
+            // Determine email type and recipient based on source
+            $source = $validated['source'] ?? null;
+
+            if ($source === 'tech_allocation' && $lockedTask->assignedBy) {
+                \Illuminate\Support\Facades\Log::info('Tech allocation confirm email block entered', ['assigned_by' => $lockedTask->assignedBy->email]);
+                // Case 1: Tech Resource Allocation - Send Confirmation to Assigner (KAM)
                 try {
                     \Illuminate\Support\Facades\Mail::to($lockedTask->assignedBy->email)
                         ->send(new \App\Mail\TechResourceConfirmationEmail($lockedTask, $sender, $actionType));
                 } catch (\Exception $e) {
-                    \Illuminate\Support\Facades\Log::error('Failed to send tech confirmation email to '.$lockedTask->assignedBy->email.': '.$e->getMessage());
+                    \Illuminate\Support\Facades\Log::error('Failed to send tech confirmation email: '.$e->getMessage());
                 }
             } else {
-                // Original logic for other cases: Find management users
+                // Case 2: Standard My Tasks Completion - Send Completion Email to Management
                 $managementUsers = \App\Models\User::whereHas('role', function ($q) {
                     $q->where('role_name', 'management');
                 })->get();
@@ -176,7 +181,6 @@ class MyTaskController extends Controller
                     $ccUsers[] = $lockedTask->assignedBy->email;
                 }
 
-                // Send email to each management user
                 foreach ($managementUsers as $manager) {
                     try {
                         $mail = \Illuminate\Support\Facades\Mail::to($manager->email);
@@ -224,20 +228,22 @@ class MyTaskController extends Controller
             return;
         }
 
-        // Get all services
-        $services = \App\Models\Service::all();
+        // Get all services and current resources (which now returns independent pools)
+        $resources = $customer->getCurrentResources();
+        $services = \App\Models\Service::where('platform_id', $customer->platform_id)->get();
 
         foreach ($services as $service) {
-            $quantity = $customer->getResourceQuantity($service->service_name);
+            $pool = $resources[$service->service_name] ?? ['test' => 0, 'billable' => 0];
 
-            // Upsert summary record
+            // Upsert summary record with separate quantity columns
             \App\Models\Summary::updateOrCreate(
                 [
                     'customer_id' => $customerId,
                     'service_id' => $service->id,
                 ],
                 [
-                    'quantity' => $quantity,
+                    'test_quantity' => $pool['test'],
+                    'billable_quantity' => $pool['billable'],
                 ]
             );
         }

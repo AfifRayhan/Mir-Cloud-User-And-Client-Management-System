@@ -11,6 +11,21 @@
 <body style="font-family: Arial, sans-serif;">
     <h1 style="color: #4f46e5;">New Resource Recommendation</h1>
     <p>A new resource {{ $actionType }} recommendation has been submitted by {{ $sender->name }}.</p>
+ 
+    @php
+        $isUpgrade = $task->allocation_type === 'upgrade';
+        
+        // Check if this is the first allocation ever for this customer
+        $isFirstAllocation = false;
+        if ($isUpgrade && $task->resourceUpgradation) {
+            $otherUpgradesCount = \App\Models\ResourceUpgradation::where('customer_id', $task->customer_id)
+                ->where('id', '<', $task->resource_upgradation_id)
+                ->count();
+            $otherDowngradesCount = \App\Models\ResourceDowngradation::where('customer_id', $task->customer_id)
+                ->count();
+            $isFirstAllocation = ($otherUpgradesCount === 0 && $otherDowngradesCount === 0);
+        }
+    @endphp
 
     <div style="background-color:#f9f9f9; padding:15px; border:1px solid #ddd; border-top: 4px solid #4f46e5;">
         <h2 style="color: #4f46e5;">Customer Information</h2>
@@ -25,25 +40,29 @@
                     <td style="border:1px solid #ddd; padding:8px;">{{ optional($task->customer->platform)->platform_name ?? 'N/A' }}</td>
                 </tr>
                 <tr>
-                    <td style="border:1px solid #ddd; background:#e0e7ff; font-weight:bold;">Activation Date</td>
+                    <td style="border:1px solid #ddd; background:#e0e7ff; font-weight:bold;">Resource Activation Date</td>
                     <td style="border:1px solid #ddd; padding:8px;">{{ $task->activation_date->format('M d, Y') }}</td>
                 </tr>
                 <tr>
                     <td style="border:1px solid #ddd; background:#e0e7ff; font-weight:bold;">Type</td>
-                    <td style="border:1px solid #ddd; padding:8px;">{{ ucfirst($actionType) }}</td>
+                    <td style="border:1px solid #ddd; padding:8px;">{{ $isFirstAllocation ?? false ? 'First Allocation' : ucfirst($actionType) }}</td>
                 </tr>
+                @if($task->customer->customer_address)
                 <tr>
                     <td style="border:1px solid #ddd; background:#e0e7ff; font-weight:bold;">Customer Address</td>
                     <td style="border:1px solid #ddd; padding:8px;">{{ $task->customer->customer_address }}</td>
                 </tr>
+                @endif
+                @if($task->customer->po_number)
                 <tr>
                     <td style="border:1px solid #ddd; background:#e0e7ff; font-weight:bold;">PO Number</td>
                     <td style="border:1px solid #ddd; padding:8px;">{{ $task->customer->po_number }}</td>
                 </tr>
+                @endif
             </tbody>
         </table>
 
-        @if($task->customer->commercial_contact_name || $task->customer->commercial_contact_email || $task->customer->commercial_contact_phone)
+        @if($task->customer->commercial_contact_name || $task->customer->commercial_contact_email || $task->customer->commercial_contact_phone || $task->customer->commercial_contact_designation)
         <h2 style="margin-top:20px; color: #4f46e5;">Commercial Contact</h2>
         <table width="100%" cellpadding="8" cellspacing="0" style="border-collapse:collapse; margin-top:10px;">
             <tbody>
@@ -75,7 +94,7 @@
         </table>
         @endif
 
-        @if($task->customer->technical_contact_name || $task->customer->technical_contact_email || $task->customer->technical_contact_phone)
+        @if($task->customer->technical_contact_name || $task->customer->technical_contact_email || $task->customer->technical_contact_phone || $task->customer->technical_contact_designation)
         <h2 style="margin-top:20px; color: #4f46e5;">Technical Contact</h2>
         <table width="100%" cellpadding="8" cellspacing="0" style="border-collapse:collapse; margin-top:10px;">
             <tbody>
@@ -107,7 +126,7 @@
         </table>
         @endif
 
-        @if($task->customer->optional_contact_name || $task->customer->optional_contact_email || $task->customer->optional_contact_phone)
+        @if($task->customer->optional_contact_name || $task->customer->optional_contact_email || $task->customer->optional_contact_phone || $task->customer->optional_contact_designation)
         <h2 style="margin-top:20px; color: #4f46e5;">Optional Contact</h2>
         <table width="100%" cellpadding="8" cellspacing="0" style="border-collapse:collapse; margin-top:10px;">
             <tbody>
@@ -141,8 +160,7 @@
     </div>
 
     @php
-        $isUpgrade = $task->allocation_type === 'upgrade';
-        $headerLabel = $isUpgrade ? 'Increase By' : 'Reduce By';
+        $headerLabel = $isFirstAllocation ? 'Allocation Amount' : ($isUpgrade ? 'Increase By' : 'Reduce By');
         $headerBg = '#e0e7ff';
         // VDC is not yet assigned during recommendation submission
     @endphp
@@ -153,9 +171,13 @@
             <thead>
                 <tr>
                     <th style="border:1px solid #ddd; background:{{ $headerBg }}; text-align:left; width: 40%;">Service</th>
-                    <th style="border:1px solid #ddd; background:{{ $headerBg }}; text-align:left;">Current</th>
+                    @if(!$isFirstAllocation)
+                        <th style="border:1px solid #ddd; background:{{ $headerBg }}; text-align:left;">Current</th>
+                    @endif
                     <th style="border:1px solid #ddd; background:{{ $headerBg }}; text-align:left;">{{ $headerLabel }}</th>
-                    <th style="border:1px solid #ddd; background:{{ $headerBg }}; text-align:left;">New</th>
+                    @if(!$isFirstAllocation)
+                        <th style="border:1px solid #ddd; background:{{ $headerBg }}; text-align:left;">New</th>
+                    @endif
                 </tr>
             </thead>
             <tbody>
@@ -169,13 +191,17 @@
                             <strong style="color: #333;">{{ $detail->service->service_name }}</strong>
                             @if($detail->service->unit) <span style="color: #666; font-size: 11px;">({{ $detail->service->unit }})</span> @endif
                         </td>
-                        <td style="border:1px solid #ddd; background:#ffffff; color: #666;">{{ $prevValue }} {{ $detail->service->unit }}</td>
+                        @if(!$isFirstAllocation)
+                            <td style="border:1px solid #ddd; background:#ffffff; color: #666;">{{ $prevValue }} {{ $detail->service->unit }}</td>
+                        @endif
                         <td style="border:1px solid #ddd; background:#ffffff; font-weight:bold; color: {{ $isUpgrade ? '#16a34a' : '#ca8a04' }};">
                             {{ $amount }} {{ $detail->service->unit }}
                         </td>
-                        <td style="border:1px solid #ddd; background:#f5f7ff; font-weight:bold; color: #4f46e5;">
-                            {{ $detail->quantity }} {{ $detail->service->unit }}
-                        </td>
+                        @if(!$isFirstAllocation)
+                            <td style="border:1px solid #ddd; background:#f5f7ff; font-weight:bold; color: #4f46e5;">
+                                {{ $detail->quantity }} {{ $detail->service->unit }}
+                            </td>
+                        @endif
                     </tr>
                 @endforeach
             </tbody>
@@ -186,12 +212,13 @@
         </div>
     @endif
     <div style="margin-top:25px; text-align:center;">
-
+ 
     <a href="{{ route('task-management.index', ['dtid' => $task->id, 'da' => 'view']) }}"
-       style="
-           display:block;
-           width: fit-content;
-           margin: 0 auto 12px auto;
+           style="
+               display:inline-block;
+               width: 220px;
+               text-align: center;
+               margin: 10px 5px;
            padding:12px 22px;
            background-color:#4f46e5;
            color:#ffffff;
@@ -200,14 +227,15 @@
            font-weight:bold;
            border-radius:4px;
        ">
-        🔍 View in Task Management
+        🔍 View Task
     </a>
-
+ 
     <a href="{{ route('task-management.index', ['dtid' => $task->id, 'da' => 'assign']) }}"
        style="
-           display:block;
-           width: fit-content;
-           margin: 0 auto;
+           display:inline-block;
+           width: 220px;
+           text-align: center;
+           margin: 10px 5px;
            padding:12px 22px;
            background-color:#16a34a;
            color:#ffffff;

@@ -11,6 +11,7 @@ class Service extends Model
     use HasFactory;
 
     protected $fillable = [
+        'platform_id',
         'service_name',
         'unit',
         'unit_price',
@@ -24,5 +25,10 @@ class Service extends Model
     public function insertedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'inserted_by');
+    }
+
+    public function platform(): BelongsTo
+    {
+        return $this->belongsTo(Platform::class);
     }
 }

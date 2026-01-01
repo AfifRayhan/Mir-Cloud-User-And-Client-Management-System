@@ -149,6 +149,9 @@
                                         <i class="fas fa-info-circle me-2"></i>Status
                                     </th>
                                     <th class="custom-task-management-table-header">
+                                        <i class="fas fa-check-circle me-2"></i>Completion Status
+                                    </th>
+                                    <th class="custom-task-management-table-header">
                                         <i class="fas fa-user-check me-2"></i>Assigned To
                                     </th>
                                     <th class="custom-task-management-table-header">
@@ -186,8 +189,6 @@
                                         <td class="custom-task-management-table-cell">
                                             @if($task->customer->platform)
                                                 <span class="custom-task-management-badge">{{ $task->customer->platform->platform_name }}</span>
-                                            @else
-                                                <span class="text-muted">Any</span>
                                             @endif
                                         </td>
                                         <td class="custom-task-management-table-cell">
@@ -220,8 +221,21 @@
                                         <td class="custom-task-management-table-cell">
                                             @if($task->status)
                                                 <span class="custom-task-management-badge">{{ $task->status->name }}</span>
+                                            @endif
+                                        </td>
+                                        <td class="custom-task-management-table-cell">
+                                            @if($task->completed_at)
+                                                <span class="custom-task-management-badge custom-task-management-badge-completed">
+                                                    <i class="fas fa-check-double me-1"></i> Completed
+                                                </span>
+                                            @elseif($task->assigned_to)
+                                                <span class="custom-task-management-badge custom-task-management-badge-assigned">
+                                                    <i class="fas fa-user-check me-1"></i> Assigned
+                                                </span>
                                             @else
-                                                <span class="text-muted">N/A</span>
+                                                <span class="custom-task-management-badge custom-task-management-badge-pending">
+                                                    <i class="fas fa-clock me-1"></i> Pending
+                                                </span>
                                             @endif
                                         </td>
                                         <td class="custom-task-management-table-cell">
@@ -278,7 +292,7 @@
                                     </tr>
                                     <!-- Expandable details row (hidden by default) -->
                                     <tr class="task-details-row" id="details-{{ $task->id }}" style="display: none;">
-                                        <td colspan="9" class="p-0">
+                                        <td colspan="10" class="p-0">
                                             <div class="task-details-container p-4 bg-light">
                                                 <div class="text-center py-3">
                                                     <div class="spinner-border text-primary" role="status">

@@ -124,14 +124,33 @@
                     <table class="custom-kam-task-management-table">
                         <thead class="custom-kam-task-management-table-head">
                             <tr>
-                                <th class="custom-kam-task-management-table-header">Customer</th>
-                                <th class="custom-kam-task-management-table-header">Inserted By</th>
-                                <th class="custom-kam-task-management-table-header">Platform</th>
-                                <th class="custom-kam-task-management-table-header">Type</th>
-                                <th class="custom-kam-task-management-table-header">Resource Activation</th>
-                                <th class="custom-kam-task-management-table-header">Status</th>
-                                <th class="custom-kam-task-management-table-header">Assigned To</th>
-                                <th class="custom-kam-task-management-table-header">Actions</th>
+                                <th class="custom-kam-task-management-table-header">
+                                    <i class="fas fa-building me-2"></i>Customer
+                                </th>
+                                <th class="custom-kam-task-management-table-header">
+                                    <i class="fas fa-user-edit me-2"></i>Inserted By
+                                </th>
+                                <th class="custom-kam-task-management-table-header">
+                                    <i class="fas fa-server me-2"></i>Platform
+                                </th>
+                                <th class="custom-kam-task-management-table-header">
+                                    <i class="fas fa-info-circle me-2"></i>Status
+                                </th>
+                                <th class="custom-kam-task-management-table-header">
+                                    <i class="fas fa-exchange-alt me-2"></i>Type
+                                </th>
+                                <th class="custom-kam-task-management-table-header">
+                                    <i class="fas fa-calendar-check me-2"></i>Resource Activation
+                                </th>
+                                <th class="custom-kam-task-management-table-header">
+                                    <i class="fas fa-check-circle me-2"></i>Completion Status
+                                </th>
+                                <th class="custom-kam-task-management-table-header">
+                                    <i class="fas fa-user-check me-2"></i>Assigned To
+                                </th>
+                                <th class="custom-kam-task-management-table-header">
+                                    <i class="fas fa-cogs me-2"></i>Actions
+                                </th>
                             </tr>
                         </thead>
                         <tbody>
@@ -168,9 +187,16 @@
                                     <td class="custom-kam-task-management-table-cell">
                                         @if($task->customer->platform)
                                             <span class="custom-kam-task-management-badge">{{ $task->customer->platform->platform_name }}</span>
-                                        @else
-                                            <span class="text-muted">Any</span>
                                         @endif
+                                    </td>
+                                    <td class="custom-kam-task-management-table-cell">
+                                        @php
+                                            $testStatusId = \App\Models\CustomerStatus::where('name', 'Test')->first()?->id ?? 2;
+                                            $isTest = $task->status_id == $testStatusId;
+                                        @endphp
+                                        <span class="custom-kam-task-management-badge">
+                                            {{ $task->status->name ?? ($isTest ? 'Test' : 'Billable') }}
+                                        </span>
                                     </td>
                                     <td class="custom-kam-task-management-table-cell">
                                         @if($task->allocation_type === 'upgrade')
@@ -196,11 +222,17 @@
                                     </td>
                                     <td class="custom-kam-task-management-table-cell">
                                         @if($task->completed_at)
-                                            <span class="badge bg-success">Completed</span>
+                                            <span class="custom-kam-task-management-badge custom-kam-task-management-badge-completed">
+                                                <i class="fas fa-check-double me-1"></i> Completed
+                                            </span>
                                         @elseif($task->assigned_to)
-                                            <span class="badge bg-info">Assigned</span>
+                                            <span class="custom-kam-task-management-badge custom-kam-task-management-badge-assigned">
+                                                <i class="fas fa-user-check me-1"></i> Assigned
+                                            </span>
                                         @else
-                                            <span class="badge bg-warning text-dark">Unassigned</span>
+                                            <span class="custom-kam-task-management-badge custom-kam-task-management-badge-pending">
+                                                <i class="fas fa-clock me-1"></i> Pending
+                                            </span>
                                         @endif
                                     </td>
                                     <td class="custom-kam-task-management-table-cell">
@@ -223,7 +255,7 @@
                                 </tr>
                                 <!-- Expandable details row -->
                                 <tr class="kam-task-details-row" id="details-{{ $task->id }}">
-                                    <td colspan="7" class="p-0">
+                                    <td colspan="8" class="p-0">
                                         <div class="task-details-container p-4">
                                             <!-- This div will be populated by AJAX -->
                                             <div class="task-details-content"></div>
@@ -310,7 +342,7 @@
                                             // Create a map of existing details by service_id
                                             $detailsMap = $task->resourceDetails->keyBy('service_id');
                                         @endphp
-                                        @foreach($services as $service)
+                                        @foreach($services->where('platform_id', $task->customer->platform_id) as $service)
                                             @php
                                                 $existingDetail = $detailsMap->get($service->id);
                                                 $amount = 0;
@@ -349,8 +381,10 @@
                                                             ? $existingDetail->quantity - $existingDetail->upgrade_amount
                                                             : $existingDetail->quantity + $existingDetail->downgrade_amount;
                                                     } else {
-                                                        // Fallback to customer's current quantity for this service
-                                                        $currentValue = $task->customer->getResourceQuantity($service->service_name);
+                                                        // Fallback to customer's current quantity for this specific pool
+                                                        $currentValue = $task->status_id == 1
+                                                            ? $task->customer->getResourceTestQuantity($service->service_name)
+                                                            : $task->customer->getResourceBillableQuantity($service->service_name);
                                                     }
                                                 @endphp
                                             <tr>

@@ -77,6 +77,23 @@
                             @endif
 
                             <div class="mb-3">
+                                <label for="platform_id" class="form-label">Platform</label>
+                                <select id="platform_id" name="platform_id" 
+                                        class="form-select @error('platform_id') is-invalid @enderror" required>
+                                    <option value="">Select Platform</option>
+                                    @foreach($platforms as $platform)
+                                        <option value="{{ $platform->id }}" 
+                                            {{ old('platform_id', $editableService->platform_id ?? '') == $platform->id ? 'selected' : '' }}>
+                                            {{ $platform->platform_name }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                                @error('platform_id')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+
+                            <div class="mb-3">
                                 <label for="service_name" class="form-label">Service Name</label>
                                 <input type="text" id="service_name" name="service_name" 
                                        class="form-control @error('service_name') is-invalid @enderror" 
@@ -126,11 +143,29 @@
             <!-- Existing Services Table -->
             <div class="col-lg-8">
                 <div class="custom-service-management-card">
-                    <div class="custom-service-management-card-header d-flex justify-content-between align-items-center">
-                        <h5 class="custom-service-management-card-title">Configured Services</h5>
-                        <div class="d-flex align-items-center gap-2">
-                            <span class="text-muted small">Total Services:</span>
-                            <span class="custom-service-management-stat-number">{{ $services->count() }}</span>
+                    <div class="custom-service-management-card-header d-flex flex-wrap justify-content-between align-items-center gap-3">
+                        <h5 class="custom-service-management-card-title mb-0">Configured Services</h5>
+                        
+                        <div class="d-flex align-items-center gap-3 flex-grow-1 flex-md-grow-0">
+                            <!-- Platform Filter -->
+                            <form action="{{ route('services.index') }}" method="GET" class="d-flex align-items-center gap-2">
+                                <label for="filter_platform_id" class="text-muted small text-nowrap mb-0">Filter by Platform:</label>
+                                <select name="platform_id" id="filter_platform_id" class="form-select form-select-sm border-0 bg-light shadow-none" style="min-width: 140px;" onchange="this.form.submit()">
+                                    <option value="">All Platforms</option>
+                                    @foreach($platforms as $platform)
+                                        <option value="{{ $platform->id }}" {{ request('platform_id') == $platform->id ? 'selected' : '' }}>
+                                            {{ $platform->platform_name }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </form>
+
+                            <div class="vr mx-1 d-none d-md-block" style="height: 20px; opacity: 0.1;"></div>
+
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="text-muted small text-nowrap">Total Services:</span>
+                                <span class="custom-service-management-stat-number">{{ $services->count() }}</span>
+                            </div>
                         </div>
                     </div>
                     <div class="card-body p-0">
@@ -144,6 +179,9 @@
                                 <table class="custom-service-management-table">
                                     <thead class="custom-service-management-table-head">
                                         <tr>
+                                            <th class="custom-service-management-table-header">
+                                                <i class="fas fa-layer-group me-2"></i>Platform
+                                            </th>
                                             <th class="custom-service-management-table-header">
                                                 <i class="fas fa-tag me-2"></i>Service
                                             </th>
@@ -164,6 +202,11 @@
                                     <tbody class="custom-service-management-table-body">
                                         @foreach($services as $service)
                                             <tr class="custom-service-management-table-row">
+                                                <td class="custom-service-management-table-cell">
+                                                    <span class="badge bg-light text-primary border border-primary-subtle px-2 py-1">
+                                                        {{ $service->platform->platform_name ?? 'N/A' }}
+                                                    </span>
+                                                </td>
                                                 <td class="custom-service-management-table-cell">
                                                     <strong>{{ $service->service_name }}</strong>
                                                 </td>

@@ -54,21 +54,6 @@
                                     @enderror
                                 </div>
 
-                                <!-- Username -->
-                                <div class="mb-3">
-                                    <label for="username" class="custom-user-add-label">Username</label>
-                                    <input id="username" 
-                                           class="custom-user-add-input @error('username') is-invalid @enderror" 
-                                           type="text" 
-                                           name="username" 
-                                           value="{{ old('username') }}" 
-                                           required 
-                                           placeholder="Enter username">
-                                @error('username')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
-                            </div>
-
                             <!-- Email -->
                             <div class="mb-3">
                                 <label for="email" class="custom-user-add-label">Email</label>
@@ -84,6 +69,21 @@
                                 @enderror
                             </div>
                         </div>
+
+                        <!-- Username -->
+                                <div class="mb-3">
+                                    <label for="username" class="custom-user-add-label">Username</label>
+                                    <input id="username" 
+                                           class="custom-user-add-input @error('username') is-invalid @enderror" 
+                                           type="text" 
+                                           name="username" 
+                                           value="{{ old('username') }}" 
+                                           required 
+                                           placeholder="Enter username">
+                                @error('username')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
 
                         <!-- Role and Department -->
                         <div class="custom-user-add-section">
@@ -187,4 +187,24 @@
             </div>
         </div>
     </div>
+
+    @push('scripts')
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const emailInput = document.getElementById('email');
+            const usernameInput = document.getElementById('username');
+            let isManuallyEdited = false;
+
+            usernameInput.addEventListener('input', function() {
+                isManuallyEdited = true;
+            });
+
+            emailInput.addEventListener('input', function() {
+                if (!isManuallyEdited) {
+                    usernameInput.value = emailInput.value;
+                }
+            });
+        });
+    </script>
+    @endpush
 </x-app-layout>

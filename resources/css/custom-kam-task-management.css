@@ -296,6 +296,24 @@
     font-size: 0.875rem;
 }
 
+.custom-kam-task-management-badge-completed {
+    background-color: var(--custom-kam-task-management-success-light);
+    color: var(--custom-kam-task-management-success);
+    border: 1px solid var(--custom-kam-task-management-success);
+}
+
+.custom-kam-task-management-badge-assigned {
+    background-color: #e0e7ff;
+    color: #4f46e5;
+    border: 1px solid #4f46e5;
+}
+
+.custom-kam-task-management-badge-pending {
+    background-color: var(--custom-kam-task-management-warning-light);
+    color: var(--custom-kam-task-management-warning);
+    border: 1px solid var(--custom-kam-task-management-warning);
+}
+
 /* Empty State */
 .custom-kam-task-management-empty-card {
     border-radius: var(--custom-kam-task-management-radius);

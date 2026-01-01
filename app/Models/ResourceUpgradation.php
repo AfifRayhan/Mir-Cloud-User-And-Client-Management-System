@@ -44,4 +44,12 @@ class ResourceUpgradation extends Model
     {
         return $this->hasOne(Task::class);
     }
+
+    protected function casts(): array
+    {
+        return [
+            'activation_date' => 'date',
+            'inactivation_date' => 'date',
+        ];
+    }
 }

@@ -34,7 +34,7 @@
                         @endif
 
                         <!-- Form - Original Logic Preserved -->
-                        <form method="POST" action="{{ route('customers.store') }}" id="customerForm">
+                        <form method="POST" action="{{ route('customers.store') }}" id="customerForm" enctype="multipart/form-data">
                             @csrf
 
                             <!-- Customer Overview Section -->
@@ -72,7 +72,7 @@
                                     <!-- Original Activation Date Field -->
                                     <div class="col-md-6">
                                         <label for="activation_date" class="form-label fw-semibold custom-addcustomer-label">
-                                            Activation Date <span class="text-danger">*</span>
+                                            Customer Activation Date <span class="text-danger">*</span>
                                         </label>
                                         <input type="date" 
                                                class="form-control form-control-lg custom-addcustomer-input @error('activation_date') is-invalid @enderror" 
@@ -104,12 +104,13 @@
                                     <!-- Original Platform Field -->
                                     <div class="col-md-6">
                                         <label for="platform_id" class="form-label fw-semibold custom-addcustomer-label">
-                                            Platform
+                                            Platform <span class="text-danger">*</span>
                                         </label>
                                         <select id="platform_id" 
                                                 name="platform_id" 
-                                                class="form-select custom-addcustomer-select @error('platform_id') is-invalid @enderror">
-                                            <option value="">{{ __('Any') }}</option>
+                                                class="form-select custom-addcustomer-select @error('platform_id') is-invalid @enderror"
+                                                required>
+                                            <option value="" disabled selected>Select Platform</option>
                                             @foreach($platforms as $platform)
                                                 <option value="{{ $platform->id }}" {{ old('platform_id') == $platform->id ? 'selected' : '' }}>
                                                     {{ $platform->platform_name }}
@@ -150,6 +151,25 @@
                                                placeholder="Enter PO number">
                                         @error('po_number')
                                             <div class="invalid-feedback">{{ $message }}</div>
+                                        @enderror
+                                    </div>
+
+                                    <!-- Added PO Project Sheet Field -->
+                                    <div class="col-md-6">
+                                        <label for="po_project_sheets" class="form-label fw-semibold custom-addcustomer-label">
+                                            PO Project Sheet (PDFs)
+                                        </label>
+                                        <input type="file" 
+                                               class="form-control custom-addcustomer-input @error('po_project_sheets') is-invalid @enderror" 
+                                               id="po_project_sheets" 
+                                               name="po_project_sheets[]" 
+                                               accept=".pdf"
+                                               multiple>
+                                        <div class="form-text small opacity-75">
+                                            <i class="fas fa-info-circle me-1"></i> Multiple PDFs allowed. Files will be optimized for storage.
+                                        </div>
+                                        @error('po_project_sheets.*')
+                                            <div class="invalid-feedback d-block">{{ $message }}</div>
                                         @enderror
                                     </div>
                                 </div>

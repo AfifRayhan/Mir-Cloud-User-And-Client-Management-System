@@ -21,7 +21,7 @@ class TechResourceAllocationController extends Controller
 {
     public function index(): View
     {
-        $customersRaw = Customer::orderBy('customer_name')->get();
+        $customersRaw = Customer::with(['submitter.role'])->orderBy('customer_name')->get();
         $customers = collect();
 
         // Group by name to identify duplicates (same logic as ResourceAllocationController)
@@ -30,30 +30,28 @@ class TechResourceAllocationController extends Controller
             if ($group->count() > 1) {
                 $index = 1;
                 foreach ($group as $customer) {
+                    $customer->is_new = ! $customer->hasResourceAllocations();
                     $customer->customer_name = $customer->customer_name.'-'.$index;
-                    if (! $customer->hasResourceAllocations()) {
+                    if ($customer->is_new) {
                         $customer->customer_name .= ' (No Resources)';
                     }
                     $customers->push($customer);
                     $index++;
                 }
             } else {
-                if (! $group->first()->hasResourceAllocations()) {
-                    $group->first()->customer_name .= ' (No Resources)';
+                $customer = $group->first();
+                $customer->is_new = ! $customer->hasResourceAllocations();
+                if ($customer->is_new) {
+                    $customer->customer_name .= ' (No Resources)';
                 }
-                $customers->push($group->first());
+                $customers->push($customer);
             }
         }
         $customers = $customers->sortBy('customer_name', SORT_NATURAL | SORT_FLAG_CASE);
 
         $customerStatuses = CustomerStatus::all();
 
-        // Get all KAM, Pro-KAM, and Admin users
-        $kams = User::whereHas('role', function ($q) {
-            $q->whereIn('role_name', ['kam', 'pro-kam', 'admin']);
-        })->orderBy('name')->get();
-
-        return view('tech-resource-allocation.index', compact('customers', 'customerStatuses', 'kams'));
+        return view('tech-resource-allocation.index', compact('customers', 'customerStatuses'));
     }
 
     public function allocationForm(Request $request, Customer $customer)
@@ -61,7 +59,7 @@ class TechResourceAllocationController extends Controller
         $actionType = $request->query('action_type');
         $statusId = $request->query('status_id');
 
-        $services = Service::all();
+        $services = Service::where('platform_id', $customer->platform_id)->get();
         $taskStatuses = TaskStatus::all();
 
         // Check if this is the first allocation
@@ -109,17 +107,22 @@ class TechResourceAllocationController extends Controller
     public function storeAllocation(Request $request, Customer $customer)
     {
         $validated = $request->validate([
-            'kam_id' => 'required|exists:users,id',
             'action_type' => 'required|in:upgrade,downgrade',
-            'status_id' => $request->action_type === 'upgrade' ? 'required|exists:customer_statuses,id' : 'nullable|exists:customer_statuses,id',
-            'activation_date' => $request->action_type === 'upgrade' ? 'required|date|after_or_equal:'.$customer->activation_date->format('Y-m-d') : 'nullable|date',
-            'services' => 'nullable|array',
+            'status_id' => 'required|exists:customer_statuses,id',
+            'activation_date' => 'required|date',
+            'services' => 'required|array',
             'services.*' => 'nullable|integer|min:0',
         ]);
 
         $actionType = $validated['action_type'];
+        $statusId = $validated['status_id'];
         $servicesInput = $validated['services'] ?? [];
-        $kamId = $validated['kam_id'];
+        $kamId = $customer->submitted_by;
+
+        if (! $kamId) {
+            // Fallback to current user if for some reason submitted_by is null
+            $kamId = Auth::id();
+        }
 
         // Filter out null and zero values
         $servicesInput = array_filter($servicesInput, function ($value) {
@@ -134,12 +137,15 @@ class TechResourceAllocationController extends Controller
             ], 422);
         }
 
-        return DB::transaction(function () use ($customer, $validated, $servicesInput, $actionType, $kamId) {
+        return DB::transaction(function () use ($customer, $validated, $servicesInput, $actionType, $kamId, $statusId) {
             $lockedCustomer = Customer::where('id', $customer->id)->lockForUpdate()->first();
             $techUser = Auth::user();
 
             // Task Status should be marked as "Proceed from Tech" (id 3 based on MyTaskController)
             $taskStatusId = 3;
+
+            $testStatusId = \App\Models\CustomerStatus::where('name', 'Test')->first()?->id ?? 1;
+            $isTestInput = $statusId == $testStatusId;
 
             $resourceId = null;
             if ($actionType === 'upgrade') {
@@ -155,13 +161,19 @@ class TechResourceAllocationController extends Controller
 
                 $lockedCustomer->update(['activation_date' => $validated['activation_date']]);
 
+                $isTest = $validated['status_id'] == $testStatusId;
+
                 foreach ($servicesInput as $serviceId => $increaseAmount) {
                     $service = Service::find($serviceId);
                     if (! $service) {
                         continue;
                     }
-                    $currentValue = $lockedCustomer->getResourceQuantity($service->service_name);
-                    $newValue = $currentValue + $increaseAmount;
+
+                    $currentPoolValue = $isTest
+                        ? $lockedCustomer->getResourceTestQuantity($service->service_name)
+                        : $lockedCustomer->getResourceBillableQuantity($service->service_name);
+
+                    $newValue = $currentPoolValue + $increaseAmount;
 
                     ResourceUpgradationDetail::create([
                         'resource_upgradation_id' => $upgradation->id,
@@ -171,28 +183,30 @@ class TechResourceAllocationController extends Controller
                     ]);
                 }
             } else {
-                $latestUpgradation = ResourceUpgradation::where('customer_id', $lockedCustomer->id)
-                    ->orderBy('created_at', 'desc')
-                    ->first();
-                $statusId = $latestUpgradation ? $latestUpgradation->status_id : null;
-
                 $downgradation = ResourceDowngradation::create([
                     'customer_id' => $lockedCustomer->id,
                     'status_id' => $statusId,
-                    'activation_date' => $validated['activation_date'] ?? now(),
+                    'activation_date' => $validated['activation_date'],
                     'inactivation_date' => '3000-01-01',
                     'task_status_id' => $taskStatusId,
                     'inserted_by' => $techUser->id,
                 ]);
                 $resourceId = $downgradation->id;
 
+                $testStatusId = \App\Models\CustomerStatus::where('name', 'Test')->first()?->id ?? 1;
+                $isTest = $statusId == $testStatusId;
+
                 foreach ($servicesInput as $serviceId => $reductionAmount) {
                     $service = Service::find($serviceId);
                     if (! $service) {
                         continue;
                     }
-                    $currentValue = $lockedCustomer->getResourceQuantity($service->service_name);
-                    $newValue = max(0, $currentValue - $reductionAmount);
+
+                    $currentPoolValue = $isTest
+                        ? $lockedCustomer->getResourceTestQuantity($service->service_name)
+                        : $lockedCustomer->getResourceBillableQuantity($service->service_name);
+
+                    $newValue = max(0, $currentPoolValue - $reductionAmount);
 
                     ResourceDowngradationDetail::create([
                         'resource_downgradation_id' => $downgradation->id,
@@ -206,9 +220,9 @@ class TechResourceAllocationController extends Controller
             // Create Task (wait for VDC assignment to mark as complete)
             $task = Task::create([
                 'customer_id' => $lockedCustomer->id,
-                'status_id' => ($actionType === 'upgrade' ? $validated['status_id'] : $statusId),
+                'status_id' => $statusId,
                 'task_status_id' => $taskStatusId,
-                'activation_date' => $validated['activation_date'] ?? now(),
+                'activation_date' => $validated['activation_date'],
                 'allocation_type' => $actionType,
                 'resource_upgradation_id' => ($actionType === 'upgrade' ? $resourceId : null),
                 'resource_downgradation_id' => ($actionType === 'downgrade' ? $resourceId : null),
@@ -236,12 +250,19 @@ class TechResourceAllocationController extends Controller
         if (! $customer) {
             return;
         }
-        $services = Service::all();
+
+        $resources = $customer->getCurrentResources();
+        $services = Service::where('platform_id', $customer->platform_id)->get();
+
         foreach ($services as $service) {
-            $quantity = $customer->getResourceQuantity($service->service_name);
+            $pool = $resources[$service->service_name] ?? ['test' => 0, 'billable' => 0];
+
             \App\Models\Summary::updateOrCreate(
                 ['customer_id' => $customerId, 'service_id' => $service->id],
-                ['quantity' => $quantity]
+                [
+                    'test_quantity' => $pool['test'],
+                    'billable_quantity' => $pool['billable'],
+                ]
             );
         }
     }

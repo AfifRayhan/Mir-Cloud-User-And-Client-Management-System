@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Mail\RecommendationSubmissionEmail;
 use App\Models\Customer;
+use App\Models\CustomerStatus;
 use App\Models\ResourceDowngradationDetail;
 use App\Models\ResourceUpgradationDetail;
 use App\Models\Service;
@@ -83,7 +84,7 @@ class KamTaskManagementController extends Controller
         $task->load(['customer', 'status', 'assignedTo', 'assignedBy', 'resourceUpgradation.details.service', 'resourceDowngradation.details.service']);
 
         // Get all services
-        $allServices = Service::all();
+        $allServices = Service::where('platform_id', $task->customer->platform_id)->get();
         $existingDetails = $task->resourceDetails;
 
         // Create a map of existing details by service_id
@@ -100,12 +101,16 @@ class KamTaskManagementController extends Controller
                 // Service doesn't exist in task, create a placeholder with 0 values
                 $isUpgrade = $task->allocation_type === 'upgrade';
 
+                $testStatusId = \App\Models\CustomerStatus::where('name', 'Test')->first()?->id ?? 1;
+
                 return (object) [
                     'service' => $service,
                     'service_id' => $service->id,
                     'upgrade_amount' => 0,
                     'downgrade_amount' => 0,
-                    'quantity' => $task->customer->getResourceQuantity($service->service_name),
+                    'quantity' => $task->status_id == $testStatusId
+                        ? $task->customer->getResourceTestQuantity($service->service_name)
+                        : $task->customer->getResourceBillableQuantity($service->service_name),
                 ];
             }
         });
@@ -285,6 +290,8 @@ class KamTaskManagementController extends Controller
      */
     protected function syncCustomerResourceChains(int $customerId, array $serviceIds): void
     {
+        $testStatusId = CustomerStatus::where('name', 'Test')->first()?->id ?? 1;
+
         foreach ($serviceIds as $serviceId) {
             // Get all upgrades for this customer and service
             $upgrades = ResourceUpgradationDetail::where('service_id', $serviceId)
@@ -293,10 +300,12 @@ class KamTaskManagementController extends Controller
                 })
                 ->with(['resourceUpgradation.task'])
                 ->get()
-                ->map(function ($detail) {
+                ->map(function ($detail) use ($testStatusId) {
                     $detail->xtype = 'upgrade';
+                    $detail->xstatus_id = $detail->resourceUpgradation->status_id;
                     $detail->sort_date = $detail->resourceUpgradation->activation_date;
                     $detail->sort_created = $detail->resourceUpgradation->created_at;
+                    $detail->is_test = $detail->resourceUpgradation->status_id == $testStatusId;
 
                     return $detail;
                 });
@@ -308,44 +317,61 @@ class KamTaskManagementController extends Controller
                 })
                 ->with(['resourceDowngradation.task'])
                 ->get()
-                ->map(function ($detail) {
+                ->map(function ($detail) use ($testStatusId) {
                     $detail->xtype = 'downgrade';
+                    $detail->xstatus_id = $detail->resourceDowngradation->status_id;
                     $detail->sort_date = $detail->resourceDowngradation->activation_date;
                     $detail->sort_created = $detail->resourceDowngradation->created_at;
+                    $detail->is_test = $detail->resourceDowngradation->status_id == $testStatusId;
 
                     return $detail;
                 });
 
             // Merge and sort chronologically ASC
             $all = $upgrades->concat($downgrades)->sort(function ($a, $b) {
-                $dateCompare = strcmp($a->sort_date, $b->sort_date);
+                $dateCompare = strcmp($a->sort_date->format('Y-m-d'), $b->sort_date->format('Y-m-d'));
                 if ($dateCompare !== 0) {
                     return $dateCompare;
                 }
 
-                return strcmp($a->sort_created, $b->sort_created);
+                return $a->sort_created <=> $b->sort_created;
             });
 
-            $runningQuantity = 0;
+            $runningTestQuantity = 0;
+            $runningBillableQuantity = 0;
+
             foreach ($all as $item) {
                 $hasConflict = false;
+                $isTest = $item->is_test;
 
                 if ($item->xtype === 'upgrade') {
-                    $runningQuantity += $item->upgrade_amount;
+                    if ($isTest) {
+                        $runningTestQuantity += $item->upgrade_amount;
+                    } else {
+                        $runningBillableQuantity += $item->upgrade_amount;
+                    }
 
-                    // Clear conflict flag for upgrades if it was set (though upgrades rarely cause conflicts themselves)
+                    // Clear conflict flag for upgrades
                     if ($item->resourceUpgradation && $item->resourceUpgradation->task) {
                         $item->resourceUpgradation->task->update(['has_resource_conflict' => false]);
                     }
 
+                    $currentPoolQuantity = $isTest ? $runningTestQuantity : $runningBillableQuantity;
                 } else {
-                    // Check for conflict BEFORE applying the downgrade
-                    if ($runningQuantity - $item->downgrade_amount < 0) {
-                        $hasConflict = true;
+                    // Check for conflict BEFORE applying the downgrade to the specific pool
+                    if ($isTest) {
+                        if ($runningTestQuantity - $item->downgrade_amount < 0) {
+                            $hasConflict = true;
+                        }
+                        $runningTestQuantity -= $item->downgrade_amount;
+                        $currentPoolQuantity = $runningTestQuantity;
+                    } else {
+                        if ($runningBillableQuantity - $item->downgrade_amount < 0) {
+                            $hasConflict = true;
+                        }
+                        $runningBillableQuantity -= $item->downgrade_amount;
+                        $currentPoolQuantity = $runningBillableQuantity;
                     }
-
-                    // Allow negative values to reflect the deficit
-                    $runningQuantity = $runningQuantity - $item->downgrade_amount;
 
                     // Update Task Conflict Status
                     if ($item->resourceDowngradation && $item->resourceDowngradation->task) {
@@ -353,10 +379,10 @@ class KamTaskManagementController extends Controller
                     }
                 }
 
-                // Update quantity in DB
+                // Update quantity in DB (representing the total for THAT specific pool at that point in time)
                 DB::table($item->xtype === 'upgrade' ? 'resource_upgradation_details' : 'resource_downgradation_details')
                     ->where('id', $item->id)
-                    ->update(['quantity' => $runningQuantity]);
+                    ->update(['quantity' => $currentPoolQuantity]);
             }
         }
     }
@@ -371,20 +397,21 @@ class KamTaskManagementController extends Controller
             return;
         }
 
-        // Get all services
-        $services = Service::all();
+        $resources = $customer->getCurrentResources();
+        $services = Service::where('platform_id', $customer->platform_id)->get();
 
         foreach ($services as $service) {
-            $quantity = $customer->getResourceQuantity($service->service_name);
+            $pool = $resources[$service->service_name] ?? ['test' => 0, 'billable' => 0];
 
-            // Upsert summary record
+            // Upsert summary record with separate quantity columns
             Summary::updateOrCreate(
                 [
                     'customer_id' => $customerId,
                     'service_id' => $service->id,
                 ],
                 [
-                    'quantity' => $quantity,
+                    'test_quantity' => $pool['test'],
+                    'billable_quantity' => $pool['billable'],
                 ]
             );
         }

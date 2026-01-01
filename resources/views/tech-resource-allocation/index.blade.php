@@ -28,37 +28,47 @@
                         <form id="tech-resource-action-form">
                             @csrf
                             
-                            <!-- KAM Selection -->
-                            <div class="mb-4">
-                                <label for="kam_id" class="form-label tech-resource-form-label">Select KAM / Pro-KAM</label>
-                                <select id="kam_id" name="kam_id" class="form-select tech-resource-select form-select-lg" required>
-                                    <option value="" disabled selected>Choose a KAM</option>
-                                    @foreach($kams as $kam)
-                                        <option value="{{ $kam->id }}">{{ $kam->name }} ({{ strtoupper($kam->role->role_name) }})</option>
-                                    @endforeach
-                                </select>
-                            </div>
+                             <!-- KAM Information (Set Automatically) -->
+                             <div class="mb-4" id="kam-info-container" style="display: none;">
+                                 <label class="form-label tech-resource-form-label">KAM / Pro-KAM</label>
+                                 <div class="p-3 bg-light rounded border">
+                                     <div class="d-flex align-items-center">
+                                         <div class="flex-shrink-0">
+                                            <div class="avatar-sm bg-primary bg-opacity-10 text-primary rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                                <i class="fas fa-user-tie"></i>
+                                            </div>
+                                         </div>
+                                         <div class="flex-grow-1 ms-3">
+                                             <h6 class="mb-0 fw-bold" id="display-kam-name">---</h6>
+                                             <small class="text-muted text-uppercase" id="display-kam-role">---</small>
+                                         </div>
+                                     </div>
+                                 </div>
+                             </div>
 
-                            <div class="mb-4">
-                                <label for="customer_id" class="form-label tech-resource-form-label">Customer</label>
-                                <select id="customer_id" name="customer_id" class="form-select tech-resource-select form-select-lg" required>
-                                    <option value="" disabled selected>Choose a customer</option>
-                                    @foreach($customers as $customer)
-                                        <option value="{{ $customer->id }}">
-                                            {{ $customer->customer_name }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                            </div>
+                             <div class="mb-4">
+                                 <label for="customer_id" class="form-label tech-resource-form-label">Customer</label>
+                                 <select id="customer_id" name="customer_id" class="form-select tech-resource-select form-select-lg" required>
+                                     <option value="" disabled selected>Choose a customer</option>
+                                     @foreach($customers as $customer)
+                                         <option value="{{ $customer->id }}" 
+                                                 data-is-new="{{ $customer->is_new ? 'true' : 'false' }}"
+                                                 data-kam-name="{{ $customer->submitter ? $customer->submitter->name : 'N/A' }}"
+                                                 data-kam-role="{{ $customer->submitter && $customer->submitter->role ? $customer->submitter->role->role_name : 'N/A' }}">
+                                             {{ $customer->customer_name }}
+                                         </option>
+                                     @endforeach
+                                 </select>
+                             </div>
 
-                            <div class="mb-4">
-                                <label for="action_type" class="form-label tech-resource-form-label">Action</label>
-                                <select id="action_type" name="action_type" class="form-select tech-resource-select form-select-lg" required>
-                                    <option value="" disabled selected>Select Action</option>
-                                    <option value="upgrade">Upgrade</option>
-                                    <option value="downgrade">Downgrade</option>
-                                </select>
-                            </div>
+                             <div class="mb-4" id="action-type-container">
+                                 <label for="action_type" class="form-label tech-resource-form-label">Action</label>
+                                 <select id="action_type" name="action_type" class="form-select tech-resource-select form-select-lg" required>
+                                     <option value="" disabled selected>Select Action</option>
+                                     <option value="upgrade">Upgrade</option>
+                                     <option value="downgrade">Downgrade</option>
+                                 </select>
+                             </div>
 
                             <div class="mb-4 d-none" id="status-container">
                                 <label for="status_id" class="form-label tech-resource-form-label">Customer Status</label>
@@ -101,6 +111,7 @@
                 <form id="vdcForm" method="POST">
                     @csrf
                     <div class="modal-body">
+                        <input type="hidden" name="source" value="tech_allocation">
                         <div class="mb-3">
                             <label for="vdc_select" class="form-label fw-semibold">Select Existing VDC</label>
                             <select id="vdc_select" name="vdc_id" class="form-select">
@@ -134,7 +145,10 @@
     @push('scripts')
         <script>
             document.addEventListener('DOMContentLoaded', function() {
-                const kamSelect = document.getElementById('kam_id');
+                const kamInfoContainer = document.getElementById('kam-info-container');
+                const displayKamName = document.getElementById('display-kam-name');
+                const displayKamRole = document.getElementById('display-kam-role');
+                const actionTypeContainer = document.getElementById('action-type-container');
                 const customerSelect = document.getElementById('customer_id');
                 const actionSelect = document.getElementById('action_type');
                 const statusContainer = document.getElementById('status-container');
@@ -164,6 +178,22 @@
                     }
                 }
 
+                function updateKamInfo() {
+                    if (!customerSelect || !kamInfoContainer) return;
+                    const selectedOption = customerSelect.options[customerSelect.selectedIndex];
+                    
+                    if (selectedOption && selectedOption.value) {
+                        const kamName = selectedOption.getAttribute('data-kam-name');
+                        const kamRole = selectedOption.getAttribute('data-kam-role');
+                        
+                        displayKamName.textContent = kamName;
+                        displayKamRole.textContent = kamRole;
+                        kamInfoContainer.style.display = 'block';
+                    } else {
+                        kamInfoContainer.style.display = 'none';
+                    }
+                }
+
                 async function loadAllocationForm() {
                     if (!customerSelect || !actionSelect) return;
                     const customerId = customerSelect.value;
@@ -188,6 +218,8 @@
                         if (statusId) {
                             url.searchParams.append('status_id', statusId);
                         }
+                        // Add timestamp to prevent caching
+                        url.searchParams.append('_t', new Date().getTime());
 
                         const response = await fetch(url, {
                             headers: {
@@ -256,7 +288,7 @@
                 }
 
                 function loadCustomerVdcs(customerId) {
-                    fetch(`/my-tasks/customer/${customerId}/vdcs`)
+                    fetch(`/my-tasks/customer/${customerId}/vdcs?_t=${new Date().getTime()}`)
                         .then(response => response.json())
                         .then(data => {
                             vdcSelect.innerHTML = '<option value="">-- Select VDC --</option>';
@@ -295,7 +327,8 @@
                         })
                         .then(data => {
                             if (vdcModalInstance) vdcModalInstance.hide();
-                            window.location.reload();
+                            loadAllocationForm();
+                            alert('Allocation completed successfully.');
                         })
                         .catch(error => {
                             console.error('Error completing task:', error);
@@ -310,12 +343,6 @@
                 window.handleAllocationSubmit = async function(event, form) {
                     event.preventDefault();
                     
-                    const kamId = kamSelect.value;
-                    if (!kamId) {
-                        alert('Please select a KAM.');
-                        return;
-                    }
-                    
                     const submitBtn = form.querySelector('button[type="submit"]');
                     const originalBtnText = submitBtn ? submitBtn.innerHTML : 'Confirm';
                     
@@ -325,7 +352,6 @@
                     }
 
                     const formData = new FormData(form);
-                    formData.append('kam_id', kamId);
                     formData.append('action_type', actionSelect.value);
                     if (statusSelect.value) formData.append('status_id', statusSelect.value);
 
@@ -364,11 +390,23 @@
                 if (actionSelect) actionSelect.addEventListener('change', () => { toggleStatus(); loadAllocationForm(); });
                 if (customerSelect) {
                     customerSelect.addEventListener('change', function() {
+                        updateKamInfo();
                         const selectedOption = customerSelect.options[customerSelect.selectedIndex];
-                        if (selectedOption && selectedOption.text.includes('No Resources')) {
+                        const isNew = selectedOption.getAttribute('data-is-new') === 'true';
+
+                        if (isNew) {
+                            actionTypeContainer.style.display = 'none';
                             actionSelect.value = 'upgrade';
                             toggleStatus();
+                        } else {
+                            actionTypeContainer.style.display = 'block';
+                            // Reset action if it was forced to upgrade and wasn't manually selected
+                            if (selectedOption.text.includes('No Resources')) {
+                                actionSelect.value = 'upgrade';
+                                toggleStatus();
+                            }
                         }
+                        
                         if (actionSelect.value) loadAllocationForm();
                     });
                 }

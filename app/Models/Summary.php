@@ -9,7 +9,8 @@ class Summary extends Model
     protected $fillable = [
         'customer_id',
         'service_id',
-        'quantity',
+        'test_quantity',
+        'billable_quantity',
     ];
 
     public function customer()

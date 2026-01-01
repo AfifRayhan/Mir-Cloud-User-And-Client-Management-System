@@ -107,7 +107,7 @@
                                         </th>
                                         <th class="custom-customer-index-table-header">
                                             <div class="d-flex align-items-center">
-                                                <i class="fas fa-calendar-check me-2"></i>Activation Date
+                                                <i class="fas fa-calendar-check me-2"></i>Customer Activation Date
                                             </div>
                                         </th>
                                         <th class="custom-customer-index-table-header">
@@ -130,7 +130,7 @@
                                                 <i class="fas fa-clock me-2"></i>Created At
                                             </div>
                                         </th>
-                                        <th class="custom-customer-index-table-header text-end" style="min-width: 150px;">
+                                        <th class="custom-customer-index-table-header text-end" style="min-width: 180px;">
                                             <div class="d-flex align-items-center justify-content-end">
                                                 <i class="fas fa-cogs me-2"></i>Actions
                                             </div>
@@ -203,6 +203,15 @@
                                         </td>
                                         <td class="custom-customer-index-table-cell text-end">
                                             <div class="d-flex justify-content-end gap-2">
+                                                <a href="{{ route('customers.show', $customer->id) }}"
+                                                    class="btn btn-sm custom-customer-index-action-btn custom-customer-index-view-btn"
+                                                    title="View Customer">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+                                                        <path d="M10.5 8a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0" />
+                                                        <path d="M0 8s3-5.5 8-5.5S16 8 16 8s-3 5.5-8 5.5S0 8 0 8m8 3.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7" />
+                                                    </svg>
+                                                    <span class="d-none d-sm-inline">View</span>
+                                                </a>
                                                 <a href="{{ route('customers.edit', $customer->id) }}"
                                                     class="btn btn-sm custom-customer-index-action-btn custom-customer-index-edit-btn"
                                                     title="Edit Customer">
@@ -211,6 +220,7 @@
                                                     </svg>
                                                     <span class="d-none d-sm-inline">Edit</span>
                                                 </a>
+                                                @if(Auth::user()->isAdmin() || Auth::user()->isManagement())
                                                 <button type="button"
                                                         class="btn btn-sm custom-customer-index-action-btn custom-customer-index-delete-btn"
                                                         data-bs-toggle="modal" 
@@ -222,6 +232,7 @@
                                                     </svg>
                                                     <span class="d-none d-sm-inline">Delete</span>
                                                 </button>
+                                                @endif
                                             </div>
                                         </td>
                                     </tr>
@@ -244,6 +255,7 @@
 
     <!-- Delete Confirmation Modals -->
     @foreach($customers as $customer)
+    @if(Auth::user()->isAdmin() || Auth::user()->isManagement())
     <div class="modal fade text-start" id="deleteCustomerModal{{ $customer->id }}" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content border-0 shadow-lg">
@@ -283,5 +295,6 @@
             </div>
         </div>
     </div>
+    @endif
     @endforeach
 </x-app-layout>

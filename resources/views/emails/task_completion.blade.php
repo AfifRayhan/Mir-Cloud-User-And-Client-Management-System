@@ -11,6 +11,22 @@
 <body>
     <h1 style="color: #16a34a;">Task Completion Summary</h1>
     <p>The following task has been completed by {{ $sender->name }}.</p>
+ 
+    @php
+        $isUpgrade = $task->allocation_type === 'upgrade';
+        
+        // Check if this is the first allocation ever for this customer
+        $isFirstAllocation = false;
+        if ($isUpgrade && $task->resourceUpgradation) {
+            $otherUpgradesCount = \App\Models\ResourceUpgradation::where('customer_id', $task->customer_id)
+                ->where('id', '<', $task->resource_upgradation_id)
+                ->count();
+            $otherDowngradesCount = \App\Models\ResourceDowngradation::where('customer_id', $task->customer_id)
+                ->count();
+            $isFirstAllocation = ($otherUpgradesCount === 0 && $otherDowngradesCount === 0);
+        }
+        $headerLabel = $isFirstAllocation ? 'Allocation Amount' : 'Upgrade Value';
+    @endphp
 
     <div style="background-color:#f9f9f9; padding:15px; border:1px solid #ddd; border-top: 4px solid #16a34a;">
         <h2 style="color: #16a34a;">Customer Information</h2>
@@ -25,25 +41,29 @@
                     <td style="border:1px solid #ddd; padding:8px;">{{ optional($task->customer->platform)->platform_name ?? 'N/A' }}</td>
                 </tr>
                 <tr>
-                    <td style="border:1px solid #ddd; background:#dcfce7; font-weight:bold;">Activation Date</td>
+                    <td style="border:1px solid #ddd; background:#dcfce7; font-weight:bold;">Resource Activation Date</td>
                     <td style="border:1px solid #ddd; padding:8px;">{{ $task->activation_date->format('M d, Y') }}</td>
                 </tr>
                 <tr>
                     <td style="border:1px solid #ddd; background:#dcfce7; font-weight:bold;">Type</td>
-                    <td style="border:1px solid #ddd; padding:8px;">{{ ucfirst($actionType) }}</td>
+                    <td style="border:1px solid #ddd; padding:8px;">{{ $isFirstAllocation ?? false ? 'First Allocation' : ucfirst($actionType) }}</td>
                 </tr>
+                @if($task->customer->customer_address)
                 <tr>
                     <td style="border:1px solid #ddd; background:#dcfce7; font-weight:bold;">Customer Address</td>
                     <td style="border:1px solid #ddd; padding:8px;">{{ $task->customer->customer_address }}</td>
                 </tr>
+                @endif
+                @if($task->customer->po_number)
                 <tr>
                     <td style="border:1px solid #ddd; background:#dcfce7; font-weight:bold;">PO Number</td>
                     <td style="border:1px solid #ddd; padding:8px;">{{ $task->customer->po_number }}</td>
                 </tr>
+                @endif
             </tbody>
         </table>
 
-        @if($task->customer->commercial_contact_name || $task->customer->commercial_contact_email || $task->customer->commercial_contact_phone)
+        @if($task->customer->commercial_contact_name || $task->customer->commercial_contact_email || $task->customer->commercial_contact_phone || $task->customer->commercial_contact_designation)
         <h2 style="margin-top:20px; color: #16a34a;">Commercial Contact</h2>
         <table width="100%" cellpadding="8" cellspacing="0" style="border-collapse:collapse; margin-top:10px;">
             <tbody>
@@ -75,7 +95,7 @@
         </table>
         @endif
 
-        @if($task->customer->technical_contact_name || $task->customer->technical_contact_email || $task->customer->technical_contact_phone)
+        @if($task->customer->technical_contact_name || $task->customer->technical_contact_email || $task->customer->technical_contact_phone || $task->customer->technical_contact_designation)
         <h2 style="margin-top:20px; color: #16a34a;">Technical Contact</h2>
         <table width="100%" cellpadding="8" cellspacing="0" style="border-collapse:collapse; margin-top:10px;">
             <tbody>
@@ -107,7 +127,7 @@
         </table>
         @endif
 
-        @if($task->customer->optional_contact_name || $task->customer->optional_contact_email || $task->customer->optional_contact_phone)
+        @if($task->customer->optional_contact_name || $task->customer->optional_contact_email || $task->customer->optional_contact_phone || $task->customer->optional_contact_designation)
         <h2 style="margin-top:20px; color: #16a34a;">Optional Contact</h2>
         <table width="100%" cellpadding="8" cellspacing="0" style="border-collapse:collapse; margin-top:10px;">
             <tbody>
@@ -140,6 +160,10 @@
         @endif
     </div>
 
+    @php
+        $headerLabel = $isFirstAllocation ? 'Allocation Amount' : 'Upgrade Value';
+    @endphp
+
     <h3 style="color: #16a34a;">Resource Details</h3>
     @if($task->allocation_type === 'upgrade' && $task->resourceUpgradation)
         <table width="100%" cellpadding="6" cellspacing="0" style="border-collapse:collapse; margin-top:10px;">
@@ -147,9 +171,13 @@
                 <tr>
                     <th style="border:1px solid #ddd; background:#dcfce7;">VDC Name</th>
                     <th style="border:1px solid #ddd; background:#dcfce7;">Service</th>
-                    <th style="border:1px solid #ddd; background:#dcfce7;">Current Value</th>
-                    <th style="border:1px solid #ddd; background:#dcfce7;">Upgrade Value</th>
-                    <th style="border:1px solid #ddd; background:#dcfce7;">New Value</th>
+                    @if(!$isFirstAllocation)
+                        <th style="border:1px solid #ddd; background:#dcfce7;">Current Value</th>
+                    @endif
+                    <th style="border:1px solid #ddd; background:#dcfce7;">{{ $headerLabel }}</th>
+                    @if(!$isFirstAllocation)
+                        <th style="border:1px solid #ddd; background:#dcfce7;">New Value</th>
+                    @endif
                 </tr>
             </thead>
             <tbody>
@@ -157,9 +185,13 @@
                     <tr>
                         <td style="border:1px solid #ddd; background:#f9f9f9;">{{ optional($task->vdc)->vdc_name ?? 'N/A' }}</td>
                         <td style="border:1px solid #ddd; background:#f9f9f9;">{{ $detail->service->service_name }} {{ $detail->service->unit ? "({$detail->service->unit})" : '' }}</td>
-                        <td style="border:1px solid #ddd; background:#f9f9f9;">{{ max(0, $detail->quantity - $detail->upgrade_amount) }} {{ $detail->service->unit ? "({$detail->service->unit})" : '' }}</td>
+                        @if(!$isFirstAllocation)
+                            <td style="border:1px solid #ddd; background:#f9f9f9;">{{ max(0, $detail->quantity - $detail->upgrade_amount) }} {{ $detail->service->unit ? "({$detail->service->unit})" : '' }}</td>
+                        @endif
                         <td style="border:1px solid #ddd; background:#f9f9f9;">{{ $detail->upgrade_amount }} {{ $detail->service->unit ? "({$detail->service->unit})" : '' }}</td>
-                        <td style="border:1px solid #ddd; background:#f9f9f9;">{{ $detail->quantity }} {{ $detail->service->unit ? "({$detail->service->unit})" : '' }}</td>
+                        @if(!$isFirstAllocation)
+                            <td style="border:1px solid #ddd; background:#f9f9f9;">{{ $detail->quantity }} {{ $detail->service->unit ? "({$detail->service->unit})" : '' }}</td>
+                        @endif
                     </tr>
                 @endforeach
             </tbody>

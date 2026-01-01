@@ -358,6 +358,17 @@
     border: none;
 }
 
+.custom-customer-index-view-btn {
+    background: #e0f2fe;
+    color: #0369a1;
+}
+
+.custom-customer-index-view-btn:hover {
+    background: #0369a1;
+    color: white;
+    transform: translateY(-1px);
+}
+
 .custom-customer-index-edit-btn {
     background: var(--custom-customer-index-primary-light);
     color: var(--custom-customer-index-primary);

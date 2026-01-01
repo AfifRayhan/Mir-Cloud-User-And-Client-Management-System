@@ -39,21 +39,6 @@
                                 @enderror
                             </div>
 
-                            <!-- Username -->
-                            <div class="mb-3">
-                                <label for="username" class="form-label fw-semibold">Username</label>
-                                <input id="username" 
-                                       class="form-control form-control-lg @error('username') is-invalid @enderror" 
-                                       type="text" 
-                                       name="username" 
-                                       value="{{ old('username', $user->username) }}" 
-                                       required 
-                                       placeholder="Enter username">
-                                @error('username')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
-                            </div>
-
                             <!-- Email -->
                             <div class="mb-3">
                                 <label for="email" class="form-label fw-semibold">Email</label>
@@ -65,6 +50,21 @@
                                        required 
                                        placeholder="Enter email address">
                                 @error('email')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+
+                            <!-- Username -->
+                            <div class="mb-3">
+                                <label for="username" class="form-label fw-semibold">Username</label>
+                                <input id="username" 
+                                       class="form-control form-control-lg @error('username') is-invalid @enderror" 
+                                       type="text" 
+                                       name="username" 
+                                       value="{{ old('username', $user->username) }}" 
+                                       required 
+                                       placeholder="Enter username">
+                                @error('username')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
                             </div>
@@ -146,4 +146,32 @@
             </div>
         </div>
     </div>
+
+    @push('scripts')
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const emailInput = document.getElementById('email');
+            const usernameInput = document.getElementById('username');
+            const initialEmail = emailInput.value;
+            const initialUsername = usernameInput.value;
+            let isManuallyEdited = false;
+
+            // If username already matches email, we assume it should stay in sync
+            // Unless the user explicitly modifies it.
+            if (initialEmail !== initialUsername) {
+                isManuallyEdited = true;
+            }
+
+            usernameInput.addEventListener('input', function() {
+                isManuallyEdited = true;
+            });
+
+            emailInput.addEventListener('input', function() {
+                if (!isManuallyEdited) {
+                    usernameInput.value = emailInput.value;
+                }
+            });
+        });
+    </script>
+    @endpush
 </x-app-layout>

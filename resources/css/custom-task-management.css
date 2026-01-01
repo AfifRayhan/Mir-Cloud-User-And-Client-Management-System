@@ -373,6 +373,24 @@
     border: 1px solid var(--custom-task-management-warning);
 }
 
+.custom-task-management-badge-completed {
+    background-color: var(--custom-task-management-success-light);
+    color: var(--custom-task-management-success);
+    border: 1px solid var(--custom-task-management-success);
+}
+
+.custom-task-management-badge-assigned {
+    background-color: var(--custom-task-management-primary-light);
+    color: var(--custom-task-management-primary);
+    border: 1px solid var(--custom-task-management-primary);
+}
+
+.custom-task-management-badge-pending {
+    background-color: var(--custom-task-management-warning-light);
+    color: var(--custom-task-management-warning);
+    border: 1px solid var(--custom-task-management-warning);
+}
+
 /* Platform & User Info */
 .custom-task-management-platform {
     font-size: 0.875rem;

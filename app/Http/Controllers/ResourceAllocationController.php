@@ -23,8 +23,9 @@ class ResourceAllocationController extends Controller
                 // If duplicates exist, append index to each
                 $index = 1;
                 foreach ($group as $customer) {
+                    $customer->is_new = ! $customer->hasResourceAllocations();
                     $customer->customer_name = $customer->customer_name.'-'.$index;
-                    if (! $customer->hasResourceAllocations()) {
+                    if ($customer->is_new) {
                         $customer->customer_name .= ' (No Resources)';
                     }
                     $customers->push($customer);
@@ -32,10 +33,12 @@ class ResourceAllocationController extends Controller
                 }
             } else {
                 // No duplicates, just add
-                if (! $group->first()->hasResourceAllocations()) {
-                    $group->first()->customer_name .= ' (No Resources)';
+                $customer = $group->first();
+                $customer->is_new = ! $customer->hasResourceAllocations();
+                if ($customer->is_new) {
+                    $customer->customer_name .= ' (No Resources)';
                 }
-                $customers->push($group->first());
+                $customers->push($customer);
             }
         }
 
@@ -68,11 +71,17 @@ class ResourceAllocationController extends Controller
         $actionType = $request->query('action_type');
         $statusId = $request->query('status_id');
 
-        $services = \App\Models\Service::all();
+        $services = \App\Models\Service::where('platform_id', $customer->platform_id)->get();
         $taskStatuses = \App\Models\TaskStatus::all();
+        $customerStatuses = \App\Models\CustomerStatus::all();
 
         // Check if this is the first allocation
         $isFirstAllocation = ! $customer->hasResourceAllocations();
+
+        // If first allocation, force upgrade action
+        if ($isFirstAllocation && $actionType !== 'upgrade') {
+            $actionType = 'upgrade';
+        }
 
         // If first allocation and no status selected, default to "Test"
         if ($isFirstAllocation && ! $statusId) {
@@ -100,8 +109,30 @@ class ResourceAllocationController extends Controller
             $status = \App\Models\CustomerStatus::find($statusId);
             $statusName = $status ? $status->name : null;
         }
+        $testStatusId = \App\Models\CustomerStatus::where('name', 'Test')->first()?->id ?? 1;
 
-        $html = view('resource-allocation.partials.allocation-form', compact('customer', 'services', 'actionType', 'statusId', 'statusName', 'taskStatuses', 'isFirstAllocation', 'defaultTaskStatusId'))->render();
+        if ($request->ajax()) {
+            return response()->json([
+                'html' => view('resource-allocation.partials.allocation-form', compact(
+                    'customer',
+                    'actionType',
+                    'services',
+                    'taskStatuses',
+                    'customerStatuses',
+                    'defaultTaskStatusId',
+                    'statusId',
+                    'statusName',
+                    'isFirstAllocation',
+                    'testStatusId'
+                ))->render(),
+                'status_id' => $statusId,
+                'test_status_id' => $testStatusId,
+                'customer_name' => $customer->customer_name,
+                'action_type' => $actionType,
+            ]);
+        }
+
+        $html = view('resource-allocation.partials.allocation-form', compact('customer', 'services', 'actionType', 'statusId', 'statusName', 'taskStatuses', 'customerStatuses', 'isFirstAllocation', 'defaultTaskStatusId', 'testStatusId'))->render();
 
         return response()->json([
             'html' => $html,
@@ -115,28 +146,18 @@ class ResourceAllocationController extends Controller
     {
         $validated = $request->validate([
             'action_type' => 'required|in:upgrade,downgrade',
-            'status_id' => $request->action_type === 'upgrade' ? 'required|exists:customer_statuses,id' : 'nullable|exists:customer_statuses,id',
-            'task_status_id' => 'nullable|exists:task_statuses,id',
-            'activation_date' => $request->action_type === 'upgrade' ? 'required|date|after_or_equal:'.$customer->activation_date->format('Y-m-d') : 'nullable|date',
-            'inactivation_date' => [
-                'nullable',
-                'date',
-                'after_or_equal:activation_date',
-                'after_or_equal:'.$customer->activation_date->format('Y-m-d'),
-            ],
-            'services' => 'nullable|array',
+            'status_id' => 'required|exists:customer_statuses,id',
+            'task_status_id' => 'required|exists:task_statuses,id',
+            'activation_date' => 'required|date',
+            'inactivation_date' => 'nullable|date',
+            'services' => 'required|array',
             'services.*' => 'nullable|integer|min:0',
         ]);
 
         $actionType = $validated['action_type'];
-        $servicesInput = $validated['services'] ?? [];
-
-        // Ensure task_status_id defaults to "Proceed from KAM" when not provided
-        $taskStatusId = $validated['task_status_id'] ?? \App\Models\TaskStatus::where('name', 'Proceed from KAM')->value('id');
-        if (! $taskStatusId) {
-            // Fallback to id 1 if seed/data differs
-            $taskStatusId = 1;
-        }
+        $statusId = $validated['status_id'];
+        $taskStatusId = $validated['task_status_id'];
+        $servicesInput = $validated['services'];
         // Filter out null and zero values
         $servicesInput = array_filter($servicesInput, function ($value) {
             return ! is_null($value) && $value > 0;
@@ -150,10 +171,13 @@ class ResourceAllocationController extends Controller
             ], 422);
         }
 
-        return \Illuminate\Support\Facades\DB::transaction(function () use ($customer, $validated, $servicesInput, $actionType, $taskStatusId) {
+        return \Illuminate\Support\Facades\DB::transaction(function () use ($customer, $validated, $servicesInput, $actionType, $taskStatusId, $statusId) {
             // Lock the customer record to serialize allocations for this customer
             // This prevents two simultaneous upgrades from reading the same "current value" and writing inconsistent data
             $lockedCustomer = \App\Models\Customer::where('id', $customer->id)->lockForUpdate()->first();
+
+            $testStatusId = \App\Models\CustomerStatus::where('name', 'Test')->first()?->id ?? 1;
+            $isTestInput = $statusId == $testStatusId;
 
             if ($actionType === 'upgrade') {
                 $upgradation = \App\Models\ResourceUpgradation::create([
@@ -170,19 +194,21 @@ class ResourceAllocationController extends Controller
                     'activation_date' => $validated['activation_date'],
                 ]);
 
+                $isTest = $isTestInput;
+
                 foreach ($servicesInput as $serviceId => $increaseAmount) {
                     $service = \App\Models\Service::find($serviceId);
                     if (! $service) {
                         continue;
                     }
 
-                    // Get current value from resource history (using the locked customer instance if possible, though relation loading stays same)
-                    // Note: getResourceQuantity likely queries database. Since we are in transaction, we see our own writes,
-                    // but we need to ensure we read the COMPLETED writes of others. The lockForUpdate ensures no one else is writing right now.
-                    $currentValue = $lockedCustomer->getResourceQuantity($service->service_name);
+                    // Get current value from the specific pool
+                    $currentPoolValue = $isTestInput
+                        ? $lockedCustomer->getResourceTestQuantity($service->service_name)
+                        : $lockedCustomer->getResourceBillableQuantity($service->service_name);
 
-                    // Calculate the new value after increase
-                    $newValue = $currentValue + $increaseAmount;
+                    // Calculate the new pool total
+                    $newValue = $currentPoolValue + $increaseAmount;
 
                     \App\Models\ResourceUpgradationDetail::create([
                         'resource_upgradation_id' => $upgradation->id,
@@ -204,11 +230,16 @@ class ResourceAllocationController extends Controller
                     ]);
                 }
             } else {
-                // Get the most recent status from upgradations for this customer
-                $latestUpgradation = \App\Models\ResourceUpgradation::where('customer_id', $lockedCustomer->id)
-                    ->orderBy('created_at', 'desc')
-                    ->first();
-                $statusId = $latestUpgradation ? $latestUpgradation->status_id : null;
+                // For downgrades, status_id is now passed from the form
+                $statusId = $validated['status_id'];
+
+                // If not passed (backward compatibility or edge case), fallback to latest
+                if (! $statusId) {
+                    $latestUpgradation = \App\Models\ResourceUpgradation::where('customer_id', $lockedCustomer->id)
+                        ->orderBy('created_at', 'desc')
+                        ->first();
+                    $statusId = $latestUpgradation ? $latestUpgradation->status_id : null;
+                }
 
                 $downgradation = \App\Models\ResourceDowngradation::create([
                     'customer_id' => $lockedCustomer->id,
@@ -219,17 +250,22 @@ class ResourceAllocationController extends Controller
                     'inserted_by' => \Illuminate\Support\Facades\Auth::id(),
                 ]);
 
+                $testStatusId = \App\Models\CustomerStatus::where('name', 'Test')->first()?->id ?? 1;
+                $isTest = $statusId == $testStatusId;
+
                 foreach ($servicesInput as $serviceId => $reductionAmount) {
                     $service = \App\Models\Service::find($serviceId);
                     if (! $service) {
                         continue;
                     }
 
-                    // Get current value from resource history
-                    $currentValue = $lockedCustomer->getResourceQuantity($service->service_name);
+                    // Get current value from the specific pool
+                    $currentPoolValue = $isTest
+                        ? $lockedCustomer->getResourceTestQuantity($service->service_name)
+                        : $lockedCustomer->getResourceBillableQuantity($service->service_name);
 
-                    // Calculate the new value after reduction
-                    $newValue = max(0, $currentValue - $reductionAmount);
+                    // Calculate the new pool total
+                    $newValue = max(0, $currentPoolValue - $reductionAmount);
 
                     \App\Models\ResourceDowngradationDetail::create([
                         'resource_downgradation_id' => $downgradation->id,
@@ -245,7 +281,7 @@ class ResourceAllocationController extends Controller
                     \App\Models\Task::create([
                         'customer_id' => $lockedCustomer->id,
                         'status_id' => $statusId,
-                        'activation_date' => now(),
+                        'activation_date' => $validated['activation_date'],
                         'allocation_type' => 'downgrade',
                         'resource_downgradation_id' => $downgradation->id,
                     ]);

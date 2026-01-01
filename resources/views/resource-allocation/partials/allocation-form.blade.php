@@ -14,7 +14,7 @@
                             Resource Upgrade: {{ $customer->customer_name }}
                         @endif
                         @if($statusName)
-                            <span class="resource-alloc-customer-status-badge status-production">
+                            <span class="resource-alloc-customer-status-badge {{ $actionType == 'upgrade' ? 'status-production' : 'status-test' }}">
                                 {{ $statusName }}
                             </span>
                         @endif
@@ -50,16 +50,23 @@
                     <table class="table table-bordered align-middle resource-alloc-table">
                         <thead class="table-light">
                             <tr>
-                                <th style="width: 30%;" class="resource-alloc-service-cell"><i class="fas fa-tools me-2"></i>Service</th>
-                                <th style="width: 15%;"><i class="fas fa-chart-line me-2"></i>Current</th>
-                                <th style="width: 30%;"><i class="fas fa-arrow-up me-2"></i>Increase By</th>
-                                <th style="width: 25%;"><i class="fas fa-equals me-2"></i>New Total</th>
+                                <th style="width: 25%;" class="resource-alloc-service-cell"><i class="fas fa-tools me-2"></i>Service</th>
+                                @if(!($isFirstAllocation ?? false))
+                                    <th style="width: 12%;" class="resource-alloc-test-col {{ $statusId == $testStatusId ? 'status-highlighted' : '' }}"><i class="fas fa-flask me-2"></i>Current Test</th>
+                                    <th style="width: 12%;" class="resource-alloc-billable-col {{ $statusId != $testStatusId && $statusId ? 'status-highlighted' : '' }}"><i class="fas fa-dollar-sign me-2"></i>Current Billable</th>
+                                @endif
+                                <th style="width: {{ ($isFirstAllocation ?? false) ? '75%' : '26%' }};"><i class="fas fa-arrow-up me-2"></i>{{ ($isFirstAllocation ?? false) ? 'Allocation Amount' : 'Increase By' }}</th>
+                                @if(!($isFirstAllocation ?? false))
+                                    <th style="width: 12%;"><i class="fas fa-equals me-2"></i>New Test</th>
+                                    <th style="width: 13%;"><i class="fas fa-equals me-2"></i>New Billable</th>
+                                @endif
                             </tr>
                         </thead>
                         <tbody>
                             @foreach($services as $service)
                                 @php
-                                    $currentValue = $customer->getResourceQuantity($service->service_name);
+                                    $currentTestValue = $customer->getResourceTestQuantity($service->service_name);
+                                    $currentBillableValue = $customer->getResourceBillableQuantity($service->service_name);
                                 @endphp
                                 <tr>
                                     <td class="resource-alloc-service-cell">
@@ -70,9 +77,20 @@
                                             @endif
                                         </span>
                                     </td>
-                                    <td>
-                                        <span class="badge bg-secondary">{{ $currentValue }} {{ $service->unit }}</span>
-                                    </td>
+                                    @if(!($isFirstAllocation ?? false))
+                                        <td class="resource-alloc-test-col {{ $statusId == $testStatusId ? 'status-highlighted' : '' }}">
+                                            <div class="resource-alloc-current-display">
+                                                <span class="resource-alloc-current-value">{{ $currentTestValue }}</span>
+                                                <span class="resource-alloc-current-unit">{{ $service->unit }}</span>
+                                            </div>
+                                        </td>
+                                        <td class="resource-alloc-billable-col {{ $statusId != $testStatusId && $statusId ? 'status-highlighted' : '' }}">
+                                            <div class="resource-alloc-current-display">
+                                                <span class="resource-alloc-current-value">{{ $currentBillableValue }}</span>
+                                                <span class="resource-alloc-current-unit">{{ $service->unit }}</span>
+                                            </div>
+                                        </td>
+                                    @endif
                                     <td>
                                         <div class="resource-alloc-stepper-group">
                                             <button type="button" class="resource-alloc-stepper-btn" onclick="decrementValue(this)">−</button>
@@ -82,8 +100,10 @@
                                                 class="form-control resource-alloc-stepper-input" 
                                                 min="0" 
                                                 value="0"
-                                                data-current="{{ $currentValue }}"
+                                                data-current-test="{{ $currentTestValue }}"
+                                                data-current-billable="{{ $currentBillableValue }}"
                                                 data-service-id="{{ $service->id }}"
+                                                data-status-id="{{ $statusId }}"
                                                 oninput="updateNewTotal(this)"
                                                 onfocus="this.value == '0' ? this.value = '' : null"
                                                 onblur="this.value == '' ? this.value = '0' : null"
@@ -92,13 +112,22 @@
                                             <button type="button" class="resource-alloc-stepper-btn" onclick="incrementValue(this)">+</button>
                                         </div>
                                     </td>
-                                    <td>
-                                        <div class="resource-alloc-new-total">
-                                            <span class="resource-alloc-new-total-arrow">→</span>
-                                            <span class="resource-alloc-new-total-value" data-new-total-for="{{ $service->id }}">{{ $currentValue }}</span>
-                                            <span class="resource-alloc-new-total-unit">{{ $service->unit }}</span>
-                                        </div>
-                                    </td>
+                                    @if(!($isFirstAllocation ?? false))
+                                        <td>
+                                            <div class="resource-alloc-new-total">
+                                                <span class="resource-alloc-new-total-arrow">→</span>
+                                                <span class="resource-alloc-new-total-value" data-new-test-for="{{ $service->id }}">{{ $currentTestValue }}</span>
+                                                <span class="resource-alloc-new-total-unit">{{ $service->unit }}</span>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div class="resource-alloc-new-total">
+                                                <span class="resource-alloc-new-total-arrow">→</span>
+                                                <span class="resource-alloc-new-total-value" data-new-billable-for="{{ $service->id }}">{{ $currentBillableValue }}</span>
+                                                <span class="resource-alloc-new-total-unit">{{ $service->unit }}</span>
+                                            </div>
+                                        </td>
+                                    @endif
                                 </tr>
                             @endforeach
                         </tbody>
@@ -116,7 +145,7 @@
         </div>
     </form>
 @elseif($actionType === 'downgrade')
-    <form id="allocation-form" method="POST" data-customer-id="{{ $customer->id }}" data-action-type="{{ $actionType }}" onsubmit="return window.handleAllocationSubmit(event, this)">
+    <form id="allocation-form" method="POST" data-customer-id="{{ $customer->id }}" data-action-type="{{ $actionType }}" data-status-id="{{ $statusId }}" onsubmit="return window.handleAllocationSubmit(event, this)">
         @csrf
         <div class="card border-0 shadow-sm h-100">
             <div class="card-header resource-alloc-card-header">
@@ -127,7 +156,7 @@
                     <span>
                         Resource Downgrade: {{ $customer->customer_name }}
                         @if($statusName)
-                            <span class="resource-alloc-customer-status-badge status-staging">
+                            <span class="resource-alloc-customer-status-badge {{ $actionType == 'downgrade' ? 'status-test' : 'status-production' }}">
                                 {{ $statusName }}
                             </span>
                         @endif
@@ -163,16 +192,19 @@
                     <table class="table table-bordered align-middle resource-alloc-table">
                         <thead class="table-light">
                             <tr>
-                                <th style="width: 30%;" class="resource-alloc-service-cell"><i class="fas fa-tools me-2"></i>Service</th>
-                                <th style="width: 15%;"><i class="fas fa-chart-line me-2"></i>Current</th>
-                                <th style="width: 30%;"><i class="fas fa-arrow-down me-2"></i>Reduce By</th>
-                                <th style="width: 25%;"><i class="fas fa-equals me-2"></i>New Total</th>
+                                <th style="width: 25%;" class="resource-alloc-service-cell"><i class="fas fa-tools me-2"></i>Service</th>
+                                <th style="width: 12%;" class="resource-alloc-test-col {{ $statusId == $testStatusId ? 'status-highlighted' : '' }}"><i class="fas fa-flask me-2"></i>Current Test</th>
+                                <th style="width: 12%;" class="resource-alloc-billable-col {{ $statusId != $testStatusId && $statusId ? 'status-highlighted' : '' }}"><i class="fas fa-dollar-sign me-2"></i>Current Billable</th>
+                                <th style="width: 26%;"><i class="fas fa-arrow-down me-2"></i>Reduce By</th>
+                                <th style="width: 12%;"><i class="fas fa-equals me-2"></i>New Test</th>
+                                <th style="width: 13%;"><i class="fas fa-equals me-2"></i>New Billable</th>
                             </tr>
                         </thead>
                         <tbody>
                             @foreach($services as $service)
                                 @php
-                                    $currentValue = $customer->getResourceQuantity($service->service_name);
+                                    $currentTestValue = $customer->getResourceTestQuantity($service->service_name);
+                                    $currentBillableValue = $customer->getResourceBillableQuantity($service->service_name);
                                 @endphp
                                 <tr>
                                     <td class="resource-alloc-service-cell">
@@ -183,8 +215,17 @@
                                             @endif
                                         </span>
                                     </td>
-                                    <td>
-                                        <span class="badge bg-secondary">{{ $currentValue }} {{ $service->unit }}</span>
+                                    <td class="resource-alloc-test-col {{ $statusId == $testStatusId ? 'status-highlighted' : '' }}">
+                                        <div class="resource-alloc-current-display">
+                                            <span class="resource-alloc-current-value">{{ $currentTestValue }}</span>
+                                            <span class="resource-alloc-current-unit">{{ $service->unit }}</span>
+                                        </div>
+                                    </td>
+                                    <td class="resource-alloc-billable-col {{ $statusId != $testStatusId && $statusId ? 'status-highlighted' : '' }}">
+                                        <div class="resource-alloc-current-display">
+                                            <span class="resource-alloc-current-value">{{ $currentBillableValue }}</span>
+                                            <span class="resource-alloc-current-unit">{{ $service->unit }}</span>
+                                        </div>
                                     </td>
                                     <td>
                                         <div class="resource-alloc-stepper-group">
@@ -194,11 +235,16 @@
                                                 name="services[{{ $service->id }}]" 
                                                 class="form-control resource-alloc-stepper-input downgrade-input" 
                                                 min="0" 
-                                                max="{{ $currentValue }}"
+                                                @php
+                                                    $maxAllowed = $statusId == $testStatusId ? $currentTestValue : $currentBillableValue;
+                                                @endphp
+                                                max="{{ $maxAllowed }}"
                                                 value="0"
-                                                data-current="{{ $currentValue }}"
-                                                data-current-value="{{ $currentValue }}"
+                                                data-current-test="{{ $currentTestValue }}"
+                                                data-current-billable="{{ $currentBillableValue }}"
+                                                data-current-value="{{ $currentTestValue + $currentBillableValue }}"
                                                 data-service-id="{{ $service->id }}"
+                                                data-status-id="{{ $statusId }}"
                                                 oninput="updateNewTotalDowngrade(this)"
                                                 onfocus="this.value == '0' ? this.value = '' : null"
                                                 onblur="this.value == '' ? this.value = '0' : null"
@@ -210,7 +256,14 @@
                                     <td>
                                         <div class="resource-alloc-new-total">
                                             <span class="resource-alloc-new-total-arrow">→</span>
-                                            <span class="resource-alloc-new-total-value" data-new-total-for="{{ $service->id }}">{{ $currentValue }}</span>
+                                            <span class="resource-alloc-new-total-value" data-new-test-for="{{ $service->id }}">{{ $currentTestValue }}</span>
+                                            <span class="resource-alloc-new-total-unit">{{ $service->unit }}</span>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="resource-alloc-new-total">
+                                            <span class="resource-alloc-new-total-arrow">→</span>
+                                            <span class="resource-alloc-new-total-value" data-new-billable-for="{{ $service->id }}">{{ $currentBillableValue }}</span>
                                             <span class="resource-alloc-new-total-unit">{{ $service->unit }}</span>
                                         </div>
                                     </td>

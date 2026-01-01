@@ -181,7 +181,8 @@ return new class extends Migration
             $table->id();
             $table->foreignId('customer_id')->constrained('customers')->onDelete('cascade');
             $table->foreignId('service_id')->constrained('services')->onDelete('cascade');
-            $table->integer('quantity')->default(0);
+            $table->integer('test_quantity')->default(0);
+            $table->integer('billable_quantity')->default(0);
             $table->timestamps();
 
             // Unique constraint: one summary record per customer-service pair

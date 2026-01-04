@@ -10,7 +10,7 @@ class Customer extends Model
 {
     protected $fillable = [
         'customer_name',
-        'activation_date',
+        'customer_activation_date',
         'customer_address',
         'bin_number',
         'po_number',
@@ -34,7 +34,7 @@ class Customer extends Model
     ];
 
     protected $casts = [
-        'activation_date' => 'date',
+        'customer_activation_date' => 'date',
         'processed_at' => 'datetime',
         'po_project_sheets' => 'array',
     ];

@@ -232,6 +232,11 @@
 
                         // Attach form submit handler
                         attachFormHandler();
+                        
+                        // Re-initialize Flatpickr for the new form elements
+                        if (window.initializeGlobalFlatpickr) {
+                            window.initializeGlobalFlatpickr();
+                        }
                     } catch (error) {
                         console.error(error);
                         renderPlaceholder('Unable to load allocation form.');
@@ -325,10 +330,50 @@
                         // Reset the form inputs
                         form.reset();
 
-                        // Reload the allocation form to show updated values
-                        setTimeout(() => {
-                            loadAllocationForm();
-                            // Button remains disabled until reload to prevent double-submit during delay
+                        // Refresh only the customer dropdown to remove "(No Resources)" label
+                        setTimeout(async () => {
+                            try {
+                                // Fetch the resource allocation page to get updated customer list
+                                const response = await fetch('{{ route("resource-allocation.index") }}', {
+                                    headers: {
+                                        'Accept': 'text/html',
+                                        'X-Requested-With': 'XMLHttpRequest',
+                                    }
+                                });
+                                
+                                if (response.ok) {
+                                    const html = await response.text();
+                                    const tempDiv = document.createElement('div');
+                                    tempDiv.innerHTML = html;
+                                    
+                                    // Extract the new customer options from the response
+                                    const newSelect = tempDiv.querySelector('#customer_id');
+                                    if (newSelect) {
+                                        const currentCustomerId = customerSelect.value;
+                                        
+                                        // Update the dropdown options while preserving the selection
+                                        customerSelect.innerHTML = newSelect.innerHTML;
+                                        
+                                        // Re-select the current customer if it still exists
+                                        if (currentCustomerId) {
+                                            customerSelect.value = currentCustomerId;
+                                            
+                                            // Update the data-is-new attribute for the selected customer
+                                            const selectedOption = customerSelect.options[customerSelect.selectedIndex];
+                                            if (selectedOption) {
+                                                selectedOption.setAttribute('data-is-new', 'false');
+                                            }
+                                        }
+                                    }
+                                }
+                                
+                                // Reload the allocation form to show updated values
+                                loadAllocationForm();
+                            } catch (error) {
+                                console.error('Error refreshing customer list:', error);
+                                // Fallback to reloading form if customer list refresh fails
+                                loadAllocationForm();
+                            }
                         }, 1500);
 
                         return false;
@@ -579,6 +624,8 @@
                         input.parentElement.classList.remove('has-error');
                     }
                 };
+
+
 
                 // Disable arrow keys and mouse wheel on stepper inputs
                 document.addEventListener('DOMContentLoaded', function() {

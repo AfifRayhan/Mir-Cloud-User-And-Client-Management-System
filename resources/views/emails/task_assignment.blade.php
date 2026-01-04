@@ -40,10 +40,25 @@
                     <td style="border:1px solid #ddd; background:#ffedd5; font-weight:bold;">Platform</td>
                     <td style="border:1px solid #ddd; padding:8px;">{{ optional($task->customer->platform)->platform_name ?? 'N/A' }}</td>
                 </tr>
+                @if($task->allocation_type === 'upgrade' && $task->resourceUpgradation)
                 <tr>
-                    <td style="border:1px solid #ddd; background:#ffedd5; font-weight:bold;">Resource Activation Date</td>
-                    <td style="border:1px solid #ddd; padding:8px;">{{ $task->activation_date->format('M d, Y') }}</td>
+                    <td style="border:1px solid #ddd; background:#ffedd5; font-weight:bold;">Resource Assignment Date</td>
+                    <td style="border:1px solid #ddd; padding:8px;">{{ $task->resourceUpgradation->assignment_datetime?->format('M d, Y h:i A') ?? 'N/A' }}</td>
                 </tr>
+                <tr>
+                    <td style="border:1px solid #ddd; background:#ffedd5; font-weight:bold;">Resource Allocation Deadline</td>
+                    <td style="border:1px solid #ddd; padding:8px; color:#dc2626; font-weight:bold;">{{ $task->resourceUpgradation->deadline_datetime?->format('M d, Y h:i A') ?? 'N/A' }}</td>
+                </tr>
+                @elseif($task->allocation_type === 'downgrade' && $task->resourceDowngradation)
+                <tr>
+                    <td style="border:1px solid #ddd; background:#ffedd5; font-weight:bold;">Resource Assignment Date</td>
+                    <td style="border:1px solid #ddd; padding:8px;">{{ $task->resourceDowngradation->assignment_datetime?->format('M d, Y h:i A') ?? 'N/A' }}</td>
+                </tr>
+                <tr>
+                    <td style="border:1px solid #ddd; background:#ffedd5; font-weight:bold;">Resource Allocation Deadline</td>
+                    <td style="border:1px solid #ddd; padding:8px; color:#dc2626; font-weight:bold;">{{ $task->resourceDowngradation->deadline_datetime?->format('M d, Y h:i A') ?? 'N/A' }}</td>
+                </tr>
+                @endif
                 <tr>
                     <td style="border:1px solid #ddd; background:#ffedd5; font-weight:bold;">Type</td>
                     <td style="border:1px solid #ddd; padding:8px;">{{ $isFirstAllocation ?? false ? 'First Allocation' : ucfirst($actionType) }}</td>
@@ -182,13 +197,16 @@
             <tbody>
                 @foreach($task->resourceUpgradation->details as $detail)
                     <tr>
-                        <td style="border:1px solid #ddd; background:#f9f9f9;">{{ $detail->service->service_name }} {{ $detail->service->unit ? "({$detail->service->unit})" : '' }}</td>
+                        <td style="border:1px solid #ddd; background:#ffffff;">
+                            <strong style="color: #333;">{{ $detail->service->service_name }}</strong>
+                            @if($detail->service->unit) <span style="color: #666; font-size: 11px;">({{ $detail->service->unit }})</span> @endif
+                        </td>
                         @if(!$isFirstAllocation)
-                            <td style="border:1px solid #ddd; background:#f9f9f9;">{{ max(0, $detail->quantity - $detail->upgrade_amount) }} {{ $detail->service->unit ? "({$detail->service->unit})" : '' }}</td>
+                            <td style="border:1px solid #ddd; background:#ffffff; color: #666;">{{ max(0, $detail->quantity - $detail->upgrade_amount) }} {{ $detail->service->unit }}</td>
                         @endif
-                        <td style="border:1px solid #ddd; background:#f9f9f9;">{{ $detail->upgrade_amount }} {{ $detail->service->unit ? "({$detail->service->unit})" : '' }}</td>
+                        <td style="border:1px solid #ddd; background:#ffffff; font-weight:bold; color: #16a34a;">{{ $detail->upgrade_amount }} {{ $detail->service->unit }}</td>
                         @if(!$isFirstAllocation)
-                            <td style="border:1px solid #ddd; background:#f9f9f9;">{{ $detail->quantity }} {{ $detail->service->unit ? "({$detail->service->unit})" : '' }}</td>
+                            <td style="border:1px solid #ddd; background:#f5f7ff; font-weight:bold; color: #4f46e5;">{{ $detail->quantity }} {{ $detail->service->unit }}</td>
                         @endif
                     </tr>
                 @endforeach
@@ -207,10 +225,13 @@
             <tbody>
                 @foreach($task->resourceDowngradation->details as $detail)
                     <tr>
-                        <td style="border:1px solid #ddd; padding:8px; text-align:left; vertical-align:middle;">{{ $detail->service->service_name }} {{ $detail->service->unit ? "({$detail->service->unit})" : '' }}</td>
-                        <td style="border:1px solid #ddd; padding:8px; text-align:left; vertical-align:middle;">{{ max(0, $detail->quantity + $detail->downgrade_amount) }} {{ $detail->service->unit ? "({$detail->service->unit})" : '' }}</td>
-                        <td style="border:1px solid #ddd; padding:8px; text-align:left; vertical-align:middle;">{{ $detail->downgrade_amount }} {{ $detail->service->unit ? "({$detail->service->unit})" : '' }}</td>
-                        <td style="border:1px solid #ddd; padding:8px; text-align:left; vertical-align:middle;">{{ $detail->quantity }} {{ $detail->service->unit ? "({$detail->service->unit})" : '' }}</td>
+                        <td style="border:1px solid #ddd; padding:8px; text-align:left; vertical-align:middle;">
+                            <strong style="color: #333;">{{ $detail->service->service_name }}</strong>
+                            @if($detail->service->unit) <span style="color: #666; font-size: 11px;">({{ $detail->service->unit }})</span> @endif
+                        </td>
+                        <td style="border:1px solid #ddd; padding:8px; text-align:left; vertical-align:middle; color: #666;">{{ max(0, $detail->quantity + $detail->downgrade_amount) }} {{ $detail->service->unit }}</td>
+                        <td style="border:1px solid #ddd; padding:8px; text-align:left; vertical-align:middle; font-weight:bold; color: #ca8a04;">{{ $detail->downgrade_amount }} {{ $detail->service->unit }}</td>
+                        <td style="border:1px solid #ddd; padding:8px; text-align:left; vertical-align:middle; background:#f5f7ff; font-weight:bold; color: #4f46e5;">{{ $detail->quantity }} {{ $detail->service->unit }}</td>
                     </tr>
                 @endforeach
             </tbody>

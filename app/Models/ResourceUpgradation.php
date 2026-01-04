@@ -13,6 +13,8 @@ class ResourceUpgradation extends Model
         'inactivation_date',
         'task_status_id',
         'inserted_by',
+        'assignment_datetime',
+        'deadline_datetime',
     ];
 
     public function customer()
@@ -50,6 +52,8 @@ class ResourceUpgradation extends Model
         return [
             'activation_date' => 'date',
             'inactivation_date' => 'date',
+            'assignment_datetime' => 'datetime',
+            'deadline_datetime' => 'datetime',
         ];
     }
 }

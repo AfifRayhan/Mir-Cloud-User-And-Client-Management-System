@@ -46,7 +46,7 @@
                             <div class="col-md-6">
                                 <label class="text-muted small fw-bold text-uppercase mb-1 d-block">Customer Activation Date</label>
                                 <div class="fs-5 fw-semibold">
-                                    {{ $customer->activation_date->format('F d, Y') }}
+                                    {{ $customer->customer_activation_date->format('F d, Y') }}
                                 </div>
                             </div>
                             <div class="col-12">

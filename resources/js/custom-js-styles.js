@@ -886,3 +886,63 @@ document.addEventListener("DOMContentLoaded", function () {
  * Custom Customer Index Styles Ends
  * ----------------------------------------------------
  */
+/*
+ * ----------------------------------------------------
+ * Custom Global Calendar Styles
+ * ----------------------------------------------------
+ */
+
+// Define global initialization function
+window.initializeGlobalFlatpickr = function () {
+    if (typeof flatpickr === "undefined") {
+        console.warn("Flatpickr not loaded");
+        return;
+    }
+
+    const dateInputs = document.querySelectorAll(".flatpickr-date");
+    dateInputs.forEach(input => {
+        // Check if already initialized
+        if (input._flatpickr) return;
+
+        // Determine minDate from attributes
+        const minDate = input.dataset.minDate || input.getAttribute('min') || null;
+
+        const fp = flatpickr(input, {
+            dateFormat: "Y-m-d",
+            allowInput: true,
+            minDate: minDate, // Apply minDate if present
+            disable: [
+                function (date) {
+                    // return true to disable Friday (5) and Saturday (6)
+                    return (date.getDay() === 5 || date.getDay() === 6);
+                }
+            ],
+            locale: {
+                firstDayOfWeek: 0 // Sunday
+            },
+            onDayCreate: function (dObj, dStr, fp, dayElem) {
+                if (dayElem.dateObj.getDay() === 5 || dayElem.dateObj.getDay() === 6) {
+                    dayElem.classList.add("blurred-weekend");
+                    dayElem.title = "Weekend (Friday/Saturday) is disabled";
+                }
+            }
+        });
+
+        // Handle Input Group Icon Click
+        const inputGroup = input.closest('.input-group');
+        if (inputGroup) {
+            const icon = inputGroup.querySelector('.input-group-text');
+            if (icon) {
+                icon.style.cursor = 'pointer'; // Make it look clickable
+                icon.addEventListener('click', () => {
+                    fp.open();
+                });
+            }
+        }
+    });
+    console.log("Global Flatpickr initialized");
+};
+
+document.addEventListener("DOMContentLoaded", function () {
+    window.initializeGlobalFlatpickr();
+});

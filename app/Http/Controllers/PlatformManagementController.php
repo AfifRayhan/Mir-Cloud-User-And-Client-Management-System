@@ -15,7 +15,7 @@ class PlatformManagementController extends Controller
     {
         $this->authorizeAccess();
 
-        $platforms = Platform::orderBy('platform_name')->get();
+        $platforms = Platform::with('services')->orderBy('platform_name')->get();
 
         return view('platforms.index', compact('platforms'));
     }
@@ -60,6 +60,10 @@ class PlatformManagementController extends Controller
     public function destroy(Platform $platform): RedirectResponse
     {
         $this->authorizeAccess();
+
+        if (! Auth::user()->isAdmin()) {
+            abort(403, 'Only administrators can delete platforms.');
+        }
 
         if ($platform->customers()->exists()) {
             return redirect()->route('platforms.index')->withErrors([

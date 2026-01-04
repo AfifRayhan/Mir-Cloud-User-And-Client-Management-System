@@ -39,10 +39,25 @@
                     <td style="border:1px solid #ddd; background:#e0e7ff; font-weight:bold;">Platform</td>
                     <td style="border:1px solid #ddd; padding:8px;">{{ optional($task->customer->platform)->platform_name ?? 'N/A' }}</td>
                 </tr>
+                @if($task->allocation_type === 'upgrade' && $task->resourceUpgradation)
                 <tr>
-                    <td style="border:1px solid #ddd; background:#e0e7ff; font-weight:bold;">Resource Activation Date</td>
-                    <td style="border:1px solid #ddd; padding:8px;">{{ $task->activation_date->format('M d, Y') }}</td>
+                    <td style="border:1px solid #ddd; background:#e0e7ff; font-weight:bold;">Resource Assignment Date</td>
+                    <td style="border:1px solid #ddd; padding:8px;">{{ $task->resourceUpgradation->assignment_datetime?->format('M d, Y h:i A') ?? 'N/A' }}</td>
                 </tr>
+                <tr>
+                    <td style="border:1px solid #ddd; background:#e0e7ff; font-weight:bold;">Resource Allocation Deadline</td>
+                    <td style="border:1px solid #ddd; padding:8px; color:#dc2626; font-weight:bold;">{{ $task->resourceUpgradation->deadline_datetime?->format('M d, Y h:i A') ?? 'N/A' }}</td>
+                </tr>
+                @elseif($task->allocation_type === 'downgrade' && $task->resourceDowngradation)
+                <tr>
+                    <td style="border:1px solid #ddd; background:#e0e7ff; font-weight:bold;">Resource Assignment Date</td>
+                    <td style="border:1px solid #ddd; padding:8px;">{{ $task->resourceDowngradation->assignment_datetime?->format('M d, Y h:i A') ?? 'N/A' }}</td>
+                </tr>
+                <tr>
+                    <td style="border:1px solid #ddd; background:#e0e7ff; font-weight:bold;">Resource Allocation Deadline</td>
+                    <td style="border:1px solid #ddd; padding:8px; color:#dc2626; font-weight:bold;">{{ $task->resourceDowngradation->deadline_datetime?->format('M d, Y h:i A') ?? 'N/A' }}</td>
+                </tr>
+                @endif
                 <tr>
                     <td style="border:1px solid #ddd; background:#e0e7ff; font-weight:bold;">Type</td>
                     <td style="border:1px solid #ddd; padding:8px;">{{ $isFirstAllocation ?? false ? 'First Allocation' : ucfirst($actionType) }}</td>

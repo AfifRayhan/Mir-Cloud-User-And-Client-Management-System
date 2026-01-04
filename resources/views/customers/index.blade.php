@@ -157,14 +157,14 @@
                                         <td class="custom-customer-index-table-cell">
                                             <div class="custom-customer-index-date">
                                                 <div class="custom-customer-index-date-day">
-                                                    {{ $customer->activation_date->format('d') }}
+                                                    {{ $customer->customer_activation_date->format('d') }}
                                                 </div>
                                                 <div class="custom-customer-index-date-details">
                                                     <div class="custom-customer-index-date-month">
-                                                        {{ $customer->activation_date->format('M') }}
+                                                        {{ $customer->customer_activation_date->format('M') }}
                                                     </div>
                                                     <div class="custom-customer-index-date-year">
-                                                        {{ $customer->activation_date->format('Y') }}
+                                                        {{ $customer->customer_activation_date->format('Y') }}
                                                     </div>
                                                 </div>
                                             </div>

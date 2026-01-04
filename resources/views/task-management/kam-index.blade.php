@@ -317,7 +317,10 @@
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label">Activation Date</label>
-                                    <input type="date" name="activation_date" class="form-control" value="{{ $task->activation_date->format('Y-m-d') }}" required>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fas fa-calendar-alt"></i></span>
+                                        <input type="text" name="activation_date" class="form-control flatpickr-date" value="{{ $task->activation_date->format('Y-m-d') }}" required>
+                                    </div>
                                 </div>
                             </div>
                             <h6 class="mb-3">Resource Details</h6>

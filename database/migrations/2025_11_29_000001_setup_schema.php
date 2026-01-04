@@ -49,11 +49,14 @@ return new class extends Migration
         // 6. Services
         Schema::create('services', function (Blueprint $table) {
             $table->id();
-            $table->string('service_name')->unique();
+            $table->foreignId('platform_id')->nullable()->constrained('platforms')->cascadeOnDelete();
+            $table->string('service_name');
             $table->string('unit')->nullable();
             $table->decimal('unit_price', 10, 2)->nullable();
             $table->foreignId('inserted_by')->nullable()->constrained('users');
             $table->timestamps();
+
+            $table->unique(['service_name', 'platform_id']);
         });
 
         // 7. Update Users Table
@@ -71,10 +74,11 @@ return new class extends Migration
         Schema::create('customers', function (Blueprint $table) {
             $table->id();
             $table->string('customer_name');
-            $table->date('activation_date');
+            $table->date('customer_activation_date');
             $table->text('customer_address')->nullable();
             $table->string('bin_number')->nullable();
             $table->string('po_number')->nullable();
+            $table->json('po_project_sheets')->nullable();
 
             // Contacts
             $table->string('commercial_contact_name')->nullable();
@@ -105,6 +109,8 @@ return new class extends Migration
             $table->foreignId('customer_id')->constrained('customers')->onDelete('cascade');
             $table->foreignId('status_id')->nullable()->constrained('customer_statuses');
             $table->date('activation_date');
+            $table->dateTime('assignment_datetime')->nullable();
+            $table->dateTime('deadline_datetime')->nullable();
             $table->date('inactivation_date')->default('3000-01-01');
             $table->foreignId('task_status_id')->constrained('task_statuses');
             $table->foreignId('inserted_by')->constrained('users');
@@ -127,6 +133,8 @@ return new class extends Migration
             $table->foreignId('customer_id')->constrained('customers')->onDelete('cascade');
             $table->foreignId('status_id')->nullable()->constrained('customer_statuses');
             $table->date('activation_date');
+            $table->dateTime('assignment_datetime')->nullable();
+            $table->dateTime('deadline_datetime')->nullable();
             $table->date('inactivation_date')->default('3000-01-01');
             $table->foreignId('task_status_id')->constrained('task_statuses');
             $table->foreignId('inserted_by')->constrained('users');
@@ -151,6 +159,7 @@ return new class extends Migration
             $table->foreignId('task_status_id')->default(1)->constrained('task_statuses');
             $table->date('activation_date');
             $table->enum('allocation_type', ['upgrade', 'downgrade']);
+            $table->boolean('has_resource_conflict')->default(false);
 
             // Reference to either upgrade or downgrade (only one will be set)
             $table->foreignId('resource_upgradation_id')->nullable()->constrained('resource_upgradations')->onDelete('cascade');

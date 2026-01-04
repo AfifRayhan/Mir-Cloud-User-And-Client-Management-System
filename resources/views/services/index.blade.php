@@ -225,12 +225,14 @@
                                                            class="custom-service-management-action-btn custom-service-management-edit-btn">
                                                             <i class="fas fa-edit me-1"></i><span>Edit</span>
                                                         </a>
+                                                        @if(Auth::user()->isAdmin())
                                                         <button type="button" 
                                                                 class="custom-service-management-action-btn custom-service-management-delete-btn"
                                                                 data-bs-toggle="modal" 
                                                                 data-bs-target="#deleteServiceModal{{ $service->id }}">
                                                             <i class="fas fa-trash-alt me-1"></i><span>Delete</span>
                                                         </button>
+                                                        @endif
                                                     </div>
                                                 </td>
                                             </tr>

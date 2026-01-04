@@ -200,6 +200,17 @@
     text-decoration: none;
 }
 
+.custom-platform-management-view-btn {
+    background: #e0f2fe;
+    color: #0369a1;
+}
+
+.custom-platform-management-view-btn:hover {
+    background: #0369a1;
+    color: white;
+    transform: translateY(-1px);
+}
+
 .custom-platform-management-delete-btn {
     background: var(--custom-platform-management-danger-light);
     color: var(--custom-platform-management-danger);

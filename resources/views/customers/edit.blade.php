@@ -70,16 +70,19 @@
                                     </div>
 
                                     <div class="col-md-6">
-                                        <label for="activation_date" class="form-label fw-semibold custom-addcustomer-label">
+                                        <label for="customer_activation_date" class="form-label fw-semibold custom-addcustomer-label">
                                             Customer Activation Date <span class="text-danger">*</span>
                                         </label>
-                                        <input type="date" 
-                                               class="form-control form-control-lg custom-addcustomer-input @error('activation_date') is-invalid @enderror" 
-                                               id="activation_date" 
-                                               name="activation_date" 
-                                               value="{{ old('activation_date', $customer->activation_date->format('Y-m-d')) }}" 
-                                               required>
-                                        @error('activation_date')
+                                        <div class="input-group">
+                                            <span class="input-group-text"><i class="fas fa-calendar-alt"></i></span>
+                                            <input type="date" 
+                                                   class="form-control form-control-lg custom-addcustomer-input flatpickr-date @error('customer_activation_date') is-invalid @enderror" 
+                                                   id="customer_activation_date" 
+                                                   name="customer_activation_date" 
+                                                   value="{{ old('customer_activation_date', $customer->customer_activation_date->format('Y-m-d')) }}" 
+                                                   required>
+                                        </div>
+                                        @error('customer_activation_date')
                                             <div class="invalid-feedback">{{ $message }}</div>
                                         @enderror
                                     </div>

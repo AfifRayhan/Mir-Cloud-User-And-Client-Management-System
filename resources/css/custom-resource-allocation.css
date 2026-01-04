@@ -339,6 +339,63 @@
     font-weight: 700;
 }
 
+/* Resource Allocation Flatpickr Customization */
+.flatpickr-day.flatpickr-disabled,
+.flatpickr-day.flatpickr-disabled:hover {
+    color: #393939 !important;
+    opacity: 0.3 !important;
+    /* Blur/Fade effect */
+    background: transparent !important;
+    border-color: transparent !important;
+    cursor: not-allowed !important;
+    text-decoration: none !important;
+}
+
+.blurred-weekend {
+    opacity: 0.4 !important;
+    color: #9ca3af !important;
+    cursor: not-allowed !important;
+    pointer-events: none;
+}
+
+
+/* Reduce Calendar Size & Fix Alignment */
+.flatpickr-calendar {
+    width: 260px !important;
+}
+
+.flatpickr-days {
+    width: 260px !important;
+}
+
+.dayContainer {
+    width: 260px !important;
+    min-width: 260px !important;
+    max-width: 260px !important;
+    display: flex !important;
+    justify-content: center !important;
+}
+
+.flatpickr-day {
+    height: 34px !important;
+    line-height: 34px !important;
+    max-width: 14.28% !important;
+    /* Ensure days fill the width equally (100% / 7) */
+    flex-basis: 14.28% !important;
+    font-size: 12px !important;
+}
+
+.flatpickr-current-month {
+    font-size: 110% !important;
+    padding-top: 5px !important;
+}
+
+.flatpickr-months .flatpickr-prev-month,
+.flatpickr-months .flatpickr-next-month {
+    padding: 5px 10px !important;
+}
+
+
 /* Responsive Adjustments */
 @media (max-width: 991.98px) {
     .resource-alloc-stepper-group {

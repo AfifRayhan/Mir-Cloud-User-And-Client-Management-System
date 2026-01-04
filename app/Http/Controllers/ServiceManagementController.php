@@ -97,6 +97,10 @@ class ServiceManagementController extends Controller
     {
         $this->authorizeAccess();
 
+        if (! Auth::user()->isAdmin()) {
+            abort(403, 'Only administrators can delete services.');
+        }
+
         $service->delete();
 
         return redirect()->route('services.index')->with('success', 'Service removed successfully.');

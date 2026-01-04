@@ -124,12 +124,22 @@
                                                     <strong>{{ $platform->platform_name }}</strong>
                                                 </td>
                                                 <td class="custom-platform-management-table-cell text-end">
-                                                    <button type="button" 
-                                                            class="custom-platform-management-action-btn custom-platform-management-delete-btn"
-                                                            data-bs-toggle="modal" 
-                                                            data-bs-target="#deletePlatformModal{{ $platform->id }}">
-                                                        <i class="fas fa-trash-alt me-1"></i><span>Delete</span>
-                                                    </button>
+                                                    <div class="d-flex justify-content-end gap-2">
+                                                        <button type="button" 
+                                                                class="custom-platform-management-action-btn custom-platform-management-view-btn"
+                                                                data-bs-toggle="modal" 
+                                                                data-bs-target="#viewPlatformServicesModal{{ $platform->id }}">
+                                                            <i class="fas fa-eye me-1"></i><span>View</span>
+                                                        </button>
+                                                        @if(Auth::user()->isAdmin())
+                                                        <button type="button" 
+                                                                class="custom-platform-management-action-btn custom-platform-management-delete-btn"
+                                                                data-bs-toggle="modal" 
+                                                                data-bs-target="#deletePlatformModal{{ $platform->id }}">
+                                                            <i class="fas fa-trash-alt me-1"></i><span>Delete</span>
+                                                        </button>
+                                                        @endif
+                                                    </div>
                                                 </td>
                                             </tr>
                                         @endforeach
@@ -175,6 +185,54 @@
                             <i class="fas fa-trash-alt me-1"></i> Delete
                         </button>
                     </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    @endforeach
+
+    <!-- View Services Modals -->
+    @foreach($platforms as $platform)
+    <div class="modal fade" id="viewPlatformServicesModal{{ $platform->id }}" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content border-0 shadow-lg">
+                <div class="modal-header custom-platform-management-modal-header border-0">
+                    <h5 class="modal-title fw-bold">
+                        <i class="fas fa-cubes me-2"></i>Services for {{ $platform->platform_name }}
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4">
+                    @if($platform->services->isEmpty())
+                        <div class="text-center py-4 text-muted">
+                            <i class="fas fa-box-open fa-3x mb-3 opacity-25"></i>
+                            <p class="mb-0">No services found for this platform.</p>
+                        </div>
+                    @else
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th scope="col">Service Name</th>
+                                        <th scope="col">Unit</th>
+                                        <th scope="col" class="text-end">Unit Price</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach($platform->services as $service)
+                                        <tr>
+                                            <td class="fw-medium">{{ $service->service_name }}</td>
+                                            <td><span class="badge bg-secondary text-white">{{ $service->unit ?? 'N/A' }}</span></td>
+                                            <td class="text-end font-monospace">{{ number_format($service->unit_price, 2) }}</td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                    @endif
+                </div>
+                <div class="modal-footer border-0 bg-light">
+                    <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">Close</button>
                 </div>
             </div>
         </div>

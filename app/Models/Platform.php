@@ -18,4 +18,9 @@ class Platform extends Model
     {
         return $this->hasMany(Customer::class);
     }
+
+    public function services(): HasMany
+    {
+        return $this->hasMany(Service::class);
+    }
 }

@@ -179,7 +179,7 @@
         $headerLabel = $isFirstAllocation ? 'Allocation Amount' : 'Upgrade Value';
     @endphp
 
-    <h3 style="color: #16a34a;">Resource Details</h3>
+    <h3 style="color: #16a34a;">Resource Details (Task ID: {{ $task->task_id ?? 'N/A' }})</h3>
     @if($task->allocation_type === 'upgrade' && $task->resourceUpgradation)
         <table width="100%" cellpadding="6" cellspacing="0" style="border-collapse:collapse; margin-top:10px;">
             <thead>

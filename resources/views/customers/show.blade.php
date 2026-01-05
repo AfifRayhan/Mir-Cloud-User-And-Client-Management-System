@@ -252,6 +252,7 @@
                 pdfPreviewModalLabel.textContent = name;
                 pdfPreviewModalSublabel.textContent = `File size: ${size}`;
                 pdfDownloadBtn.href = url;
+                pdfDownloadBtn.setAttribute('download', name); // Force download with specific name
                 pdfPreviewFrame.src = url;
                 
                 const modal = new bootstrap.Modal(pdfPreviewModal);

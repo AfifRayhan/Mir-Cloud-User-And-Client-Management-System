@@ -166,6 +166,11 @@
                                 <tr class="custom-kam-task-management-table-row {{ $rowClass }}">
                                     <td class="custom-kam-task-management-table-cell">
                                         <strong>{{ $task->customer->customer_name }}</strong>
+                                        @if($task->task_id)
+                                            <div class="text-muted small mt-1" style="opacity: 0.7; font-size: 0.75rem;">
+                                                Task ID: {{ $task->task_id }}
+                                            </div>
+                                        @endif
                                         @if($task->has_resource_conflict)
                                             <div class="mt-1">
                                                 <span class="badge bg-danger">

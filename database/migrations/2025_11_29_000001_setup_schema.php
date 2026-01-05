@@ -154,6 +154,7 @@ return new class extends Migration
         // 14. Tasks
         Schema::create('tasks', function (Blueprint $table) {
             $table->id();
+            $table->string('task_id')->unique()->nullable();
             $table->foreignId('customer_id')->constrained('customers')->onDelete('cascade');
             $table->foreignId('status_id')->nullable()->constrained('customer_statuses');
             $table->foreignId('task_status_id')->default(1)->constrained('task_statuses');

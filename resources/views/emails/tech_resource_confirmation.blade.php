@@ -179,7 +179,7 @@
         $headerBg = '#e0e7ff';
     @endphp
 
-    <h3 style="color: #4f46e5; margin-top: 25px;">Resource Details</h3>
+    <h3 style="color: #4f46e5; margin-top: 25px;">Resource Details (Task ID: {{ $task->task_id ?? 'N/A' }})</h3>
     @if($task->resourceDetails->count() > 0)
         <table width="100%" cellpadding="8" cellspacing="0" style="border-collapse:collapse; margin-top:10px; font-size: 14px;">
             <thead>

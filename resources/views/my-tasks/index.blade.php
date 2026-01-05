@@ -99,6 +99,11 @@
                                     <tr class="custom-my-task-table-row {{ $task->completed_at ? 'task-completed' : '' }}" data-task-id="{{ $task->id }}">
                                         <td class="custom-my-task-table-cell">
                                             <strong>{{ $task->customer->customer_name }}</strong>
+                                            @if($task->task_id)
+                                                <div class="text-muted small mt-1" style="opacity: 0.7; font-size: 0.75rem;">
+                                                    Task ID: {{ $task->task_id }}
+                                                </div>
+                                            @endif
                                         </td>
                                         <td class="custom-my-task-table-cell">
                                             <select class="custom-my-task-select platform-select" 

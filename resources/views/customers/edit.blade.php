@@ -176,7 +176,7 @@
                                                 <label class="form-label fw-semibold small text-muted text-uppercase">Existing Sheets</label>
                                                 <div id="existing-sheets-container">
                                                     @foreach($customer->po_project_sheets as $index => $sheet)
-                                                        <div class="d-flex align-items-center justify-content-between p-2 mb-2 bg-light rounded border border-light-subtle existing-sheet-item" data-index="{{ $index }}">
+                                                        <div class="d-flex align-items-center justify-content-between p-2 mb-2 bg-light rounded border border-light-subtle existing-sheet-item" id="sheet-item-{{ $index }}" data-index="{{ $index }}">
                                                             <div class="d-flex align-items-center overflow-hidden">
                                                                 <i class="fas fa-file-pdf text-danger me-2"></i>
                                                                 <span class="text-truncate small fw-medium" title="{{ $sheet['name'] }}">{{ $sheet['name'] }}</span>
@@ -363,18 +363,66 @@
             </div>
         </div>
     </div>
+    <!-- Delete Confirmation Modal -->
+    <div class="modal fade" id="deleteSheetModal" tabindex="-1" aria-labelledby="deleteSheetModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header border-0 pb-0">
+                    <h5 class="modal-title fw-bold text-danger" id="deleteSheetModalLabel">Confirm Deletion</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body py-4">
+                    <div class="text-center mb-3">
+                        <div class="avatar-lg bg-danger-subtle rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 60px; height: 60px;">
+                            <i class="fas fa-trash-alt text-danger fs-3"></i>
+                        </div>
+                        <h5 class="fw-bold">Delete Project Sheet?</h5>
+                        <p class="text-muted mb-0">Are you sure you want to remove this sheet? This action cannot be undone after saving.</p>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 pt-0 justify-content-center pb-4">
+                    <button type="button" class="btn btn-light px-4" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-danger px-4" id="confirmDeleteBtn">Delete Sheet</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
-        function removeExistingSheet(index) {
-            const item = document.querySelector(`.existing-sheet-item[data-index="${index}"]`);
-            const input = document.getElementById(`removed-sheet-${index}`);
-            
-            if (item && input) {
-                if (confirm('Are you sure you want to remove this sheet? It will be deleted permanently when you save.')) {
-                    item.style.display = 'none';
-                    input.value = index;
-                    input.disabled = false;
+        document.addEventListener('DOMContentLoaded', function() {
+            let sheetIndexToDelete = null;
+            let deleteSheetModal = null;
+            const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
+
+            // Attach function to window so onclick works
+            window.removeExistingSheet = function(index) {
+                if (!deleteSheetModal) {
+                    deleteSheetModal = new bootstrap.Modal(document.getElementById('deleteSheetModal'));
                 }
+                sheetIndexToDelete = index;
+                deleteSheetModal.show();
             }
-        }
+
+            if (confirmDeleteBtn) {
+                confirmDeleteBtn.addEventListener('click', function() {
+                    if (sheetIndexToDelete !== null) {
+                        const item = document.getElementById(`sheet-item-${sheetIndexToDelete}`);
+                        const input = document.getElementById(`removed-sheet-${sheetIndexToDelete}`);
+                        
+                        if (item && input) {
+                            item.style.opacity = '0.4';
+                            item.style.pointerEvents = 'none'; // Prevent clicking again
+                            input.value = sheetIndexToDelete;
+                            input.removeAttribute('disabled');
+                        }
+                        
+                        if (deleteSheetModal) {
+                            deleteSheetModal.hide();
+                        }
+                        sheetIndexToDelete = null;
+                    }
+                });
+            }
+        });
     </script>
 </x-app-layout>

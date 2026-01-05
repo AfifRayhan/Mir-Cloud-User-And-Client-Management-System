@@ -62,7 +62,7 @@ class CustomerController extends Controller
         $poSheets = [];
         if ($request->hasFile('po_project_sheets')) {
             foreach ($request->file('po_project_sheets') as $file) {
-                $poSheets[] = $this->optimizeAndStorePdf($file);
+                $poSheets[] = $this->optimizeAndStorePdf($file, $request->po_number);
             }
         }
 
@@ -118,6 +118,10 @@ class CustomerController extends Controller
             'technical_contact_designation' => 'nullable|string|max:255',
             'technical_contact_email' => 'nullable|email|max:255',
             'technical_contact_phone' => 'nullable|string|max:255',
+            'technical_contact_name' => 'nullable|string|max:255',
+            'technical_contact_designation' => 'nullable|string|max:255',
+            'technical_contact_email' => 'nullable|email|max:255',
+            'technical_contact_phone' => 'nullable|string|max:255',
             'optional_contact_name' => 'nullable|string|max:255',
             'optional_contact_designation' => 'nullable|string|max:255',
             'optional_contact_email' => 'nullable|email|max:255',
@@ -131,7 +135,7 @@ class CustomerController extends Controller
         $poSheets = $customer->po_project_sheets ?? [];
 
         // Handle removals
-        if ($request->filled('removed_sheets')) {
+        if ($request->has('removed_sheets')) {
             foreach ($request->removed_sheets as $index) {
                 if (isset($poSheets[$index])) {
                     Storage::disk('public')->delete($poSheets[$index]['path']);
@@ -144,7 +148,9 @@ class CustomerController extends Controller
         // Handle new uploads
         if ($request->hasFile('po_project_sheets')) {
             foreach ($request->file('po_project_sheets') as $file) {
-                $poSheets[] = $this->optimizeAndStorePdf($file);
+                // Use new PO number if present, otherwise fallback to existing
+                $poNumber = $request->po_number ?? $customer->po_number;
+                $poSheets[] = $this->optimizeAndStorePdf($file, $poNumber);
             }
         }
 
@@ -161,18 +167,42 @@ class CustomerController extends Controller
     /**
      * Optimize and store PDF file.
      */
-    private function optimizeAndStorePdf($file): array
+    private function optimizeAndStorePdf($file, $poNumber = null): array
     {
-        $originalName = $file->getClientOriginalName();
-        $fileName = time().'_'.uniqid().'.pdf';
+        $originalName = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
+        $extension = $file->getClientOriginalExtension();
+        
+        // Sanitize PO Number (replace illegal chars with underscores)
+        $safePoNumber = $poNumber ? preg_replace('/[^A-Za-z0-9_\-]/', '_', $poNumber) : null;
+        
+        // Construct filename: OriginalName_PONumber.pdf
+        // If PO Number is missing, fall back to timestamp to ensure uniqueness
+        if ($safePoNumber) {
+            $fileName = "{$originalName}_{$safePoNumber}.{$extension}";
+        } else {
+             $fileName = "{$originalName}_" . time() . ".{$extension}";
+        }
+        
+        // Ensure uniqueness by checking if file exists, appending counter if necessary
         $directory = 'customer_po_sheets';
+        $finalPath = $directory.'/'.$fileName;
+        $counter = 1;
+        
+        while (Storage::disk('public')->exists($finalPath)) {
+            if ($safePoNumber) {
+                 $fileName = "{$originalName}_{$safePoNumber}_{$counter}.{$extension}";
+            } else {
+                 $fileName = "{$originalName}_" . time() . "_{$counter}.{$extension}";
+            }
+            $finalPath = $directory.'/'.$fileName;
+            $counter++;
+        }
 
         if (! Storage::disk('public')->exists($directory)) {
             Storage::disk('public')->makeDirectory($directory);
         }
 
         $tempPath = $file->getRealPath();
-        $finalPath = $directory.'/'.$fileName;
         $absolutePath = storage_path('app/public/'.$finalPath);
 
         try {
@@ -195,7 +225,7 @@ class CustomerController extends Controller
         }
 
         return [
-            'name' => $originalName,
+            'name' => $fileName, // Store the actual filename on disk as the 'name'
             'path' => $finalPath,
             'size' => Storage::disk('public')->size($finalPath),
         ];

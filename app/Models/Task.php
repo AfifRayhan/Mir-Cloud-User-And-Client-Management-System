@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class Task extends Model
 {
     protected $fillable = [
+        'task_id',
         'customer_id',
         'status_id',
         'task_status_id',
@@ -21,6 +22,37 @@ class Task extends Model
         'vdc_id',
         'has_resource_conflict',
     ];
+
+    protected static function booted()
+    {
+        static::created(function ($task) {
+            $task->generateTaskId();
+        });
+    }
+
+    public function generateTaskId()
+    {
+        $customerId = $this->customer_id;
+        $platformId = $this->customer->platform_id;
+        $statusId = $this->status_id;
+        
+        $typeBit = $this->allocation_type === 'upgrade' ? '1' : '0';
+        $resourceId = $this->allocation_type === 'upgrade' 
+            ? $this->resource_upgradation_id 
+            : $this->resource_downgradation_id;
+        
+        $assignmentDateTime = '';
+        if ($this->allocation_type === 'upgrade' && $this->resourceUpgradation) {
+            $assignmentDateTime = $this->resourceUpgradation->assignment_datetime?->format('YmdHi') ?? '';
+        } elseif ($this->allocation_type === 'downgrade' && $this->resourceDowngradation) {
+            $assignmentDateTime = $this->resourceDowngradation->assignment_datetime?->format('YmdHi') ?? '';
+        }
+
+        $generatedId = "{$customerId}-{$platformId}-{$statusId}-{$assignmentDateTime}-{$typeBit}-{$resourceId}";
+        
+        $this->update(['task_id' => $generatedId]);
+    }
+
 
     protected $casts = [
         'activation_date' => 'date',

@@ -21,6 +21,8 @@ class Task extends Model
         'completed_at',
         'vdc_id',
         'has_resource_conflict',
+        'assignment_datetime',
+        'deadline_datetime',
     ];
 
     protected static function booted()
@@ -35,12 +37,12 @@ class Task extends Model
         $customerId = $this->customer_id;
         $platformId = $this->customer->platform_id;
         $statusId = $this->status_id;
-        
+
         $typeBit = $this->allocation_type === 'upgrade' ? '1' : '0';
-        $resourceId = $this->allocation_type === 'upgrade' 
-            ? $this->resource_upgradation_id 
+        $resourceId = $this->allocation_type === 'upgrade'
+            ? $this->resource_upgradation_id
             : $this->resource_downgradation_id;
-        
+
         $assignmentDateTime = '';
         if ($this->allocation_type === 'upgrade' && $this->resourceUpgradation) {
             $assignmentDateTime = $this->resourceUpgradation->assignment_datetime?->format('YmdHi') ?? '';
@@ -49,15 +51,16 @@ class Task extends Model
         }
 
         $generatedId = "{$customerId}-{$platformId}-{$statusId}-{$assignmentDateTime}-{$typeBit}-{$resourceId}";
-        
+
         $this->update(['task_id' => $generatedId]);
     }
-
 
     protected $casts = [
         'activation_date' => 'date',
         'assigned_at' => 'datetime',
         'completed_at' => 'datetime',
+        'assignment_datetime' => 'datetime',
+        'deadline_datetime' => 'datetime',
     ];
 
     public function customer()
@@ -110,7 +113,7 @@ class Task extends Model
         } elseif ($this->allocation_type === 'downgrade' && $this->resourceDowngradation) {
             return $this->resourceDowngradation->insertedBy;
         }
-        
+
         return null;
     }
 

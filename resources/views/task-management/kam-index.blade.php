@@ -140,10 +140,13 @@
                                     <i class="fas fa-exchange-alt me-2"></i>Type
                                 </th>
                                 <th class="custom-kam-task-management-table-header">
-                                    <i class="fas fa-calendar-check me-2"></i>Resource Activation
+                                    <i class="fas fa-calendar-check me-2"></i>Resource Assignment
                                 </th>
                                 <th class="custom-kam-task-management-table-header">
-                                    <i class="fas fa-check-circle me-2"></i>Completion Status
+                                    <i class="fas fa-hourglass-end me-2"></i>Resource Deadline
+                                </th>
+                                <th class="custom-kam-task-management-table-header">
+                                    <i class="fas fa-check-circle me-2"></i>Completion
                                 </th>
                                 <th class="custom-kam-task-management-table-header">
                                     <i class="fas fa-user-check me-2"></i>Assigned To
@@ -217,13 +220,36 @@
                                     <td class="custom-kam-task-management-table-cell">
                                         <div class="custom-kam-task-management-date">
                                             <div class="custom-kam-task-management-date-day">
-                                                {{ $task->activation_date->format('d') }}
+                                                {{ $task->assignment_datetime ? $task->assignment_datetime->format('d') : ($task->activation_date ? $task->activation_date->format('d') : 'N/A') }}
                                             </div>
                                             <div class="d-flex flex-column ms-2">
-                                                <span class="fw-bold">{{ $task->activation_date->format('F') }}</span>
-                                                <span class="text-muted small">{{ $task->activation_date->format('Y') }}</span>
+                                                <span class="fw-bold">{{ $task->assignment_datetime ? $task->assignment_datetime->format('F') : ($task->activation_date ? $task->activation_date->format('F') : '') }}</span>
+                                                <span class="text-muted small">
+                                                    {{ $task->assignment_datetime ? $task->assignment_datetime->format('Y') : ($task->activation_date ? $task->activation_date->format('Y') : '') }}
+                                                    @if($task->assignment_datetime)
+                                                        <br> {{ $task->assignment_datetime->format('H:i') }}
+                                                    @endif
+                                                </span>
                                             </div>
                                         </div>
+                                    </td>
+                                    <td class="custom-kam-task-management-table-cell">
+                                        @if($task->deadline_datetime)
+                                            <div class="custom-kam-task-management-date">
+                                                <div class="custom-kam-task-management-date-day-deadline">
+                                                    {{ $task->deadline_datetime->format('d') }}
+                                                </div>
+                                                <div class="d-flex flex-column ms-2">
+                                                    <span class="fw-bold">{{ $task->deadline_datetime->format('F') }}</span>
+                                                    <span class="text-muted small">
+                                                        {{ $task->deadline_datetime->format('Y') }}
+                                                        <br> {{ $task->deadline_datetime->format('H:i') }}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        @else
+                                            <span class="text-muted">N/A</span>
+                                        @endif
                                     </td>
                                     <td class="custom-kam-task-management-table-cell">
                                         @if($task->completed_at)

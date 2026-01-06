@@ -23,11 +23,11 @@ class PlatformManagementFeatureTest extends TestCase
         $admin = User::factory()->create(['role_id' => 1]); // Admin
         $platform = Platform::create(['platform_name' => 'Test Platform']);
         Service::create([
-            'platform_id' => $platform->id, 
-            'service_name' => 'Test Service', 
-            'unit' => 'GB', 
+            'platform_id' => $platform->id,
+            'service_name' => 'Test Service',
+            'unit' => 'GB',
             'unit_price' => 10.00,
-            'inserted_by' => $admin->id
+            'inserted_by' => $admin->id,
         ]);
 
         $response = $this->actingAs($admin)->get(route('platforms.index'));
@@ -43,11 +43,11 @@ class PlatformManagementFeatureTest extends TestCase
         $management = User::factory()->create(['role_id' => 6]); // Management
         $platform = Platform::create(['platform_name' => 'Test Platform']);
         Service::create([
-            'platform_id' => $platform->id, 
-            'service_name' => 'Test Service', 
-            'unit' => 'GB', 
+            'platform_id' => $platform->id,
+            'service_name' => 'Test Service',
+            'unit' => 'GB',
             'unit_price' => 10.00,
-            'inserted_by' => $management->id
+            'inserted_by' => $management->id,
         ]);
 
         $response = $this->actingAs($management)->get(route('platforms.index'));

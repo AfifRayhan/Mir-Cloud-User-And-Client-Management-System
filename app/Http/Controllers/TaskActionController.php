@@ -182,6 +182,8 @@ class TaskActionController extends Controller
                 'assigned_by' => $kam->id,
                 'task_status_id' => 1, // Assigned
                 'activation_date' => now(),
+                'assignment_datetime' => now(),
+                // 'deadline_datetime' => null, // Leaving null for now as we don't have calculation logic here and it's an undo action
                 'completed_at' => null,
                 'vdc_id' => $task->vdc_id,
             ]);

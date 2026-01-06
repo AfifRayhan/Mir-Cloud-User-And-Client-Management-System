@@ -171,28 +171,28 @@ class CustomerController extends Controller
     {
         $originalName = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
         $extension = $file->getClientOriginalExtension();
-        
+
         // Sanitize PO Number (replace illegal chars with underscores)
         $safePoNumber = $poNumber ? preg_replace('/[^A-Za-z0-9_\-]/', '_', $poNumber) : null;
-        
+
         // Construct filename: OriginalName_PONumber.pdf
         // If PO Number is missing, fall back to timestamp to ensure uniqueness
         if ($safePoNumber) {
             $fileName = "{$originalName}_{$safePoNumber}.{$extension}";
         } else {
-             $fileName = "{$originalName}_" . time() . ".{$extension}";
+            $fileName = "{$originalName}_".time().".{$extension}";
         }
-        
+
         // Ensure uniqueness by checking if file exists, appending counter if necessary
         $directory = 'customer_po_sheets';
         $finalPath = $directory.'/'.$fileName;
         $counter = 1;
-        
+
         while (Storage::disk('public')->exists($finalPath)) {
             if ($safePoNumber) {
-                 $fileName = "{$originalName}_{$safePoNumber}_{$counter}.{$extension}";
+                $fileName = "{$originalName}_{$safePoNumber}_{$counter}.{$extension}";
             } else {
-                 $fileName = "{$originalName}_" . time() . "_{$counter}.{$extension}";
+                $fileName = "{$originalName}_".time()."_{$counter}.{$extension}";
             }
             $finalPath = $directory.'/'.$fileName;
             $counter++;

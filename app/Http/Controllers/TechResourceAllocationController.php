@@ -93,13 +93,13 @@ class TechResourceAllocationController extends Controller
         }
 
         $testStatusId = CustomerStatus::where('name', 'Test')->first()?->id ?? 1;
-        
+
         // Determine default Activation Date
         // If Customer Activation Date is in the past -> Default to Current Date.
         // If Customer Activation Date is in the future -> Default to Customer Activation Date.
         $customerActivationDate = $customer->customer_activation_date;
-        $defaultActivationDate = $customerActivationDate->isFuture() 
-            ? $customerActivationDate->format('Y-m-d') 
+        $defaultActivationDate = $customerActivationDate->isFuture()
+            ? $customerActivationDate->format('Y-m-d')
             : now()->format('Y-m-d');
 
         // We'll reuse the same partial but might need to adjust it if we want custom styling there
@@ -161,7 +161,7 @@ class TechResourceAllocationController extends Controller
             // Calculate assignment and deadline datetimes
             $activationDate = \Carbon\Carbon::parse($validated['activation_date']);
             $now = \Carbon\Carbon::now();
-            
+
             if ($activationDate->isToday()) {
                 $assignmentDatetime = $now;
                 $deadlineDatetime = $this->calculateDeadline($now);
@@ -253,7 +253,9 @@ class TechResourceAllocationController extends Controller
                 'resource_downgradation_id' => ($actionType === 'downgrade' ? $resourceId : null),
                 'assigned_to' => $techUser->id,
                 'assigned_by' => $kamId,
-                'assigned_at' => now(),
+                'assigned_at' => now(), // Still kept for 'assigned_at' field legacy/compatibility
+                'assignment_datetime' => $assignmentDatetime,
+                'deadline_datetime' => $deadlineDatetime,
                 'completed_at' => null, // Will be filled by VDC selection
             ]);
 
@@ -298,38 +300,39 @@ class TechResourceAllocationController extends Controller
         $workEnd = 17.5;  // 5:30 PM
         $workHoursPerDay = $workEnd - $workStart; // 8 hours
         $hoursToAdd = 8;
-        
+
         $deadline = $assignmentTime->copy();
-        
+
         while ($hoursToAdd > 0) {
             // Skip to next working day if currently on Friday (5) or Saturday (6)
             while (in_array($deadline->dayOfWeek, [5, 6])) {
                 $deadline->addDay()->setTime(9, 30);
             }
-            
+
             $currentHour = $deadline->hour + ($deadline->minute / 60);
-            
+
             // If before work hours, move to start of work day
             if ($currentHour < $workStart) {
                 $deadline->setTime(9, 30);
                 $currentHour = $workStart;
             }
-            
+
             // If after work hours, move to next working day
             if ($currentHour >= $workEnd) {
                 $deadline->addDay()->setTime(9, 30);
+
                 continue;
             }
-            
+
             // Calculate remaining work hours today
             $remainingToday = $workEnd - $currentHour;
-            
+
             if ($hoursToAdd <= $remainingToday) {
                 // Can finish today
                 $totalMinutes = ($currentHour + $hoursToAdd) * 60;
                 $hours = floor($totalMinutes / 60);
                 $minutes = $totalMinutes % 60;
-                $deadline->setTime((int)$hours, (int)$minutes);
+                $deadline->setTime((int) $hours, (int) $minutes);
                 $hoursToAdd = 0;
             } else {
                 // Use remaining hours today, continue tomorrow
@@ -337,7 +340,7 @@ class TechResourceAllocationController extends Controller
                 $deadline->addDay()->setTime(9, 30);
             }
         }
-        
+
         return $deadline;
     }
 }

@@ -192,9 +192,10 @@
                     }
 
                     // For upgrade and downgrade, require status selection
+                    // For upgrade and downgrade, check if status is needed but don't block yet
+                    // blocking logic moved to controller or handled by default status return
                     if ((actionType === 'upgrade' || actionType === 'downgrade') && !statusId) {
-                        renderPlaceholder(`Please select a customer status to proceed with ${actionType}.`);
-                        return;
+                         // We allow proceeding so the backend can provide the default status
                     }
 
                     renderPlaceholder('Loading allocation form...');
@@ -221,8 +222,13 @@
                         container.innerHTML = data.html;
 
                         // If the backend provided a status_id, update the select
-                        if (data.status_id && actionType === 'upgrade') {
-                            statusSelect.value = data.status_id;
+                        if (data.status_id && (actionType === 'upgrade' || actionType === 'downgrade')) {
+                            // Only update if the user hasn't explicitly selected one (which is mostly true here since we allowed empty statusId)
+                            // But since simple toggle clears value, checking if it matches is good.
+                            // Actually, we want to force update it if it came from backend default
+                             if (!statusSelect.value) {
+                                statusSelect.value = data.status_id;
+                             }
                         }
 
                         // Store testStatusId if provided
@@ -433,41 +439,7 @@
                 actionSelect.addEventListener('change', async function() {
                     toggleStatus();
                     
-                    // For upgrade, auto-select previous status if available
-                    if (actionSelect.value === 'upgrade' && customerSelect.value) {
-                        try {
-                            const url = new URL(`{{ url('resource-allocation') }}/${customerSelect.value}/allocate`);
-                            url.searchParams.append('action_type', 'upgrade');
-                            
-                            const response = await fetch(url, {
-                                headers: {
-                                    'Accept': 'application/json',
-                                    'X-Requested-With': 'XMLHttpRequest',
-                                },
-                            });
-                            
-                            if (response.ok) {
-                                const data = await response.json();
-                                // Extract status_id from the response HTML if available
-                                const tempDiv = document.createElement('div');
-                                tempDiv.innerHTML = data.html;
-                                const statusBadge = tempDiv.querySelector('.badge.bg-primary');
-                                
-                                // Try to find matching status in dropdown
-                                if (statusBadge) {
-                                    const statusName = statusBadge.textContent.trim();
-                                    const statusOptions = Array.from(statusSelect.options);
-                                    const matchingOption = statusOptions.find(opt => opt.text.trim() === statusName);
-                                    if (matchingOption) {
-                                        statusSelect.value = matchingOption.value;
-                                    }
-                                }
-                            }
-                        } catch (error) {
-                            console.error('Error fetching previous status:', error);
-                        }
-                    }
-                    
+                    // Logic simplified to rely on loadAllocationForm fetching default status
                     loadAllocationForm();
                 });
 
@@ -489,6 +461,9 @@
                         }
                     }
                     
+                    // Reset status to allow "smart default" to kick in from backend
+                    statusSelect.value = '';
+
                     if (actionSelect.value) {
                         loadAllocationForm();
                     }

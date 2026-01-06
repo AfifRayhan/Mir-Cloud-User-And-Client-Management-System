@@ -1,3 +1,10 @@
+@php
+    $hasTestValues = $services->contains(fn($s) => $customer->getResourceTestQuantity($s->service_name) > 0);
+    $hasBillableValues = $services->contains(fn($s) => $customer->getResourceBillableQuantity($s->service_name) > 0);
+    $isTargetingTest = ($statusId == ($testStatusId ?? 1));
+    $showTestColumns = $isTargetingTest || $hasTestValues;
+    $showBillableColumns = !$isTargetingTest || $hasBillableValues;
+@endphp
 @if($actionType === 'upgrade')
     <form id="allocation-form" method="POST" data-customer-id="{{ $customer->id }}" data-action-type="{{ $actionType }}" data-status-id="{{ $statusId }}" onsubmit="return window.handleAllocationSubmit(event, this)">
         @csrf
@@ -35,7 +42,7 @@
                         <label for="activation_date" class="form-label fw-semibold">Activation Date <span class="text-danger">*</span></label>
                         <div class="input-group">
                             <span class="input-group-text"><i class="fas fa-calendar-alt"></i></span>
-                            <input type="text" id="activation_date" name="activation_date" class="form-control flatpickr-date" value="{{ $defaultActivationDate }}" data-min-date="{{ $customer->customer_activation_date->format('Y-m-d') }}" required>
+                            <input type="text" id="activation_date" name="activation_date" class="form-control flatpickr-date" value="{{ $defaultActivationDate }}" data-min-date="{{ $defaultActivationDate }}" required>
                         </div>
                     </div>
                     <div class="col-md-4">
@@ -56,15 +63,23 @@
                     <table class="table table-bordered align-middle resource-alloc-table">
                         <thead class="table-light">
                             <tr>
-                                <th style="width: 25%;" class="resource-alloc-service-cell"><i class="fas fa-tools me-2"></i>Service</th>
+                                <th class="resource-alloc-service-cell"><i class="fas fa-tools me-2"></i>Service</th>
                                 @if(!($isFirstAllocation ?? false))
-                                    <th style="width: 12%;" class="resource-alloc-test-col {{ $statusId == $testStatusId ? 'status-highlighted' : '' }}"><i class="fas fa-flask me-2"></i>Current Test</th>
-                                    <th style="width: 12%;" class="resource-alloc-billable-col {{ $statusId != $testStatusId && $statusId ? 'status-highlighted' : '' }}"><i class="fas fa-dollar-sign me-2"></i>Current Billable</th>
+                                    @if($showTestColumns)
+                                        <th class="resource-alloc-test-col {{ $statusId == $testStatusId ? 'status-highlighted' : '' }}"><i class="fas fa-flask me-2"></i>Current Test</th>
+                                    @endif
+                                    @if($showBillableColumns)
+                                        <th class="resource-alloc-billable-col {{ $statusId != $testStatusId && $statusId ? 'status-highlighted' : '' }}"><i class="fas fa-dollar-sign me-2"></i>Current Billable</th>
+                                    @endif
                                 @endif
-                                <th style="width: {{ ($isFirstAllocation ?? false) ? '75%' : '26%' }};"><i class="fas fa-arrow-up me-2"></i>{{ ($isFirstAllocation ?? false) ? 'Allocation Amount' : 'Increase By' }}</th>
+                                <th><i class="fas fa-arrow-up me-2"></i>{{ ($isFirstAllocation ?? false) ? 'Allocation Amount' : 'Increase By' }}</th>
                                 @if(!($isFirstAllocation ?? false))
-                                    <th style="width: 12%;"><i class="fas fa-equals me-2"></i>New Test</th>
-                                    <th style="width: 13%;"><i class="fas fa-equals me-2"></i>New Billable</th>
+                                    @if($showTestColumns)
+                                        <th><i class="fas fa-equals me-2"></i>New Test</th>
+                                    @endif
+                                    @if($showBillableColumns)
+                                        <th><i class="fas fa-equals me-2"></i>New Billable</th>
+                                    @endif
                                 @endif
                             </tr>
                         </thead>
@@ -74,6 +89,9 @@
                                     $currentTestValue = $customer->getResourceTestQuantity($service->service_name);
                                     $currentBillableValue = $customer->getResourceBillableQuantity($service->service_name);
                                 @endphp
+                                @if(!($isFirstAllocation ?? false) && $currentTestValue == 0 && $currentBillableValue == 0)
+                                    @continue
+                                @endif
                                 <tr>
                                     <td class="resource-alloc-service-cell">
                                         <span class="resource-alloc-service-name">
@@ -84,18 +102,22 @@
                                         </span>
                                     </td>
                                     @if(!($isFirstAllocation ?? false))
-                                        <td class="resource-alloc-test-col {{ $statusId == $testStatusId ? 'status-highlighted' : '' }}">
-                                            <div class="resource-alloc-current-display">
-                                                <span class="resource-alloc-current-value">{{ $currentTestValue }}</span>
-                                                <span class="resource-alloc-current-unit">{{ $service->unit }}</span>
-                                            </div>
-                                        </td>
-                                        <td class="resource-alloc-billable-col {{ $statusId != $testStatusId && $statusId ? 'status-highlighted' : '' }}">
-                                            <div class="resource-alloc-current-display">
-                                                <span class="resource-alloc-current-value">{{ $currentBillableValue }}</span>
-                                                <span class="resource-alloc-current-unit">{{ $service->unit }}</span>
-                                            </div>
-                                        </td>
+                                        @if($showTestColumns)
+                                            <td class="resource-alloc-test-col {{ $statusId == $testStatusId ? 'status-highlighted' : '' }}">
+                                                <div class="resource-alloc-current-display">
+                                                    <span class="resource-alloc-current-value">{{ $currentTestValue }}</span>
+                                                    <span class="resource-alloc-current-unit">{{ $service->unit }}</span>
+                                                </div>
+                                            </td>
+                                        @endif
+                                        @if($showBillableColumns)
+                                            <td class="resource-alloc-billable-col {{ $statusId != $testStatusId && $statusId ? 'status-highlighted' : '' }}">
+                                                <div class="resource-alloc-current-display">
+                                                    <span class="resource-alloc-current-value">{{ $currentBillableValue }}</span>
+                                                    <span class="resource-alloc-current-unit">{{ $service->unit }}</span>
+                                                </div>
+                                            </td>
+                                        @endif
                                     @endif
                                     <td>
                                         <div class="resource-alloc-stepper-group">
@@ -119,20 +141,24 @@
                                         </div>
                                     </td>
                                     @if(!($isFirstAllocation ?? false))
-                                        <td>
-                                            <div class="resource-alloc-new-total">
-                                                <span class="resource-alloc-new-total-arrow">→</span>
-                                                <span class="resource-alloc-new-total-value" data-new-test-for="{{ $service->id }}">{{ $currentTestValue }}</span>
-                                                <span class="resource-alloc-new-total-unit">{{ $service->unit }}</span>
-                                            </div>
-                                        </td>
-                                        <td>
-                                            <div class="resource-alloc-new-total">
-                                                <span class="resource-alloc-new-total-arrow">→</span>
-                                                <span class="resource-alloc-new-total-value" data-new-billable-for="{{ $service->id }}">{{ $currentBillableValue }}</span>
-                                                <span class="resource-alloc-new-total-unit">{{ $service->unit }}</span>
-                                            </div>
-                                        </td>
+                                        @if($showTestColumns)
+                                            <td>
+                                                <div class="resource-alloc-new-total">
+                                                    <span class="resource-alloc-new-total-arrow">→</span>
+                                                    <span class="resource-alloc-new-total-value" data-new-test-for="{{ $service->id }}">{{ $currentTestValue }}</span>
+                                                    <span class="resource-alloc-new-total-unit">{{ $service->unit }}</span>
+                                                </div>
+                                            </td>
+                                        @endif
+                                        @if($showBillableColumns)
+                                            <td>
+                                                <div class="resource-alloc-new-total">
+                                                    <span class="resource-alloc-new-total-arrow">→</span>
+                                                    <span class="resource-alloc-new-total-value" data-new-billable-for="{{ $service->id }}">{{ $currentBillableValue }}</span>
+                                                    <span class="resource-alloc-new-total-unit">{{ $service->unit }}</span>
+                                                </div>
+                                            </td>
+                                        @endif
                                     @endif
                                 </tr>
                             @endforeach
@@ -183,7 +209,7 @@
                         <label for="activation_date" class="form-label fw-semibold">Activation Date <span class="text-danger">*</span></label>
                         <div class="input-group">
                             <span class="input-group-text"><i class="fas fa-calendar-alt"></i></span>
-                            <input type="text" id="activation_date" name="activation_date" class="form-control flatpickr-date" value="{{ $defaultActivationDate }}" data-min-date="{{ $customer->customer_activation_date->format('Y-m-d') }}" required>
+                            <input type="text" id="activation_date" name="activation_date" class="form-control flatpickr-date" value="{{ $defaultActivationDate }}" data-min-date="{{ $defaultActivationDate }}" required>
                         </div>
                     </div>
                     <div class="col-md-4">
@@ -201,12 +227,24 @@
                     <table class="table table-bordered align-middle resource-alloc-table">
                         <thead class="table-light">
                             <tr>
-                                <th style="width: 25%;" class="resource-alloc-service-cell"><i class="fas fa-tools me-2"></i>Service</th>
-                                <th style="width: 12%;" class="resource-alloc-test-col {{ $statusId == $testStatusId ? 'status-highlighted' : '' }}"><i class="fas fa-flask me-2"></i>Current Test</th>
-                                <th style="width: 12%;" class="resource-alloc-billable-col {{ $statusId != $testStatusId && $statusId ? 'status-highlighted' : '' }}"><i class="fas fa-dollar-sign me-2"></i>Current Billable</th>
-                                <th style="width: 26%;"><i class="fas fa-arrow-down me-2"></i>Reduce By</th>
-                                <th style="width: 12%;"><i class="fas fa-equals me-2"></i>New Test</th>
-                                <th style="width: 13%;"><i class="fas fa-equals me-2"></i>New Billable</th>
+                                <th class="resource-alloc-service-cell"><i class="fas fa-tools me-2"></i>Service</th>
+                                @if(!($isFirstAllocation ?? false))
+                                    @if($showTestColumns)
+                                        <th class="resource-alloc-test-col {{ $statusId == $testStatusId ? 'status-highlighted' : '' }}"><i class="fas fa-flask me-2"></i>Current Test</th>
+                                    @endif
+                                    @if($showBillableColumns)
+                                        <th class="resource-alloc-billable-col {{ $statusId != $testStatusId && $statusId ? 'status-highlighted' : '' }}"><i class="fas fa-dollar-sign me-2"></i>Current Billable</th>
+                                    @endif
+                                @endif
+                                <th><i class="fas fa-arrow-down me-2"></i>Reduce By</th>
+                                @if(!($isFirstAllocation ?? false))
+                                    @if($showTestColumns)
+                                        <th><i class="fas fa-equals me-2"></i>New Test</th>
+                                    @endif
+                                    @if($showBillableColumns)
+                                        <th><i class="fas fa-equals me-2"></i>New Billable</th>
+                                    @endif
+                                @endif
                             </tr>
                         </thead>
                         <tbody>
@@ -215,6 +253,9 @@
                                     $currentTestValue = $customer->getResourceTestQuantity($service->service_name);
                                     $currentBillableValue = $customer->getResourceBillableQuantity($service->service_name);
                                 @endphp
+                                @if(!($isFirstAllocation ?? false) && $currentTestValue == 0 && $currentBillableValue == 0)
+                                    @continue
+                                @endif
                                 <tr>
                                     <td class="resource-alloc-service-cell">
                                         <span class="resource-alloc-service-name">
@@ -224,18 +265,22 @@
                                             @endif
                                         </span>
                                     </td>
-                                    <td class="resource-alloc-test-col {{ $statusId == $testStatusId ? 'status-highlighted' : '' }}">
-                                        <div class="resource-alloc-current-display">
-                                            <span class="resource-alloc-current-value">{{ $currentTestValue }}</span>
-                                            <span class="resource-alloc-current-unit">{{ $service->unit }}</span>
-                                        </div>
-                                    </td>
-                                    <td class="resource-alloc-billable-col {{ $statusId != $testStatusId && $statusId ? 'status-highlighted' : '' }}">
-                                        <div class="resource-alloc-current-display">
-                                            <span class="resource-alloc-current-value">{{ $currentBillableValue }}</span>
-                                            <span class="resource-alloc-current-unit">{{ $service->unit }}</span>
-                                        </div>
-                                    </td>
+                                    @if($showTestColumns)
+                                        <td class="resource-alloc-test-col {{ $statusId == $testStatusId ? 'status-highlighted' : '' }}">
+                                            <div class="resource-alloc-current-display">
+                                                <span class="resource-alloc-current-value">{{ $currentTestValue }}</span>
+                                                <span class="resource-alloc-current-unit">{{ $service->unit }}</span>
+                                            </div>
+                                        </td>
+                                    @endif
+                                    @if($showBillableColumns)
+                                        <td class="resource-alloc-billable-col {{ $statusId != $testStatusId && $statusId ? 'status-highlighted' : '' }}">
+                                            <div class="resource-alloc-current-display">
+                                                <span class="resource-alloc-current-value">{{ $currentBillableValue }}</span>
+                                                <span class="resource-alloc-current-unit">{{ $service->unit }}</span>
+                                            </div>
+                                        </td>
+                                    @endif
                                     <td>
                                         <div class="resource-alloc-stepper-group">
                                             <button type="button" class="resource-alloc-stepper-btn" onclick="decrementValue(this)">−</button>
@@ -262,20 +307,24 @@
                                             <button type="button" class="resource-alloc-stepper-btn" onclick="incrementValue(this)">+</button>
                                         </div>
                                     </td>
-                                    <td>
-                                        <div class="resource-alloc-new-total">
-                                            <span class="resource-alloc-new-total-arrow">→</span>
-                                            <span class="resource-alloc-new-total-value" data-new-test-for="{{ $service->id }}">{{ $currentTestValue }}</span>
-                                            <span class="resource-alloc-new-total-unit">{{ $service->unit }}</span>
-                                        </div>
-                                    </td>
-                                    <td>
-                                        <div class="resource-alloc-new-total">
-                                            <span class="resource-alloc-new-total-arrow">→</span>
-                                            <span class="resource-alloc-new-total-value" data-new-billable-for="{{ $service->id }}">{{ $currentBillableValue }}</span>
-                                            <span class="resource-alloc-new-total-unit">{{ $service->unit }}</span>
-                                        </div>
-                                    </td>
+                                    @if($showTestColumns)
+                                        <td>
+                                            <div class="resource-alloc-new-total">
+                                                <span class="resource-alloc-new-total-arrow">→</span>
+                                                <span class="resource-alloc-new-total-value" data-new-test-for="{{ $service->id }}">{{ $currentTestValue }}</span>
+                                                <span class="resource-alloc-new-total-unit">{{ $service->unit }}</span>
+                                            </div>
+                                        </td>
+                                    @endif
+                                    @if($showBillableColumns)
+                                        <td>
+                                            <div class="resource-alloc-new-total">
+                                                <span class="resource-alloc-new-total-arrow">→</span>
+                                                <span class="resource-alloc-new-total-value" data-new-billable-for="{{ $service->id }}">{{ $currentBillableValue }}</span>
+                                                <span class="resource-alloc-new-total-unit">{{ $service->unit }}</span>
+                                            </div>
+                                        </td>
+                                    @endif
                                 </tr>
                             @endforeach
                         </tbody>

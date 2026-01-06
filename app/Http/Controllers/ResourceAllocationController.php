@@ -115,8 +115,8 @@ class ResourceAllocationController extends Controller
         // If Customer Activation Date is in the past -> Default to Current Date.
         // If Customer Activation Date is in the future -> Default to Customer Activation Date.
         $customerActivationDate = $customer->customer_activation_date;
-        $defaultActivationDate = $customerActivationDate->isFuture() 
-            ? $customerActivationDate->format('Y-m-d') 
+        $defaultActivationDate = $customerActivationDate->isFuture()
+            ? $customerActivationDate->format('Y-m-d')
             : now()->format('Y-m-d');
 
         if ($request->ajax()) {
@@ -191,7 +191,7 @@ class ResourceAllocationController extends Controller
             // Calculate assignment and deadline datetimes
             $activationDate = \Illuminate\Support\Carbon::parse($validated['activation_date']);
             $now = now();
-            
+
             if ($activationDate->isSameDay($now)) {
                 $assignmentDatetime = $now;
                 // Calculate deadline: 8 working hours from now
@@ -252,6 +252,8 @@ class ResourceAllocationController extends Controller
                         'activation_date' => $validated['activation_date'],
                         'allocation_type' => 'upgrade',
                         'resource_upgradation_id' => $upgradation->id,
+                        'assignment_datetime' => $assignmentDatetime,
+                        'deadline_datetime' => $deadlineDatetime,
                     ]);
                 }
             } else {
@@ -311,6 +313,8 @@ class ResourceAllocationController extends Controller
                         'activation_date' => $validated['activation_date'],
                         'allocation_type' => 'downgrade',
                         'resource_downgradation_id' => $downgradation->id,
+                        'assignment_datetime' => $assignmentDatetime,
+                        'deadline_datetime' => $deadlineDatetime,
                     ]);
                 }
             }
@@ -345,11 +349,11 @@ class ResourceAllocationController extends Controller
             ]);
         });
     }
+
     /**
      * Calculate deadline based on working hours (Sun-Thu, 9:30 AM - 5:30 PM).
      * Duration: 8 hours.
      *
-     * @param \Carbon\Carbon $startTime
      * @return \Carbon\Carbon
      */
     private function calculateDeadline(\Carbon\Carbon $startTime)
@@ -369,6 +373,7 @@ class ResourceAllocationController extends Controller
             if (! $isWorkingDay) {
                 // Move to next day 9:30 AM
                 $start->addDay()->setTime(9, 30, 0);
+
                 continue;
             }
 
@@ -378,6 +383,7 @@ class ResourceAllocationController extends Controller
             // If current time is past working hours, move to next working day
             if ($currentTimeMinutes >= $workingDayEnd) {
                 $start->addDay()->setTime(9, 30, 0);
+
                 continue;
             }
 

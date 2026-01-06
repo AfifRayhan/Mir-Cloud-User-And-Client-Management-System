@@ -302,6 +302,19 @@
     font-size: 0.875rem;
 }
 
+.custom-my-task-date-day-deadline {
+    width: 50px;
+    height: 36px;
+    background: var(--custom-my-task-danger-light);
+    color: var(--custom-my-task-danger);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 0.875rem;
+}
+
 .custom-my-task-date-details {
     display: flex;
     flex-direction: column;

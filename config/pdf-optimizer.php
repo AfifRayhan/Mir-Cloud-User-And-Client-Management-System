@@ -40,9 +40,9 @@ return [
     */
 
     'queue' => [
-        'enabled'    => false,
-        'name'       => 'default',
+        'enabled' => false,
+        'name' => 'default',
         'connection' => null,
-        'timeout'    => 900 // seconds (15 minutes)
-    ]
+        'timeout' => 900, // seconds (15 minutes)
+    ],
 ];

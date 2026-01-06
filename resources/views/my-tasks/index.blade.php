@@ -75,10 +75,10 @@
                                         <i class="fas fa-exchange-alt me-2"></i>Type
                                     </th>
                                     <th class="custom-my-task-table-header">
-                                        <i class="fas fa-calendar-check me-2"></i>Resource Activation
+                                        <i class="fas fa-calendar-check me-2"></i>Resource Assignment
                                     </th>
                                     <th class="custom-my-task-table-header">
-                                        <i class="fas fa-user-clock me-2"></i>Assigned At
+                                        <i class="fas fa-hourglass-end me-2"></i>Resource Deadline
                                     </th>
                                     <th class="custom-my-task-table-header">
                                         <i class="fas fa-check-circle me-2"></i>Completed At
@@ -134,21 +134,37 @@
                                         <td class="custom-my-task-table-cell">
                                             <div class="custom-my-task-date">
                                                 <div class="custom-my-task-date-day">
-                                                    {{ $task->activation_date->format('d') }}
+                                                    {{ $task->assignment_datetime ? $task->assignment_datetime->format('d') : ($task->activation_date ? $task->activation_date->format('d') : 'N/A') }}
                                                 </div>
                                                 <div class="custom-my-task-date-details">
                                                     <div class="custom-my-task-date-month fw-bold">
-                                                        {{ $task->activation_date->format('F') }}
+                                                        {{ $task->assignment_datetime ? $task->assignment_datetime->format('F') : ($task->activation_date ? $task->activation_date->format('F') : '') }}
                                                     </div>
                                                     <div class="custom-my-task-date-year">
-                                                        {{ $task->activation_date->format('Y') }}
+                                                        {{ $task->assignment_datetime ? $task->assignment_datetime->format('Y') : ($task->activation_date ? $task->activation_date->format('Y') : '') }}
+                                                        @if($task->assignment_datetime)
+                                                            <span class="small d-block text-muted">{{ $task->assignment_datetime->format('H:i') }}</span>
+                                                        @endif
                                                     </div>
                                                 </div>
                                             </div>
                                         </td>
                                         <td class="custom-my-task-table-cell">
-                                            @if($task->assigned_at)
-                                                {{ \Carbon\Carbon::parse($task->assigned_at)->format('M d, Y H:i') }}
+                                            @if($task->deadline_datetime)
+                                                <div class="custom-my-task-date">
+                                                    <div class="custom-my-task-date-day-deadline">
+                                                        {{ $task->deadline_datetime->format('d') }}
+                                                    </div>
+                                                    <div class="custom-my-task-date-details">
+                                                        <div class="custom-my-task-date-month fw-bold">
+                                                            {{ $task->deadline_datetime->format('F') }}
+                                                        </div>
+                                                        <div class="custom-my-task-date-year">
+                                                            {{ $task->deadline_datetime->format('Y') }}
+                                                            <span class="small d-block text-muted">{{ $task->deadline_datetime->format('H:i') }}</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
                                             @else
                                                 <span class="text-muted">N/A</span>
                                             @endif
@@ -324,6 +340,9 @@
     </div>
 
 
+
+    @push('styles')
+    @endpush
 
     @push('scripts')
     <script>

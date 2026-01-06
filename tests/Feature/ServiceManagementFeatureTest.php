@@ -23,11 +23,11 @@ class ServiceManagementFeatureTest extends TestCase
         $admin = User::factory()->create(['role_id' => 1]); // Admin
         $platform = Platform::create(['platform_name' => 'Test Platform']);
         Service::create([
-            'platform_id' => $platform->id, 
-            'service_name' => 'Test Service', 
-            'unit' => 'GB', 
+            'platform_id' => $platform->id,
+            'service_name' => 'Test Service',
+            'unit' => 'GB',
             'unit_price' => 10.00,
-            'inserted_by' => $admin->id
+            'inserted_by' => $admin->id,
         ]);
 
         $response = $this->actingAs($admin)->get(route('services.index'));
@@ -42,11 +42,11 @@ class ServiceManagementFeatureTest extends TestCase
         $management = User::factory()->create(['role_id' => 6]); // Management
         $platform = Platform::create(['platform_name' => 'Test Platform']);
         Service::create([
-            'platform_id' => $platform->id, 
-            'service_name' => 'Test Service', 
-            'unit' => 'GB', 
+            'platform_id' => $platform->id,
+            'service_name' => 'Test Service',
+            'unit' => 'GB',
             'unit_price' => 10.00,
-            'inserted_by' => $management->id
+            'inserted_by' => $management->id,
         ]);
 
         $response = $this->actingAs($management)->get(route('services.index'));
@@ -61,11 +61,11 @@ class ServiceManagementFeatureTest extends TestCase
         $proTech = User::factory()->create(['role_id' => 2]); // Pro-Tech
         $platform = Platform::create(['platform_name' => 'Test Platform']);
         Service::create([
-            'platform_id' => $platform->id, 
-            'service_name' => 'Test Service', 
-            'unit' => 'GB', 
+            'platform_id' => $platform->id,
+            'service_name' => 'Test Service',
+            'unit' => 'GB',
             'unit_price' => 10.00,
-            'inserted_by' => $proTech->id
+            'inserted_by' => $proTech->id,
         ]);
 
         $response = $this->actingAs($proTech)->get(route('services.index'));
@@ -79,9 +79,9 @@ class ServiceManagementFeatureTest extends TestCase
         $admin = User::factory()->create(['role_id' => 1]);
         $platform = Platform::create(['platform_name' => 'Test Platform']);
         $service = Service::create([
-            'platform_id' => $platform->id, 
+            'platform_id' => $platform->id,
             'service_name' => 'Delete Me',
-            'inserted_by' => $admin->id
+            'inserted_by' => $admin->id,
         ]);
 
         $response = $this->actingAs($admin)->delete(route('services.destroy', $service));
@@ -95,9 +95,9 @@ class ServiceManagementFeatureTest extends TestCase
         $management = User::factory()->create(['role_id' => 6]);
         $platform = Platform::create(['platform_name' => 'Test Platform']);
         $service = Service::create([
-            'platform_id' => $platform->id, 
+            'platform_id' => $platform->id,
             'service_name' => 'Keep Me',
-            'inserted_by' => $management->id
+            'inserted_by' => $management->id,
         ]);
 
         $response = $this->actingAs($management)->delete(route('services.destroy', $service));

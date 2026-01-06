@@ -140,7 +140,10 @@
                                         <i class="fas fa-exchange-alt me-2"></i>Type
                                     </th>
                                     <th class="custom-task-management-table-header">
-                                        <i class="fas fa-calendar-check me-2"></i>Resource Activation
+                                        <i class="fas fa-calendar-check me-2"></i>Resource Assignment
+                                    </th>
+                                    <th class="custom-task-management-table-header">
+                                        <i class="fas fa-hourglass-end me-2"></i>Resource Deadline
                                     </th>
                                     <!-- <th class="custom-task-management-table-header">
                                         <i class="fas fa-clock me-2"></i>Created At
@@ -149,13 +152,10 @@
                                         <i class="fas fa-info-circle me-2"></i>Status
                                     </th>
                                     <th class="custom-task-management-table-header">
-                                        <i class="fas fa-check-circle me-2"></i>Completion Status
+                                        <i class="fas fa-check-circle me-2"></i>Completion
                                     </th>
                                     <th class="custom-task-management-table-header">
                                         <i class="fas fa-user-check me-2"></i>Assigned To
-                                    </th>
-                                    <th class="custom-task-management-table-header">
-                                        <i class="fas fa-user-tie me-2"></i>Assigned By
                                     </th>
                                     <th class="custom-task-management-table-header">
                                         <i class="fas fa-cogs me-2"></i>Actions
@@ -210,17 +210,40 @@
                                         <td class="custom-task-management-table-cell">
                                             <div class="custom-task-management-date">
                                                 <div class="custom-task-management-date-day">
-                                                    {{ $task->activation_date->format('d') }}
+                                                    {{ $task->assignment_datetime ? $task->assignment_datetime->format('d') : ($task->activation_date ? $task->activation_date->format('d') : 'N/A') }}
                                                 </div>
                                                 <div class="custom-task-management-date-details">
                                                     <div class="custom-task-management-date-month fw-bold">
-                                                        {{ $task->activation_date->format('F') }}
+                                                        {{ $task->assignment_datetime ? $task->assignment_datetime->format('F') : ($task->activation_date ? $task->activation_date->format('F') : '') }}
                                                     </div>
                                                     <div class="custom-task-management-date-year">
-                                                        {{ $task->activation_date->format('Y') }}
+                                                        {{ $task->assignment_datetime ? $task->assignment_datetime->format('Y') : ($task->activation_date ? $task->activation_date->format('Y') : '') }}
+                                                        @if($task->assignment_datetime)
+                                                            <span class="small d-block text-muted">{{ $task->assignment_datetime->format('H:i') }}</span>
+                                                        @endif
                                                     </div>
                                                 </div>
                                             </div>
+                                        </td>
+                                        <td class="custom-task-management-table-cell">
+                                            @if($task->deadline_datetime)
+                                                <div class="custom-task-management-date">
+                                                    <div class="custom-task-management-date-day-deadline">
+                                                        {{ $task->deadline_datetime->format('d') }}
+                                                    </div>
+                                                    <div class="custom-task-management-date-details">
+                                                        <div class="custom-task-management-date-month fw-bold">
+                                                            {{ $task->deadline_datetime->format('F') }}
+                                                        </div>
+                                                        <div class="custom-task-management-date-year">
+                                                            {{ $task->deadline_datetime->format('Y') }}
+                                                            <span class="small d-block text-muted">{{ $task->deadline_datetime->format('H:i') }}</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            @else
+                                                <span class="text-muted">N/A</span>
+                                            @endif
                                         </td>
                                         <!-- <td class="custom-task-management-table-cell">{{ $task->created_at->format('M d, Y H:i:s') }}</td> -->
                                         <td class="custom-task-management-table-cell">
@@ -248,16 +271,6 @@
                                                 <div class="d-flex align-items-center">
                                                     <i class="fas fa-user-circle text-primary me-2"></i>
                                                     {{ $task->assignedTo->name }}
-                                                </div>
-                                            @else
-                                                <span class="custom-task-management-badge">Unassigned</span>
-                                            @endif
-                                        </td>
-                                        <td class="custom-task-management-table-cell">
-                                            @if($task->assignedBy)
-                                                <div class="d-flex align-items-center">
-                                                    <i class="fas fa-user-circle text-primary me-2"></i>
-                                                    {{ $task->assignedBy->name }}
                                                 </div>
                                             @else
                                                 <span class="custom-task-management-badge">Unassigned</span>

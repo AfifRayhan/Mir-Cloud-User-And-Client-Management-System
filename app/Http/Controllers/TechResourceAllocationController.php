@@ -93,10 +93,18 @@ class TechResourceAllocationController extends Controller
         }
 
         $testStatusId = CustomerStatus::where('name', 'Test')->first()?->id ?? 1;
+        
+        // Determine default Activation Date
+        // If Customer Activation Date is in the past -> Default to Current Date.
+        // If Customer Activation Date is in the future -> Default to Customer Activation Date.
+        $customerActivationDate = $customer->customer_activation_date;
+        $defaultActivationDate = $customerActivationDate->isFuture() 
+            ? $customerActivationDate->format('Y-m-d') 
+            : now()->format('Y-m-d');
 
         // We'll reuse the same partial but might need to adjust it if we want custom styling there
         // For now, let's use the same partial.
-        $html = view('resource-allocation.partials.allocation-form', compact('customer', 'services', 'actionType', 'statusId', 'statusName', 'taskStatuses', 'isFirstAllocation', 'defaultTaskStatusId', 'testStatusId'))->render();
+        $html = view('resource-allocation.partials.allocation-form', compact('customer', 'services', 'actionType', 'statusId', 'statusName', 'taskStatuses', 'isFirstAllocation', 'defaultTaskStatusId', 'testStatusId', 'defaultActivationDate'))->render();
 
         return response()->json([
             'html' => $html,

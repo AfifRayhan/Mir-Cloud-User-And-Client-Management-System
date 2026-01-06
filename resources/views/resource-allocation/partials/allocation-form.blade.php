@@ -35,7 +35,7 @@
                         <label for="activation_date" class="form-label fw-semibold">Activation Date <span class="text-danger">*</span></label>
                         <div class="input-group">
                             <span class="input-group-text"><i class="fas fa-calendar-alt"></i></span>
-                            <input type="text" id="activation_date" name="activation_date" class="form-control flatpickr-date" value="{{ $customer->customer_activation_date->format('Y-m-d') }}" data-min-date="{{ $customer->customer_activation_date->format('Y-m-d') }}" required>
+                            <input type="text" id="activation_date" name="activation_date" class="form-control flatpickr-date" value="{{ $defaultActivationDate }}" data-min-date="{{ $customer->customer_activation_date->format('Y-m-d') }}" required>
                         </div>
                     </div>
                     <div class="col-md-4">
@@ -183,7 +183,7 @@
                         <label for="activation_date" class="form-label fw-semibold">Activation Date <span class="text-danger">*</span></label>
                         <div class="input-group">
                             <span class="input-group-text"><i class="fas fa-calendar-alt"></i></span>
-                            <input type="text" id="activation_date" name="activation_date" class="form-control flatpickr-date" value="{{ now()->format('Y-m-d') }}" data-min-date="{{ $customer->customer_activation_date->format('Y-m-d') }}" required>
+                            <input type="text" id="activation_date" name="activation_date" class="form-control flatpickr-date" value="{{ $defaultActivationDate }}" data-min-date="{{ $customer->customer_activation_date->format('Y-m-d') }}" required>
                         </div>
                     </div>
                     <div class="col-md-4">

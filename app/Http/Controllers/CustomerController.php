@@ -203,7 +203,7 @@ class CustomerController extends Controller
         }
 
         $tempPath = $file->getRealPath();
-        $absolutePath = storage_path('app/public/'.$finalPath);
+        $absolutePath = Storage::disk('public')->path($finalPath);
 
         try {
             // Attempt to optimize

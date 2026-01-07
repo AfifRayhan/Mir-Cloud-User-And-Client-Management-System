@@ -102,6 +102,7 @@
                                         <option value="" disabled selected>Select Action</option>
                                         <option value="upgrade" {{ old('action_type') === 'upgrade' ? 'selected' : '' }}>Upgrade</option>
                                         <option value="downgrade" {{ old('action_type') === 'downgrade' ? 'selected' : '' }}>Downgrade</option>
+                                        <option value="transfer" {{ old('action_type') === 'transfer' ? 'selected' : '' }}>Transfer</option>
                                     </select>
                                     @error('action_type')
                                         <div class="invalid-feedback">{{ $message }}</div>
@@ -119,6 +120,18 @@
                                         @endforeach
                                     </select>
                                     @error('status_id')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+
+                                <div class="mb-4 d-none" id="transfer-type-container">
+                                    <label for="transfer_type" class="form-label fw-semibold">Transfer Type</label>
+                                    <select id="transfer_type" name="transfer_type" class="form-select form-select-lg @error('transfer_type') is-invalid @enderror">
+                                        <option value="" disabled selected>Select Transfer Type</option>
+                                        <option value="test_to_billable" {{ old('transfer_type') === 'test_to_billable' ? 'selected' : '' }}>Test to Billable</option>
+                                        <option value="billable_to_test" {{ old('transfer_type') === 'billable_to_test' ? 'selected' : '' }}>Billable to Test</option>
+                                    </select>
+                                    @error('transfer_type')
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
                                 </div>
@@ -148,6 +161,8 @@
                 const actionSelect = document.getElementById('action_type');
                 const statusContainer = document.getElementById('status-container');
                 const statusSelect = document.getElementById('status_id');
+                const transferTypeContainer = document.getElementById('transfer-type-container');
+                const transferTypeSelect = document.getElementById('transfer_type');
                 const container = document.getElementById('cloud-detail-container');
                 const resourceForm = document.getElementById('resource-action-form');
                 const testStatusId = {{ \App\Models\CustomerStatus::where('name', 'Test')->first()?->id ?? 1 }};
@@ -172,12 +187,24 @@
                     if (action === 'upgrade' || action === 'downgrade') {
                         statusContainer.classList.remove('d-none');
                         statusSelect.required = true;
+                        transferTypeContainer.classList.add('d-none');
+                        transferTypeSelect.required = false;
                         console.log('Status container shown');
+                    } else if (action === 'transfer') {
+                        statusContainer.classList.add('d-none');
+                        statusSelect.required = false;
+                        statusSelect.value = "";
+                        transferTypeContainer.classList.remove('d-none');
+                        transferTypeSelect.required = true;
+                        console.log('Transfer Type container shown');
                     } else {
                         statusContainer.classList.add('d-none');
                         statusSelect.required = false;
                         statusSelect.value = "";
-                        console.log('Status container hidden');
+                        transferTypeContainer.classList.add('d-none');
+                        transferTypeSelect.required = false;
+                        transferTypeSelect.value = "";
+                        console.log('All extra containers hidden');
                     }
                 }
 
@@ -185,6 +212,7 @@
                     const customerId = customerSelect.value;
                     const actionType = actionSelect.value;
                     const statusId = statusSelect.value;
+                    const transferType = transferTypeSelect.value;
 
                     if (!customerId || !actionType) {
                         renderPlaceholder();
@@ -206,6 +234,9 @@
                         if (statusId) {
                             url.searchParams.append('status_id', statusId);
                         }
+                        if (transferType) {
+                            url.searchParams.append('transfer_type', transferType);
+                        }
 
                         const response = await fetch(url, {
                             headers: {
@@ -219,6 +250,19 @@
                         }
 
                         const data = await response.json();
+                        if (data.transfer_type && !transferTypeSelect.value) {
+                            transferTypeSelect.value = data.transfer_type;
+                        }
+
+                        // Disable options if pool is empty
+                        if (data.action_type === 'transfer') {
+                            const testToBillableOpt = transferTypeSelect.querySelector('option[value="test_to_billable"]');
+                            const billableToTestOpt = transferTypeSelect.querySelector('option[value="billable_to_test"]');
+                            
+                            if (testToBillableOpt) testToBillableOpt.disabled = !data.has_test;
+                            if (billableToTestOpt) billableToTestOpt.disabled = !data.has_billable;
+                        }
+                        
                         container.innerHTML = data.html;
 
                         // If the backend provided a status_id, update the select
@@ -266,10 +310,14 @@
                     const customerId = form.dataset.customerId;
                     const actionType = form.dataset.actionType;
                     const statusId = form.dataset.statusId;
+                    const transferType = form.dataset.transferType;
 
                     formData.append('action_type', actionType);
                     if (statusId) {
                         formData.append('status_id', statusId);
+                    }
+                    if (transferType) {
+                        formData.append('transfer_type', transferType);
                     }
 
                     // Clear previous errors
@@ -475,6 +523,12 @@
                     }
                 });
 
+                transferTypeSelect.addEventListener('change', function() {
+                    if (actionSelect.value === 'transfer') {
+                        loadAllocationForm();
+                    }
+                });
+
                 // Override form submission for dismantle
                 resourceForm.addEventListener('submit', function(e) {
                     const actionType = actionSelect.value;
@@ -484,6 +538,20 @@
                     }
                 });
 
+                // Global function to fill all transfer inputs with max values
+                window.fillTransferAllValues = function() {
+                    const inputs = document.querySelectorAll('.transfer-input');
+                    inputs.forEach(input => {
+                        const maxVal = input.getAttribute('max');
+                        if (maxVal) {
+                            input.value = maxVal;
+                            // Trigger input event for real-time updates (like new totals)
+                            const event = new Event('input', { bubbles: true });
+                            input.dispatchEvent(event);
+                        }
+                    });
+                };
+
                 // Global function to fill all downgrade inputs with current values (for dismantle)
                 window.fillDismantleValues = function() {
                     const inputs = document.querySelectorAll('.downgrade-input');
@@ -491,6 +559,9 @@
                         const currentValue = input.getAttribute('data-current-value');
                         if (currentValue) {
                             input.value = currentValue;
+                            // Trigger input event for real-time updates
+                            const event = new Event('input', { bubbles: true });
+                            input.dispatchEvent(event);
                         }
                     });
                 };
@@ -501,6 +572,7 @@
                     customerSelect.value = '';
                     actionSelect.value = '';
                     statusSelect.value = '';
+                    transferTypeSelect.value = '';
                     toggleStatus();
                 };
 
@@ -592,6 +664,45 @@
                     // Inline validation - highlight if exceeds current value for the selected status
                     const maxAllowed = isTest ? currentTestValue : currentBillableValue;
                     if (reduceBy > maxAllowed) {
+                        input.classList.add('is-invalid');
+                        input.parentElement.classList.add('has-error');
+                    } else {
+                        input.classList.remove('is-invalid');
+                        input.parentElement.classList.remove('has-error');
+                    }
+                };
+
+                // Update new total for transfer
+                window.updateNewTotalTransfer = function(input) {
+                    const serviceId = input.dataset.serviceId;
+                    const currentTestValue = parseInt(input.dataset.currentTest) || 0;
+                    const currentBillableValue = parseInt(input.dataset.currentBillable) || 0;
+                    const transferType = input.dataset.transferType;
+                    const transferAmount = parseInt(input.value) || 0;
+                    
+                    let newTestTotal, newBillableTotal;
+                    
+                    if (transferType === 'test_to_billable') {
+                        newTestTotal = Math.max(0, currentTestValue - transferAmount);
+                        newBillableTotal = currentBillableValue + transferAmount;
+                    } else {
+                        newBillableTotal = Math.max(0, currentBillableValue - transferAmount);
+                        newTestTotal = currentTestValue + transferAmount;
+                    }
+                    
+                    const newTestElement = document.querySelector(`[data-new-test-for="${serviceId}"]`);
+                    const newBillableElement = document.querySelector(`[data-new-billable-for="${serviceId}"]`);
+                    
+                    if (newTestElement) {
+                        newTestElement.textContent = newTestTotal;
+                    }
+                    if (newBillableElement) {
+                        newBillableElement.textContent = newBillableTotal;
+                    }
+                    
+                    // Inline validation
+                    const maxAllowed = transferType === 'test_to_billable' ? currentTestValue : currentBillableValue;
+                    if (transferAmount > maxAllowed) {
                         input.classList.add('is-invalid');
                         input.parentElement.classList.add('has-error');
                     } else {

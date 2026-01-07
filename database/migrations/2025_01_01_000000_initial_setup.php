@@ -11,6 +11,80 @@ return new class extends Migration
      */
     public function up(): void
     {
+        // --- BASE LARAVEL TABLES ---
+
+        Schema::create('users', function (Blueprint $table) {
+            $table->id();
+            $table->string('name');
+            $table->string('email')->unique();
+            $table->timestamp('email_verified_at')->nullable();
+            $table->string('password');
+            $table->rememberToken();
+            $table->timestamps();
+        });
+
+        Schema::create('password_reset_tokens', function (Blueprint $table) {
+            $table->string('email')->primary();
+            $table->string('token');
+            $table->timestamp('created_at')->nullable();
+        });
+
+        Schema::create('sessions', function (Blueprint $table) {
+            $table->string('id')->primary();
+            $table->foreignId('user_id')->nullable()->index();
+            $table->string('ip_address', 45)->nullable();
+            $table->text('user_agent')->nullable();
+            $table->longText('payload');
+            $table->integer('last_activity')->index();
+        });
+
+        Schema::create('cache', function (Blueprint $table) {
+            $table->string('key')->primary();
+            $table->mediumText('value');
+            $table->integer('expiration');
+        });
+
+        Schema::create('cache_locks', function (Blueprint $table) {
+            $table->string('key')->primary();
+            $table->string('owner');
+            $table->integer('expiration');
+        });
+
+        Schema::create('jobs', function (Blueprint $table) {
+            $table->id();
+            $table->string('queue')->index();
+            $table->longText('payload');
+            $table->unsignedTinyInteger('attempts');
+            $table->unsignedInteger('reserved_at')->nullable();
+            $table->unsignedInteger('available_at');
+            $table->unsignedInteger('created_at');
+        });
+
+        Schema::create('job_batches', function (Blueprint $table) {
+            $table->string('id')->primary();
+            $table->string('name');
+            $table->integer('total_jobs');
+            $table->integer('pending_jobs');
+            $table->integer('failed_jobs');
+            $table->longText('failed_job_ids');
+            $table->mediumText('options')->nullable();
+            $table->integer('cancelled_at')->nullable();
+            $table->integer('created_at');
+            $table->integer('finished_at')->nullable();
+        });
+
+        Schema::create('failed_jobs', function (Blueprint $table) {
+            $table->id();
+            $table->string('uuid')->unique();
+            $table->text('connection');
+            $table->text('queue');
+            $table->longText('payload');
+            $table->longText('exception');
+            $table->timestamp('failed_at')->useCurrent();
+        });
+
+        // --- APPLICATION TABLES ---
+
         // 1. Roles
         Schema::create('roles', function (Blueprint $table) {
             $table->id();
@@ -151,6 +225,17 @@ return new class extends Migration
             $table->timestamps();
         });
 
+        // 15. VDCs
+        Schema::create('vdcs', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('customer_id')->constrained('customers')->onDelete('cascade');
+            $table->string('vdc_name');
+            $table->timestamps();
+
+            // Unique constraint: one VDC name per customer
+            $table->unique(['customer_id', 'vdc_name']);
+        });
+
         // 14. Tasks
         Schema::create('tasks', function (Blueprint $table) {
             $table->id();
@@ -158,7 +243,10 @@ return new class extends Migration
             $table->foreignId('customer_id')->constrained('customers')->onDelete('cascade');
             $table->foreignId('status_id')->nullable()->constrained('customer_statuses');
             $table->foreignId('task_status_id')->default(1)->constrained('task_statuses');
+            $table->foreignId('vdc_id')->nullable()->constrained('vdcs')->nullOnDelete();
             $table->date('activation_date');
+            $table->timestamp('assignment_datetime')->nullable();
+            $table->timestamp('deadline_datetime')->nullable();
             $table->enum('allocation_type', ['upgrade', 'downgrade']);
             $table->boolean('has_resource_conflict')->default(false);
 
@@ -175,17 +263,6 @@ return new class extends Migration
             $table->timestamps();
         });
 
-        // 15. VDCs
-        Schema::create('vdcs', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('customer_id')->constrained('customers')->onDelete('cascade');
-            $table->string('vdc_name');
-            $table->timestamps();
-
-            // Unique constraint: one VDC name per customer
-            $table->unique(['customer_id', 'vdc_name']);
-        });
-
         // 16. Summaries
         Schema::create('summaries', function (Blueprint $table) {
             $table->id();
@@ -199,9 +276,28 @@ return new class extends Migration
             $table->unique(['customer_id', 'service_id']);
         });
 
-        // 17. Add VDC to Tasks
-        Schema::table('tasks', function (Blueprint $table) {
-            $table->foreignId('vdc_id')->nullable()->after('task_status_id')->constrained('vdcs')->nullOnDelete();
+        // 17. Resource Transfers
+        Schema::create('resource_transfers', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('customer_id')->constrained('customers')->onDelete('cascade');
+            $table->foreignId('status_from_id')->constrained('customer_statuses');
+            $table->foreignId('status_to_id')->constrained('customer_statuses');
+            $table->dateTime('transfer_datetime');
+            $table->foreignId('inserted_by')->constrained('users');
+            $table->timestamps();
+        });
+
+        // 18. Resource Transfer Details
+        Schema::create('resource_transfer_details', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('resource_transfer_id')->constrained('resource_transfers')->onDelete('cascade');
+            $table->foreignId('service_id')->constrained('services');
+            $table->integer('current_source_quantity');
+            $table->integer('current_target_quantity');
+            $table->integer('transfer_amount');
+            $table->integer('new_source_quantity');
+            $table->integer('new_target_quantity');
+            $table->timestamps();
         });
     }
 
@@ -210,20 +306,17 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('tasks', function (Blueprint $table) {
-            $table->dropForeign(['vdc_id']);
-            $table->dropColumn('vdc_id');
-        });
-
+        Schema::dropIfExists('resource_transfer_details');
+        Schema::dropIfExists('resource_transfers');
         Schema::dropIfExists('summaries');
-        Schema::dropIfExists('vdcs');
         Schema::dropIfExists('tasks');
+        Schema::dropIfExists('vdcs');
         Schema::dropIfExists('resource_downgradation_details');
         Schema::dropIfExists('resource_downgradations');
         Schema::dropIfExists('resource_upgradation_details');
         Schema::dropIfExists('resource_upgradations');
         Schema::dropIfExists('customers');
-
+        
         Schema::table('users', function (Blueprint $table) {
             $table->dropForeign(['role_id']);
             $table->dropForeign(['department_id']);
@@ -237,5 +330,13 @@ return new class extends Migration
         Schema::dropIfExists('user_departments');
         Schema::dropIfExists('platforms');
         Schema::dropIfExists('roles');
+        Schema::dropIfExists('failed_jobs');
+        Schema::dropIfExists('job_batches');
+        Schema::dropIfExists('jobs');
+        Schema::dropIfExists('cache_locks');
+        Schema::dropIfExists('cache');
+        Schema::dropIfExists('sessions');
+        Schema::dropIfExists('password_reset_tokens');
+        Schema::dropIfExists('users');
     }
 };

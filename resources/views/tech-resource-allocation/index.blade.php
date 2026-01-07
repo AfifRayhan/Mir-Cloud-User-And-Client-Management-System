@@ -132,7 +132,7 @@
             <div class="modal-content border-0 shadow-lg">
                 <div class="modal-header bg-primary text-white border-0">
                     <h5 class="modal-title fw-bold" id="vdcModalLabel">
-                        <i class="fas fa-server me-2"></i>Complete Allocation
+                        <i class="fas fa-server me-2"></i>Select VDC
                     </h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
@@ -333,6 +333,15 @@
                 window.openVdcModal = function(taskId, customerId) {
                     currentTaskId = taskId;
                     currentCustomerId = customerId;
+
+                    // Update modal title with customer name
+                    const customerSelect = document.getElementById('customer_id');
+                    const selectedOption = customerSelect.options[customerSelect.selectedIndex];
+                    const customerName = selectedOption ? selectedOption.text.trim() : 'Select VDC';
+                    const modalTitle = document.getElementById('vdcModalLabel');
+                    if (modalTitle) {
+                        modalTitle.innerHTML = `<i class="fas fa-server me-2"></i>${customerName} - Select VDC`;
+                    }
 
                     loadCustomerVdcs(currentCustomerId);
 

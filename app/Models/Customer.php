@@ -2,12 +2,15 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Customer extends Model
 {
+    use HasFactory;
+
     protected $fillable = [
         'customer_name',
         'customer_activation_date',
@@ -64,6 +67,11 @@ class Customer extends Model
         return $this->hasMany(ResourceDowngradation::class);
     }
 
+    public function resourceTransfers(): HasMany
+    {
+        return $this->hasMany(ResourceTransfer::class);
+    }
+
     /**
      * Calculate current resources from upgradation and downgradation history
      * Returns array of service_name => ['test' => quantity, 'billable' => quantity]
@@ -83,9 +91,9 @@ class Customer extends Model
         foreach ($upgradations as $upgradation) {
             foreach ($upgradation->details as $detail) {
                 if ($detail->service) {
-                    $serviceName = $detail->service->service_name;
+                    $serviceId = $detail->service_id;
                     $allChanges[] = [
-                        'service_name' => $serviceName,
+                        'service_id' => $serviceId,
                         'quantity' => $detail->quantity,
                         'activation_date' => $upgradation->activation_date,
                         'inactivation_date' => $upgradation->inactivation_date,
@@ -105,15 +113,49 @@ class Customer extends Model
         foreach ($downgradations as $downgradation) {
             foreach ($downgradation->details as $detail) {
                 if ($detail->service) {
-                    $serviceName = $detail->service->service_name;
+                    $serviceId = $detail->service_id;
                     $allChanges[] = [
-                        'service_name' => $serviceName,
+                        'service_id' => $serviceId,
                         'quantity' => $detail->quantity,
                         'activation_date' => $downgradation->activation_date,
                         'inactivation_date' => $downgradation->inactivation_date,
                         'created_at' => $downgradation->created_at,
                         'type' => 'downgrade',
                         'status_id' => $downgradation->status_id,
+                    ];
+                }
+            }
+        }
+
+        // Get all transfers with their details
+        $transfers = $this->resourceTransfers()
+            ->with('details.service')
+            ->get();
+
+        foreach ($transfers as $transfer) {
+            foreach ($transfer->details as $detail) {
+                if ($detail->service) {
+                    $serviceId = $detail->service_id;
+                    // Transfer affects BOTH from and to pools
+                    // Add from pool change
+                    $allChanges[] = [
+                        'service_id' => $serviceId,
+                        'quantity' => $detail->new_source_quantity,
+                        'activation_date' => $transfer->transfer_datetime,
+                        'inactivation_date' => null,
+                        'created_at' => $transfer->created_at,
+                        'type' => 'transfer_from',
+                        'status_id' => $transfer->status_from_id,
+                    ];
+                    // Add to pool change
+                    $allChanges[] = [
+                        'service_id' => $serviceId,
+                        'quantity' => $detail->new_target_quantity,
+                        'activation_date' => $transfer->transfer_datetime,
+                        'inactivation_date' => null,
+                        'created_at' => $transfer->created_at,
+                        'type' => 'transfer_to',
+                        'status_id' => $transfer->status_to_id,
                     ];
                 }
             }
@@ -135,10 +177,10 @@ class Customer extends Model
         $now = now()->format('Y-m-d');
 
         foreach ($allChanges as $change) {
-            $serviceName = $change['service_name'];
+            $serviceId = $change['service_id'];
 
-            if (! isset($resources[$serviceName])) {
-                $resources[$serviceName] = [
+            if (! isset($resources[$serviceId])) {
+                $resources[$serviceId] = [
                     'test' => null,
                     'billable' => null,
                 ];
@@ -150,16 +192,17 @@ class Customer extends Model
             $poolKey = $isTest ? 'test' : 'billable';
 
             // If we already found the latest for this pool, skip
-            if ($resources[$serviceName][$poolKey] !== null) {
+            if ($resources[$serviceId][$poolKey] !== null) {
                 continue;
             }
 
             // Check if this change is not yet inactivated
-            if ($change['inactivation_date'] >= $now) {
-                $resources[$serviceName][$poolKey] = $change['quantity'];
+            $inactivationDate = $change['inactivation_date'];
+            if ($inactivationDate === null || $inactivationDate >= $now) {
+                $resources[$serviceId][$poolKey] = $change['quantity'];
             } else {
                 // If the most recent record is inactivated, the quantity for this pool is 0
-                $resources[$serviceName][$poolKey] = 0;
+                $resources[$serviceId][$poolKey] = 0;
             }
         }
 
@@ -176,28 +219,38 @@ class Customer extends Model
         return $resources;
     }
 
-    /**
-     * Get quantity for a specific service (total)
-     */
     public function getResourceQuantity(string $serviceName): int
     {
-        $resources = $this->getCurrentResources();
+        $service = \App\Models\Service::where('platform_id', $this->platform_id)
+            ->where('service_name', $serviceName)
+            ->first();
 
-        if (! isset($resources[$serviceName])) {
+        if (! $service) {
             return 0;
         }
 
-        return $resources[$serviceName]['test'] + $resources[$serviceName]['billable'];
-    }
-
-    /**
-     * Get test quantity for a specific service
-     */
-    public function getResourceTestQuantity(string $serviceName): int
-    {
         $resources = $this->getCurrentResources();
 
-        return $resources[$serviceName]['test'] ?? 0;
+        if (! isset($resources[$service->id])) {
+            return 0;
+        }
+
+        return ($resources[$service->id]['test'] ?? 0) + ($resources[$service->id]['billable'] ?? 0);
+    }
+
+    public function getResourceTestQuantity(string $serviceName): int
+    {
+        $service = \App\Models\Service::where('platform_id', $this->platform_id)
+            ->where('service_name', $serviceName)
+            ->first();
+
+        if (! $service) {
+            return 0;
+        }
+
+        $resources = $this->getCurrentResources();
+
+        return $resources[$service->id]['test'] ?? 0;
     }
 
     /**
@@ -205,9 +258,17 @@ class Customer extends Model
      */
     public function getResourceBillableQuantity(string $serviceName): int
     {
+        $service = \App\Models\Service::where('platform_id', $this->platform_id)
+            ->where('service_name', $serviceName)
+            ->first();
+
+        if (! $service) {
+            return 0;
+        }
+
         $resources = $this->getCurrentResources();
 
-        return $resources[$serviceName]['billable'] ?? 0;
+        return $resources[$service->id]['billable'] ?? 0;
     }
 
     /**

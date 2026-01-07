@@ -401,7 +401,7 @@ class KamTaskManagementController extends Controller
         $services = Service::where('platform_id', $customer->platform_id)->get();
 
         foreach ($services as $service) {
-            $pool = $resources[$service->service_name] ?? ['test' => 0, 'billable' => 0];
+            $pool = $resources[$service->id] ?? ['test' => 0, 'billable' => 0];
 
             // Upsert summary record with separate quantity columns
             Summary::updateOrCreate(

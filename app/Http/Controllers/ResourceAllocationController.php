@@ -70,6 +70,7 @@ class ResourceAllocationController extends Controller
     {
         $actionType = $request->query('action_type');
         $statusId = $request->query('status_id');
+        $transferType = $request->query('transfer_type');
 
         $services = \App\Models\Service::where('platform_id', $customer->platform_id)->get();
         $taskStatuses = \App\Models\TaskStatus::all();
@@ -111,6 +112,36 @@ class ResourceAllocationController extends Controller
         }
         $testStatusId = \App\Models\CustomerStatus::where('name', 'Test')->first()?->id ?? 1;
 
+        // Calculate availability once to use for both auto-selection and AJAX response
+        $currentResources = $customer->getCurrentResources();
+        $hasTest = false;
+        $hasBillable = false;
+
+        if (empty($currentResources)) {
+            // Fallback to Summary table if no historical changes found
+            $summaries = \App\Models\Summary::where('customer_id', $customer->id)->get();
+            $hasTest = $summaries->sum('test_quantity') > 0;
+            $hasBillable = $summaries->sum('billable_quantity') > 0;
+        } else {
+            foreach ($currentResources as $pool) {
+                if (($pool['test'] ?? 0) > 0) {
+                    $hasTest = true;
+                }
+                if (($pool['billable'] ?? 0) > 0) {
+                    $hasBillable = true;
+                }
+            }
+        }
+
+        // Auto-select Transfer Type if not provided
+        if ($actionType === 'transfer' && ! $transferType) {
+            if ($hasTest && ! $hasBillable) {
+                $transferType = 'test_to_billable';
+            } elseif ($hasBillable && ! $hasTest) {
+                $transferType = 'billable_to_test';
+            }
+        }
+
         // Determine default Activation Date
         // If Customer Activation Date is in the past -> Default to Current Date.
         // If Customer Activation Date is in the future -> Default to Customer Activation Date.
@@ -119,43 +150,39 @@ class ResourceAllocationController extends Controller
             ? $customerActivationDate->format('Y-m-d')
             : now()->format('Y-m-d');
 
-        if ($request->ajax()) {
-            return response()->json([
-                'html' => view('resource-allocation.partials.allocation-form', compact(
-                    'customer',
-                    'actionType',
-                    'services',
-                    'taskStatuses',
-                    'customerStatuses',
-                    'defaultTaskStatusId',
-                    'statusId',
-                    'statusName',
-                    'isFirstAllocation',
-                    'testStatusId',
-                    'defaultActivationDate'
-                ))->render(),
-                'status_id' => $statusId,
-                'test_status_id' => $testStatusId,
-                'customer_name' => $customer->customer_name,
-                'action_type' => $actionType,
-            ]);
-        }
-
-        $html = view('resource-allocation.partials.allocation-form', compact('customer', 'services', 'actionType', 'statusId', 'statusName', 'taskStatuses', 'customerStatuses', 'isFirstAllocation', 'defaultTaskStatusId', 'testStatusId', 'defaultActivationDate'))->render();
-
-        return response()->json([
-            'html' => $html,
+        $responseData = [
+            'html' => view('resource-allocation.partials.allocation-form', compact(
+                'customer',
+                'actionType',
+                'services',
+                'taskStatuses',
+                'customerStatuses',
+                'defaultTaskStatusId',
+                'statusId',
+                'statusName',
+                'isFirstAllocation',
+                'testStatusId',
+                'defaultActivationDate',
+                'transferType'
+            ))->render(),
             'status_id' => $statusId,
+            'test_status_id' => $testStatusId,
             'customer_name' => $customer->customer_name,
             'action_type' => $actionType,
-        ]);
+            'transfer_type' => $transferType,
+            'has_test' => $hasTest,
+            'has_billable' => $hasBillable,
+        ];
+
+        return response()->json($responseData);
     }
 
     public function storeAllocation(Request $request, Customer $customer)
     {
         $validated = $request->validate([
-            'action_type' => 'required|in:upgrade,downgrade',
-            'status_id' => 'required|exists:customer_statuses,id',
+            'action_type' => 'required|in:upgrade,downgrade,transfer',
+            'status_id' => 'required_if:action_type,upgrade,downgrade|exists:customer_statuses,id',
+            'transfer_type' => 'required_if:action_type,transfer|in:test_to_billable,billable_to_test',
             'task_status_id' => 'required|exists:task_statuses,id',
             'activation_date' => 'required|date',
             'inactivation_date' => 'nullable|date',
@@ -164,7 +191,7 @@ class ResourceAllocationController extends Controller
         ]);
 
         $actionType = $validated['action_type'];
-        $statusId = $validated['status_id'];
+        $statusId = $validated['status_id'] ?? null;
         $taskStatusId = $validated['task_status_id'];
         $servicesInput = $validated['services'];
         // Filter out null and zero values
@@ -178,6 +205,35 @@ class ResourceAllocationController extends Controller
                 'message' => 'Please specify at least one resource change with a value greater than 0.',
                 'errors' => ['services' => ['Please specify at least one resource change with a value greater than 0.']],
             ], 422);
+        }
+
+        // SYNC VALIDATION: Block transfer if resources are out of sync
+        if ($actionType === 'transfer') {
+            $currentHistory = $customer->getCurrentResources();
+            $summaries = \App\Models\Summary::where('customer_id', $customer->id)
+                ->get()
+                ->keyBy('service_id');
+
+            $isOutOfSync = false;
+
+            foreach ($currentHistory as $serviceId => $pools) {
+                $summary = $summaries->get($serviceId);
+                $summaryTest = $summary->test_quantity ?? 0;
+                $summaryBillable = $summary->billable_quantity ?? 0;
+
+                if ($pools['test'] != $summaryTest || $pools['billable'] != $summaryBillable) {
+                    $isOutOfSync = true;
+                    break;
+                }
+            }
+
+            if ($isOutOfSync) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'The pre-requisite task has not been completed',
+                    'errors' => ['sync' => ['The pre-requisite task has not been completed']],
+                ], 422);
+            }
         }
 
         return \Illuminate\Support\Facades\DB::transaction(function () use ($customer, $validated, $servicesInput, $actionType, $taskStatusId, $statusId) {
@@ -256,7 +312,7 @@ class ResourceAllocationController extends Controller
                         'deadline_datetime' => $deadlineDatetime,
                     ]);
                 }
-            } else {
+            } elseif ($actionType === 'downgrade') {
                 // For downgrades, status_id is now passed from the form
                 $statusId = $validated['status_id'];
 
@@ -317,35 +373,106 @@ class ResourceAllocationController extends Controller
                         'deadline_datetime' => $deadlineDatetime,
                     ]);
                 }
-            }
+            } elseif ($actionType === 'transfer') {
+                $transferType = $validated['transfer_type'];
+                $testStatus = \App\Models\CustomerStatus::where('name', 'Test')->first();
+                $billableStatus = \App\Models\CustomerStatus::where('name', 'Billable')->first(); // Assuming Billable is the target status
 
-            // Send email notification to all Pro-Tech users
-            try {
-                $proTechUsers = \App\Models\User::whereHas('role', function ($q) {
-                    $q->where('role_name', 'pro-tech');
-                })->get();
+                if ($transferType === 'test_to_billable') {
+                    $statusFromId = $testStatus->id;
+                    $statusToId = $billableStatus->id;
+                } else {
+                    $statusFromId = $billableStatus->id;
+                    $statusToId = $testStatus->id;
+                }
 
-                $sender = \Illuminate\Support\Facades\Auth::user();
+                $transfer = \App\Models\ResourceTransfer::create([
+                    'customer_id' => $lockedCustomer->id,
+                    'status_from_id' => $statusFromId,
+                    'status_to_id' => $statusToId,
+                    'transfer_datetime' => now(),
+                    'inserted_by' => \Illuminate\Support\Facades\Auth::id(),
+                ]);
 
-                // We can fetch the latest task for this customer as it was just created.
-                $latestTask = \App\Models\Task::where('customer_id', $lockedCustomer->id)->latest()->first();
+                foreach ($servicesInput as $serviceId => $transferAmount) {
+                    // Get current summary to record state before transfer
+                    $summary = \App\Models\Summary::where('customer_id', $lockedCustomer->id)
+                        ->where('service_id', $serviceId)
+                        ->first();
 
-                if ($latestTask) {
-                    foreach ($proTechUsers as $proTech) {
-                        \Illuminate\Support\Facades\Mail::to($proTech->email)
-                            ->send(new \App\Mail\RecommendationSubmissionEmail($latestTask, $sender, $actionType));
+                    if ($summary) {
+                        $currentTest = $summary->test_quantity;
+                        $currentBillable = $summary->billable_quantity;
+
+                        if ($transferType === 'test_to_billable') {
+                            $currentSource = $currentTest;
+                            $currentTarget = $currentBillable;
+
+                            $summary->test_quantity = max(0, $summary->test_quantity - $transferAmount);
+                            $summary->billable_quantity += $transferAmount;
+
+                            $newSource = $summary->test_quantity;
+                            $newTarget = $summary->billable_quantity;
+                        } else {
+                            $currentSource = $currentBillable;
+                            $currentTarget = $currentTest;
+
+                            $summary->billable_quantity = max(0, $summary->billable_quantity - $transferAmount);
+                            $summary->test_quantity += $transferAmount;
+
+                            $newSource = $summary->billable_quantity;
+                            $newTarget = $summary->test_quantity;
+                        }
+
+                        $summary->save();
+
+                        \App\Models\ResourceTransferDetail::create([
+                            'resource_transfer_id' => $transfer->id,
+                            'service_id' => $serviceId,
+                            'current_source_quantity' => $currentSource,
+                            'current_target_quantity' => $currentTarget,
+                            'transfer_amount' => $transferAmount,
+                            'new_source_quantity' => $newSource,
+                            'new_target_quantity' => $newTarget,
+                        ]);
                     }
                 }
-            } catch (\Exception $e) {
-                // Log error but don't stop execution
-                \Illuminate\Support\Facades\Log::error('Failed to send recommendation email: '.$e->getMessage());
             }
 
-            $actionName = $actionType === 'upgrade' ? 'upgraded' : 'downgraded';
+            // Send email notification to all Pro-Tech users (skip for transfers)
+            if ($actionType !== 'transfer') {
+                try {
+                    $proTechUsers = \App\Models\User::whereHas('role', function ($q) {
+                        $q->where('role_name', 'pro-tech');
+                    })->get();
+
+                    $sender = \Illuminate\Support\Facades\Auth::user();
+
+                    // We can fetch the latest task for this customer as it was just created.
+                    $latestTask = \App\Models\Task::where('customer_id', $lockedCustomer->id)->latest()->first();
+
+                    if ($latestTask) {
+                        foreach ($proTechUsers as $proTech) {
+                            \Illuminate\Support\Facades\Mail::to($proTech->email)
+                                ->send(new \App\Mail\RecommendationSubmissionEmail($latestTask, $sender, $actionType));
+                        }
+                    }
+                } catch (\Exception $e) {
+                    // Log error but don't stop execution
+                    \Illuminate\Support\Facades\Log::error('Failed to send recommendation email: '.$e->getMessage());
+                }
+            }
+
+            if ($actionType === 'transfer') {
+                $message = "Resources transfered successfully for {$lockedCustomer->customer_name}.";
+            } else {
+                $actionName = $actionType === 'upgrade' ? 'upgraded' : 'downgraded';
+                $message = "Resources {$actionName} successfully for {$lockedCustomer->customer_name}.";
+            }
 
             return response()->json([
                 'success' => true,
-                'message' => "Resources {$actionName} successfully for {$lockedCustomer->customer_name}.",
+                'message' => $message,
             ]);
         });
     }

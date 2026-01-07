@@ -204,6 +204,7 @@
                                                             class="custom-my-task-action-btn custom-my-task-edit-btn complete-task-btn"
                                                             data-task-id="{{ $task->id }}"
                                                             data-customer-id="{{ $task->customer_id }}"
+                                                            data-customer-name="{{ $task->customer->customer_name }}"
                                                             data-bs-toggle="modal"
                                                             data-bs-target="#vdcModal">
                                                             <i class="fas fa-check me-1"></i> <span class="btn-text">Complete</span>
@@ -287,6 +288,7 @@
                         <button type="button" class="btn btn-warning px-4 flex-grow-1 complete-task-anyway-btn" 
                                 data-task-id="{{ $task->id }}"
                                 data-customer-id="{{ $task->customer_id }}"
+                                data-customer-name="{{ $task->customer->customer_name }}"
                                 data-bs-dismiss="modal">
                             Complete Anyway
                         </button>
@@ -302,7 +304,7 @@
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title" id="vdcModalLabel">
-                        <i class="fas fa-server me-2"></i>Complete Task - Select VDC
+                        <i class="fas fa-server me-2"></i>Select VDC
                     </h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
@@ -536,14 +538,14 @@
             // Handle Complete button click
             document.querySelectorAll('.complete-task-btn').forEach(btn => {
                 btn.addEventListener('click', function() {
-                    handleCompleteClick(this.dataset.taskId, this.dataset.customerId);
+                    handleCompleteClick(this.dataset.taskId, this.dataset.customerId, this.dataset.customerName);
                 });
             });
 
             // Handle Complete Anyway button click from warning modal
             document.querySelectorAll('.complete-task-anyway-btn').forEach(btn => {
                 btn.addEventListener('click', function() {
-                    handleCompleteClick(this.dataset.taskId, this.dataset.customerId);
+                    handleCompleteClick(this.dataset.taskId, this.dataset.customerId, this.dataset.customerName);
                     
                     // Manually open the VDC modal since we dismissed the warning modal
                     const modal = new bootstrap.Modal(vdcModal);
@@ -551,9 +553,15 @@
                 });
             });
 
-            function handleCompleteClick(taskId, customerId) {
+            function handleCompleteClick(taskId, customerId, customerName) {
                 currentTaskId = taskId;
                 currentCustomerId = customerId;
+
+                // Update modal title
+                const modalTitle = document.getElementById('vdcModalLabel');
+                if (modalTitle) {
+                    modalTitle.innerHTML = `<i class="fas fa-server me-2"></i>${customerName} - Select VDC`;
+                }
 
                 // Load VDCs for this customer
                 loadCustomerVdcs(currentCustomerId);

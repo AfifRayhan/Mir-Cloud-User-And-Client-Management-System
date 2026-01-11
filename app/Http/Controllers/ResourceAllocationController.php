@@ -207,8 +207,9 @@ class ResourceAllocationController extends Controller
             ], 422);
         }
 
-        // SYNC VALIDATION: Block transfer if resources are out of sync
-        if ($actionType === 'transfer') {
+        // SYNC VALIDATION: Block allocation if resources are out of sync (incomplete tasks exist)
+        // NOTE: Transfers are excluded - they use quantity validation instead
+        if ($actionType === 'upgrade' || $actionType === 'downgrade') {
             $currentHistory = $customer->getCurrentResources();
             $summaries = \App\Models\Summary::where('customer_id', $customer->id)
                 ->get()
@@ -233,6 +234,35 @@ class ResourceAllocationController extends Controller
                     'message' => 'The pre-requisite task has not been completed',
                     'errors' => ['sync' => ['The pre-requisite task has not been completed']],
                 ], 422);
+            }
+        }
+
+        // ADDITIONAL VALIDATION FOR TRANSFERS: Check if move amount exceeds available quantity
+        if ($actionType === 'transfer') {
+            $transferType = $validated['transfer_type'];
+            $summaries = \App\Models\Summary::where('customer_id', $customer->id)
+                ->get()
+                ->keyBy('service_id');
+
+            foreach ($servicesInput as $serviceId => $moveAmount) {
+                $summary = $summaries->get($serviceId);
+                if (! $summary) {
+                    continue;
+                }
+
+                // Determine source pool based on transfer type
+                $availableQuantity = ($transferType === 'test_to_billable')
+                    ? ($summary->test_quantity ?? 0)
+                    : ($summary->billable_quantity ?? 0);
+
+                // Check if trying to move more than available
+                if ($moveAmount > $availableQuantity) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'The pre-requisite task has not been completed',
+                        'errors' => ['transfer' => ['The pre-requisite task has not been completed']],
+                    ], 422);
+                }
             }
         }
 

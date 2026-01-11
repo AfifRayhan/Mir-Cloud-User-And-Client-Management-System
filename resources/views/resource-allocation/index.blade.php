@@ -351,17 +351,32 @@
                             // Handle validation errors - show at top of page
                             if (data.message) {
                                 showPageAlert('danger', 'Error!', data.message);
-                                // Update column highlighting
-                                const currentTestStatusId = window.currentTestStatusId || testStatusId;
-                                const isTest = statusId == currentTestStatusId;
-                                document.querySelectorAll('.resource-alloc-test-col').forEach(el => {
-                                    if (isTest) el.classList.add('status-highlighted');
-                                    else el.classList.remove('status-highlighted');
-                                });
-                                document.querySelectorAll('.resource-alloc-billable-col').forEach(el => {
-                                    if (!isTest && statusId) el.classList.add('status-highlighted');
-                                    else el.classList.remove('status-highlighted');
-                                });
+                                
+                                // Update column highlighting based on action type
+                                if (actionType === 'transfer') {
+                                    // For transfers, we need to highlight source and destination columns
+                                    // The form already has the correct highlighting from the server,
+                                    // so we don't need to change anything - just preserve it
+                                    // (The highlighting is set in the Blade template based on transferType)
+                                } else {
+                                    // For upgrades/downgrades, highlight based on status
+                                    const currentTestStatusId = window.currentTestStatusId || testStatusId;
+                                    const isTest = statusId == currentTestStatusId;
+                                    document.querySelectorAll('.resource-alloc-test-col').forEach(el => {
+                                        if (isTest) el.classList.add('status-highlighted');
+                                        else el.classList.remove('status-highlighted');
+                                    });
+                                    document.querySelectorAll('.resource-alloc-billable-col').forEach(el => {
+                                        if (!isTest && statusId) el.classList.add('status-highlighted');
+                                        else el.classList.remove('status-highlighted');
+                                    });
+                                }
+                                
+                                // Scroll to error message
+                                const errorAlert = document.querySelector('.alert-danger');
+                                if (errorAlert) {
+                                    errorAlert.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                                }
                             }
                             if (data.errors) {
                                 Object.keys(data.errors).forEach(key => {
@@ -375,6 +390,8 @@
                                     }
                                 });
                             }
+                            
+                            // DO NOT reload the form - keep user's input values intact
                             return false;
                         }
 

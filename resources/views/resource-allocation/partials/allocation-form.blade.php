@@ -89,9 +89,6 @@
                                     $currentTestValue = $customer->getResourceTestQuantity($service->service_name);
                                     $currentBillableValue = $customer->getResourceBillableQuantity($service->service_name);
                                 @endphp
-                                @if(!($isFirstAllocation ?? false) && $currentTestValue == 0 && $currentBillableValue == 0)
-                                    @continue
-                                @endif
                                 <tr>
                                     <td class="resource-alloc-service-cell">
                                         <span class="resource-alloc-service-name">
@@ -253,9 +250,6 @@
                                     $currentTestValue = $customer->getResourceTestQuantity($service->service_name);
                                     $currentBillableValue = $customer->getResourceBillableQuantity($service->service_name);
                                 @endphp
-                                @if(!($isFirstAllocation ?? false) && $currentTestValue == 0 && $currentBillableValue == 0)
-                                    @continue
-                                @endif
                                 <tr>
                                     <td class="resource-alloc-service-cell">
                                         <span class="resource-alloc-service-name">
@@ -413,9 +407,6 @@
                                     $currentTestValue = $customer->getResourceTestQuantity($service->service_name);
                                     $currentBillableValue = $customer->getResourceBillableQuantity($service->service_name);
                                 @endphp
-                                @if($currentTestValue == 0 && $currentBillableValue == 0)
-                                    @continue
-                                @endif
                                 <tr>
                                     <td class="resource-alloc-service-cell">
                                         <span class="resource-alloc-service-name">

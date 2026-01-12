@@ -433,6 +433,12 @@
 
             if (deepTaskId) {
                 console.log('Deep link detected:', { dtid: deepTaskId, da: deepAction });
+                
+                // Clear query params immediately to prevent reopening on reload
+                // We do this via replaceState so it doesn't trigger a reload
+                const newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
+                window.history.replaceState({path: newUrl}, '', newUrl);
+
                 if (deepAction === 'view') {
                     const targetBtn = document.querySelector(`.view-task-btn[data-task-id="${deepTaskId}"]`);
                     console.log('Target view button:', targetBtn);

@@ -106,19 +106,7 @@
                                             @endif
                                         </td>
                                         <td class="custom-my-task-table-cell">
-                                            <select class="custom-my-task-select platform-select" 
-                                                    data-task-id="{{ $task->id }}"
-                                                    {{ $task->completed_at ? 'disabled' : '' }}>
-                                                @foreach($platforms as $platform)
-                                                    <option value="{{ $platform->id }}" 
-                                                        {{ $task->customer->platform_id == $platform->id ? 'selected' : '' }}>
-                                                        {{ $platform->platform_name }}
-                                                    </option>
-                                                @endforeach
-                                            </select>
-                                            <div class="platform-update-status text-success small mt-1" style="display: none; height: 20px;">
-                                                <i class="fas fa-check-circle"></i> Updated
-                                            </div>
+                                            {{ $task->customer->platform ? $task->customer->platform->platform_name : 'N/A' }}
                                         </td>
                                         <td class="custom-my-task-table-cell">
                                             @if($task->allocation_type === 'upgrade')
@@ -654,64 +642,7 @@
             });
         });
 
-        // Platform update handler
-        document.querySelectorAll('.platform-select').forEach(select => {
-            select.addEventListener('change', function() {
-                const taskId = this.dataset.taskId;
-                const platformId = this.value;
-                const statusDiv = this.nextElementSibling;
-                const originalValue = this.getAttribute('data-original-value') || platformId;
 
-                // Disable select while updating
-                this.disabled = true;
-
-                fetch(`/my-tasks/${taskId}/platform`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                    },
-                    body: JSON.stringify({ platform_id: platformId })
-                })
-                .then(response => {
-                    if (!response.ok) {
-                        return response.json().then(err => { throw new Error(err.message || 'Update failed'); });
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    if (data.success) {
-                        // Show success message
-                        statusDiv.innerHTML = '<i class="fas fa-check-circle"></i> Updated';
-                        statusDiv.className = 'platform-update-status text-success small mt-1';
-                        statusDiv.style.display = 'block';
-                        
-                        setTimeout(() => {
-                            statusDiv.style.display = 'none';
-                        }, 2000);
-                    } else {
-                        throw new Error(data.message || 'Update failed');
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    // Revert selection
-                    this.value = originalValue;
-                    
-                    // Show error message
-                    statusDiv.innerHTML = '<i class="fas fa-exclamation-circle"></i> Failed';
-                    statusDiv.className = 'platform-update-status text-danger small mt-1';
-                    statusDiv.style.display = 'block';
-                    
-                    setTimeout(() => {
-                        statusDiv.style.display = 'none';
-                    }, 3000);
-                })
-                .finally(() => {
-                    this.disabled = false;
-                });
-            });
-        });
     </script>
     @endpush
 </x-app-layout>

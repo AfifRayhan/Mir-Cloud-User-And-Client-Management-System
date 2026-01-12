@@ -7,7 +7,14 @@ use App\Models\Platform;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\DB;
 use Mostafaznv\PdfOptimizer\Laravel\Facade\PdfOptimizer;
+use App\Models\Task;
+use App\Models\ResourceUpgradation;
+use App\Models\ResourceDowngradation;
+use App\Models\Summary;
+use App\Models\Service;
+use App\Models\CustomerStatus;
 
 class CustomerController extends Controller
 {
@@ -160,6 +167,11 @@ class CustomerController extends Controller
             'processed_by' => Auth::id(),
         ]);
 
+        // Check for platform change and trigger automated tasks
+        if ($customer->wasChanged('platform_id')) {
+            $this->handlePlatformChangeMigration($customer, $customer->getOriginal('platform_id'), $customer->platform_id);
+        }
+
         return redirect()->route('customers.index')
             ->with('success', 'Customer updated successfully.');
     }
@@ -246,5 +258,168 @@ class CustomerController extends Controller
 
         return redirect()->route('customers.index')
             ->with('success', "{$customerName} has been deleted successfully.");
+    }
+
+    /**
+     * Handle automated task creation for platform migration.
+     */
+    use \App\Traits\CalculatesDeadlines;
+
+    /**
+     * Handle automated task creation for platform migration.
+     */
+    protected function handlePlatformChangeMigration(Customer $customer, $oldPlatformId, $newPlatformId)
+    {
+        // Get all summaries (current resources) for the customer
+        // We need to fetch services belonging to the OLD platform to get correct current usage
+        // Note: The Summary model links to Service. Even if we changed platform_id on customer,
+        // the existing summary rows still point to the old service_ids.
+        $summaries = Summary::where('customer_id', $customer->id)
+            ->where(function ($q) {
+                $q->where('test_quantity', '>', 0)
+                  ->orWhere('billable_quantity', '>', 0);
+            })
+            ->with('service') // Eager load service to get names
+            ->get();
+
+        if ($summaries->isEmpty()) {
+            return;
+        }
+
+        $testSummaries = $summaries->where('test_quantity', '>', 0);
+        $billableSummaries = $summaries->where('billable_quantity', '>', 0);
+        
+        // Calculate deadline: 8 working hours from now
+        $deadline = $this->calculateDeadline(now());
+
+        DB::transaction(function () use ($customer, $testSummaries, $billableSummaries, $newPlatformId, $deadline) {
+            // Task Status ID 1 = Proceed from KAM (Pending Tech Action)
+            $pendingTaskStatusId = 1; 
+
+            // Handle Test Resources (Status ID 2 = Test)
+            if ($testSummaries->isNotEmpty()) {
+                $this->createMigrationTasks($customer, $testSummaries, 2, 'test_quantity', $newPlatformId, $pendingTaskStatusId, $deadline);
+            }
+
+            // Handle Billable Resources (Status ID 1 = Billable)
+            if ($billableSummaries->isNotEmpty()) {
+                $this->createMigrationTasks($customer, $billableSummaries, 1, 'billable_quantity', $newPlatformId, $pendingTaskStatusId, $deadline);
+            }
+        });
+    }
+
+    protected function createMigrationTasks(Customer $customer, $summaries, $statusId, $quantityColumn, $newPlatformId, $taskStatusId, $deadline)
+    {
+        // 1. Upgrade Task (Re-allocation)
+        $upgrade = ResourceUpgradation::create([
+            'customer_id' => $customer->id,
+            'status_id' => $statusId,
+            'activation_date' => now(),
+            'task_status_id' => $taskStatusId,
+            'inserted_by' => Auth::id(),
+            'assignment_datetime' => now(),
+            'deadline_datetime' => $deadline,
+        ]);
+
+        // Fetch all services for the new platform to match against
+        $newPlatformServices = Service::where('platform_id', $newPlatformId)->get();
+
+        $hasUpgradeDetails = false;
+        foreach ($summaries as $summary) {
+            $oldService = $summary->service;
+            if (!$oldService) continue;
+
+            $oldServiceName = $oldService->service_name;
+            
+            // normalize function for comparison
+            $normalize = function ($name) {
+                $name = strtolower(trim($name));
+                return ($name === 'nvme') ? 'ssd' : $name;
+            };
+
+            $normalizedOldName = $normalize($oldServiceName);
+
+            // Find matching service on new platform
+            $newService = $newPlatformServices->first(function ($service) use ($normalize, $normalizedOldName) {
+                return $normalize($service->service_name) === $normalizedOldName;
+            });
+            
+            if ($newService) {
+                $currentQty = $summary->{$quantityColumn};
+                $upgrade->details()->create([
+                    'service_id' => $newService->id,
+                    'quantity' => $currentQty, // New Total (0 + current)
+                    'upgrade_amount' => $currentQty, // Increase by current
+                ]);
+                $hasUpgradeDetails = true;
+            }
+        }
+
+        // Fetch Pro-Tech users for email notification
+        $proTechUsers = \App\Models\User::whereHas('role', function ($q) {
+            $q->where('role_name', 'pro-tech');
+        })->get();
+        $sender = Auth::user();
+
+        if ($hasUpgradeDetails) {
+            $upgradeTask = Task::create([
+                'customer_id' => $customer->id,
+                'status_id' => $statusId,
+                'task_status_id' => $taskStatusId,
+                'allocation_type' => 'upgrade',
+                'resource_upgradation_id' => $upgrade->id,
+                'assigned_by' => Auth::id(),
+                'activation_date' => now(),
+                'assignment_datetime' => now(),
+                'deadline_datetime' => $deadline,
+            ]);
+
+            // Send email to Pro-Techs
+            foreach ($proTechUsers as $proTech) {
+                \Illuminate\Support\Facades\Mail::to($proTech->email)
+                    ->send(new \App\Mail\RecommendationSubmissionEmail($upgradeTask, $sender, 'upgrade'));
+            }
+        } else {
+            // Cleanup empty upgrade if no services matched
+             $upgrade->delete();
+        }
+
+        // 2. Dismantle Task (Downgrade)
+        $downgrade = ResourceDowngradation::create([
+            'customer_id' => $customer->id,
+            'status_id' => $statusId,
+            'activation_date' => now(), // Assume immediate effect
+            'task_status_id' => $taskStatusId, // Unused in logic but good for record
+            'inserted_by' => Auth::id(),
+            'assignment_datetime' => now(),
+            'deadline_datetime' => $deadline,
+        ]);
+
+        foreach ($summaries as $summary) {
+            $currentQty = $summary->{$quantityColumn};
+            $downgrade->details()->create([
+                'service_id' => $summary->service_id,
+                'quantity' => 0, // New Total (current - current)
+                'downgrade_amount' => $currentQty, // Remove all
+            ]);
+        }
+
+        $downgradeTask = Task::create([
+            'customer_id' => $customer->id,
+            'status_id' => $statusId,
+            'task_status_id' => $taskStatusId,
+            'allocation_type' => 'downgrade',
+            'resource_downgradation_id' => $downgrade->id,
+            'assigned_by' => Auth::id(),
+            'activation_date' => now(),
+            'assignment_datetime' => now(),
+            'deadline_datetime' => $deadline,
+        ]);
+
+        // Send email to Pro-Techs
+        foreach ($proTechUsers as $proTech) {
+            \Illuminate\Support\Facades\Mail::to($proTech->email)
+                ->send(new \App\Mail\RecommendationSubmissionEmail($downgradeTask, $sender, 'downgrade'));
+        }
     }
 }

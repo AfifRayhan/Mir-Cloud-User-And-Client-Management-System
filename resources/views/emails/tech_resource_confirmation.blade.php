@@ -37,7 +37,16 @@
                 </tr>
                 <tr>
                     <td style="border:1px solid #ddd; background:#e0e7ff; font-weight:bold;">Platform</td>
-                    <td style="border:1px solid #ddd; padding:8px;">{{ optional($task->customer->platform)->platform_name ?? 'N/A' }}</td>
+                    @php
+                        $platformName = optional($task->customer->platform)->platform_name ?? 'N/A';
+                        if ($task->allocation_type === 'downgrade' && $task->resourceDowngradation) {
+                             $firstDetail = $task->resourceDowngradation->details->first();
+                             if ($firstDetail && $firstDetail->service && $firstDetail->service->platform) {
+                                 $platformName = $firstDetail->service->platform->platform_name;
+                             }
+                        }
+                    @endphp
+                    <td style="border:1px solid #ddd; padding:8px;">{{ $platformName }}</td>
                 </tr>
                 @if($task->allocation_type === 'upgrade' && $task->resourceUpgradation)
                 <tr>

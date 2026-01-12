@@ -74,10 +74,18 @@
                                     <select id="customer_id" name="customer_id" class="form-select form-select-lg @error('customer_id') is-invalid @enderror" required>
                                         <option value="" disabled selected>Choose a customer</option>
                                         @foreach($customers as $customer)
+                                            @php
+                                                $roleName = $customer->submitter && $customer->submitter->role ? $customer->submitter->role->role_name : 'N/A';
+                                                if (strtolower((string)$roleName) === 'kam') {
+                                                    $roleName = 'KAM';
+                                                } elseif (strtolower((string)$roleName) === 'pro-kam') {
+                                                    $roleName = 'Pro-KAM';
+                                                }
+                                            @endphp
                                             <option value="{{ $customer->id }}" 
                                                     data-is-new="{{ $customer->is_new ? 'true' : 'false' }}"
                                                     data-kam-name="{{ $customer->submitter ? $customer->submitter->name : 'N/A' }}"
-                                                    data-kam-role="{{ $customer->submitter && $customer->submitter->role ? $customer->submitter->role->role_name : 'N/A' }}">
+                                                    data-kam-role="{{ $roleName }}">
                                                 {{ $customer->customer_name }}
                                             </option>
                                         @endforeach

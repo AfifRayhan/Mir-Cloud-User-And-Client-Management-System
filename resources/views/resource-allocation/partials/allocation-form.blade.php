@@ -441,7 +441,17 @@
                                                 class="form-control resource-alloc-stepper-input transfer-input" 
                                                 min="0" 
                                                 @php
+                                                    // Use Summary table for max value to respect available resources
+                                                    // If summaries passed from controller
+                                                    if (isset($summaries)) {
+                                                        $summary = $summaries->get($service->id);
+                                                        $summaryTest = $summary->test_quantity ?? 0;
+                                                        $summaryBillable = $summary->billable_quantity ?? 0;
+                                                        $maxAllowed = $transferType === 'test_to_billable' ? $summaryTest : $summaryBillable;
+                                                    } else {
+                                                        // Fallback to history (should not happen with new controller)
                                                     $maxAllowed = $transferType === 'test_to_billable' ? $currentTestValue : $currentBillableValue;
+                                                    }
                                                 @endphp
                                                 max="{{ $maxAllowed }}"
                                                 value="0"

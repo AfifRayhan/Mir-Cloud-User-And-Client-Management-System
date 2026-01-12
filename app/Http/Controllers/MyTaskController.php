@@ -14,7 +14,7 @@ class MyTaskController extends Controller
      */
     public function index()
     {
-        $tasks = Task::with(['customer', 'status', 'assignedBy', 'resourceUpgradation.details.service', 'resourceDowngradation.details.service'])
+        $tasks = Task::with(['customer.platform', 'status', 'assignedBy', 'resourceUpgradation.details.service', 'resourceDowngradation.details.service'])
             ->leftJoin('resource_upgradations', 'tasks.resource_upgradation_id', '=', 'resource_upgradations.id')
             ->leftJoin('resource_downgradations', 'tasks.resource_downgradation_id', '=', 'resource_downgradations.id')
             ->where('tasks.assigned_to', Auth::id())
@@ -24,9 +24,7 @@ class MyTaskController extends Controller
             ->select('tasks.*')
             ->paginate(10);
 
-        $platforms = \App\Models\Platform::all();
-
-        return view('my-tasks.index', compact('tasks', 'platforms'));
+        return view('my-tasks.index', compact('tasks'));
     }
 
     /**
@@ -62,29 +60,7 @@ class MyTaskController extends Controller
         return view('my-tasks.show', compact('task'));
     }
 
-    /**
-     * Update the platform for a task's customer
-     */
-    public function updatePlatform(Request $request, Task $task)
-    {
-        if ($task->assigned_to !== Auth::id() && ! Auth::user()->isAdmin()) {
-            return response()->json(['error' => 'Unauthorized'], 403);
-        }
 
-        $validated = $request->validate([
-            'platform_id' => 'required|exists:platforms,id',
-        ]);
-
-        $task->customer->update([
-            'platform_id' => $validated['platform_id'],
-        ]);
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Platform updated successfully.',
-            'platform_name' => $task->customer->platform->platform_name,
-        ]);
-    }
 
     /**
      * Mark task as complete with VDC assignment
@@ -230,16 +206,22 @@ class MyTaskController extends Controller
 
         // Get all services and current resources (which now returns independent pools)
         $resources = $customer->getCurrentResources();
-        $services = \App\Models\Service::where('platform_id', $customer->platform_id)->get();
+        
+        // fetch services on current platform
+        $platformServiceIds = \App\Models\Service::where('platform_id', $customer->platform_id)->pluck('id')->toArray();
+        
+        // Identify all service IDs involved (from current platform OR from resource history)
+        // This ensures that if a resource was on an old platform (and is now 0), we still update its summary row to 0
+        $allServiceIds = array_unique(array_merge($platformServiceIds, array_keys($resources)));
 
-        foreach ($services as $service) {
-            $pool = $resources[$service->id] ?? ['test' => 0, 'billable' => 0];
+        foreach ($allServiceIds as $serviceId) {
+            $pool = $resources[$serviceId] ?? ['test' => 0, 'billable' => 0];
 
             // Upsert summary record with separate quantity columns
             \App\Models\Summary::updateOrCreate(
                 [
                     'customer_id' => $customerId,
-                    'service_id' => $service->id,
+                    'service_id' => $serviceId,
                 ],
                 [
                     'test_quantity' => $pool['test'],

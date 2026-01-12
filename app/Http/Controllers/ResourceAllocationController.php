@@ -150,6 +150,11 @@ class ResourceAllocationController extends Controller
             ? $customerActivationDate->format('Y-m-d')
             : now()->format('Y-m-d');
 
+        // Fetch summaries for transfer validation and display
+        $summaries = \App\Models\Summary::where('customer_id', $customer->id)
+            ->get()
+            ->keyBy('service_id');
+
         $responseData = [
             'html' => view('resource-allocation.partials.allocation-form', compact(
                 'customer',
@@ -179,6 +184,13 @@ class ResourceAllocationController extends Controller
 
     public function storeAllocation(Request $request, Customer $customer)
     {
+        // Fetch services to map IDs to Names for validation attributes
+        $services = \App\Models\Service::where('platform_id', $customer->platform_id)->get();
+        $attributes = [];
+        foreach ($services as $service) {
+            $attributes['services.'.$service->id] = $service->service_name;
+        }
+
         $validated = $request->validate([
             'action_type' => 'required|in:upgrade,downgrade,transfer',
             'status_id' => 'required_if:action_type,upgrade,downgrade|exists:customer_statuses,id',
@@ -188,7 +200,7 @@ class ResourceAllocationController extends Controller
             'inactivation_date' => 'nullable|date',
             'services' => 'required|array',
             'services.*' => 'nullable|integer|min:0',
-        ]);
+        ], [], $attributes);
 
         $actionType = $validated['action_type'];
         $statusId = $validated['status_id'] ?? null;
@@ -507,63 +519,6 @@ class ResourceAllocationController extends Controller
         });
     }
 
-    /**
-     * Calculate deadline based on working hours (Sun-Thu, 9:30 AM - 5:30 PM).
-     * Duration: 8 hours.
-     *
-     * @return \Carbon\Carbon
-     */
-    private function calculateDeadline(\Carbon\Carbon $startTime)
-    {
-        $start = $startTime->copy();
-        $remainingMinutes = 8 * 60; // 8 hours in minutes
-
-        $workingDayStart = 9 * 60 + 30; // 9:30 AM in minutes
-        $workingDayEnd = 17 * 60 + 30;  // 5:30 PM in minutes
-        $workingDayDuration = $workingDayEnd - $workingDayStart; // 480 minutes (8 hours)
-
-        while ($remainingMinutes > 0) {
-            // Check if current day is a working day (Sunday=0, Thursday=4)
-            // Friday=5, Saturday=6 are off days
-            $isWorkingDay = ! in_array($start->dayOfWeek, [5, 6]); // 5=Friday, 6=Saturday
-
-            if (! $isWorkingDay) {
-                // Move to next day 9:30 AM
-                $start->addDay()->setTime(9, 30, 0);
-
-                continue;
-            }
-
-            // Current time in minutes from start of day
-            $currentTimeMinutes = $start->hour * 60 + $start->minute;
-
-            // If current time is past working hours, move to next working day
-            if ($currentTimeMinutes >= $workingDayEnd) {
-                $start->addDay()->setTime(9, 30, 0);
-
-                continue;
-            }
-
-            // If current time is before working hours, set to working hours start
-            if ($currentTimeMinutes < $workingDayStart) {
-                $start->setTime(9, 30, 0);
-                $currentTimeMinutes = $workingDayStart;
-            }
-
-            // Calculate available minutes in current day
-            $availableMinutes = $workingDayEnd - $currentTimeMinutes;
-
-            if ($remainingMinutes <= $availableMinutes) {
-                // Can finish in this day
-                $start->addMinutes($remainingMinutes);
-                $remainingMinutes = 0;
-            } else {
-                // Use all available minutes and move to next day
-                $remainingMinutes -= $availableMinutes;
-                $start->addDay()->setTime(9, 30, 0);
-            }
-        }
-
-        return $start;
-    }
+    use \App\Traits\CalculatesDeadlines;
 }
+

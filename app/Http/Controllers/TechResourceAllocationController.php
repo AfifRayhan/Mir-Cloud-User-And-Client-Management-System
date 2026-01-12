@@ -116,6 +116,13 @@ class TechResourceAllocationController extends Controller
 
     public function storeAllocation(Request $request, Customer $customer)
     {
+        // Fetch services to map IDs to Names for validation attributes
+        $services = Service::where('platform_id', $customer->platform_id)->get();
+        $attributes = [];
+        foreach ($services as $service) {
+            $attributes['services.'.$service->id] = $service->service_name;
+        }
+
         $validated = $request->validate([
             'action_type' => 'required|in:upgrade,downgrade',
             'status_id' => 'required|exists:customer_statuses,id',
@@ -123,7 +130,7 @@ class TechResourceAllocationController extends Controller
             'inactivation_date' => 'nullable|date',
             'services' => 'required|array',
             'services.*' => 'nullable|integer|min:0',
-        ]);
+        ], [], $attributes);
 
         $actionType = $validated['action_type'];
         $statusId = $validated['status_id'];

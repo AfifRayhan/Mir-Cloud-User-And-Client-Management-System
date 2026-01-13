@@ -26,9 +26,19 @@
     <div class="row mb-5">
         <div class="col-12">
             <div class="custom-kam-task-management-header">
-                <div>
-                    <h1 class="custom-kam-task-management-title fw-bold mb-2">KAM Task Management</h1>
-                    <p class="custom-kam-task-management-subtitle text-muted">Manage unassigned tasks and resource requests</p>
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h1 class="custom-kam-task-management-title fw-bold mb-2">KAM Task Management</h1>
+                        <p class="custom-kam-task-management-subtitle text-muted">Manage unassigned tasks and resource requests</p>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <a href="{{ route('kam-task-management.export', request()->query()) }}" class="btn btn-success">
+                            <i class="fas fa-file-excel me-2"></i>Export Task Report
+                        </a>
+                        <a href="{{ route('kam-task-management.export-customers', request()->query()) }}" class="btn btn-primary">
+                            <i class="fas fa-users me-2"></i>Export Customer Report
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>
@@ -128,7 +138,7 @@
                                     <i class="fas fa-building me-2"></i>Customer
                                 </th>
                                 <th class="custom-kam-task-management-table-header">
-                                    <i class="fas fa-user-edit me-2"></i>Inserted By
+                                    <i class="fas fa-fingerprint me-2"></i>Task ID
                                 </th>
                                 <th class="custom-kam-task-management-table-header">
                                     <i class="fas fa-server me-2"></i>Platform
@@ -169,11 +179,6 @@
                                 <tr class="custom-kam-task-management-table-row {{ $rowClass }}">
                                     <td class="custom-kam-task-management-table-cell">
                                         <strong>{{ $task->customer->customer_name }}</strong>
-                                        @if($task->task_id)
-                                            <div class="text-muted small mt-1" style="opacity: 0.7; font-size: 0.75rem;">
-                                                Task ID: {{ $task->task_id }}
-                                            </div>
-                                        @endif
                                         @if($task->has_resource_conflict)
                                             <div class="mt-1">
                                                 <span class="badge bg-danger">
@@ -183,13 +188,10 @@
                                         @endif
                                     </td>
                                     <td class="custom-kam-task-management-table-cell">
-                                        @if($task->insertedBy)
-                                            <div class="d-flex align-items-center">
-                                                <i class="fas fa-user-circle text-secondary me-2"></i>
-                                                {{ $task->insertedBy->name }}
-                                            </div>
+                                        @if($task->task_id)
+                                            <span class="text-nowrap">{{ $task->task_id }}</span>
                                         @else
-                                            <span class="text-muted">System</span>
+                                            <span class="text-muted">N/A</span>
                                         @endif
                                     </td>
                                     <td class="custom-kam-task-management-table-cell">

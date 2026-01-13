@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Exports\KamCustomerSummaryExport;
+use App\Exports\KamTasksExport;
 use App\Mail\RecommendationSubmissionEmail;
 use App\Models\Customer;
 use App\Models\CustomerStatus;
@@ -16,6 +18,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
+use Maatwebsite\Excel\Facades\Excel;
 
 class KamTaskManagementController extends Controller
 {
@@ -38,6 +41,14 @@ class KamTaskManagementController extends Controller
         // Prioritize specific task if provided (for deep linking)
         if ($request->filled('dtid')) {
             $query->orderByRaw('CASE WHEN tasks.id = ? THEN 0 ELSE 1 END', [$request->dtid]);
+        }
+
+        // Filter tasks for KAMs to show only those they created (assigned by themselves)
+        if (! Auth::user()->isAdmin() && ! Auth::user()->isProKam()) {
+            $query->where(function ($q) {
+                $q->where('resource_upgradations.inserted_by', Auth::id())
+                    ->orWhere('resource_downgradations.inserted_by', Auth::id());
+            });
         }
 
         $query->select('tasks.*');
@@ -69,6 +80,94 @@ class KamTaskManagementController extends Controller
         $services = Service::all();
 
         return view('task-management.kam-index', compact('tasks', 'services'));
+    }
+
+    /**
+     * Export tasks to Excel
+     */
+    public function export(Request $request)
+    {
+        // Check authorization
+        if (! Auth::user()->isAdmin() && ! Auth::user()->isProKam() && ! Auth::user()->isKam()) {
+            abort(403, 'Unauthorized access.');
+        }
+
+        $query = Task::with(['customer', 'status', 'assignedTo', 'resourceUpgradation.details.service', 'resourceDowngradation.details.service'])
+            ->leftJoin('resource_upgradations', 'tasks.resource_upgradation_id', '=', 'resource_upgradations.id')
+            ->leftJoin('resource_downgradations', 'tasks.resource_downgradation_id', '=', 'resource_downgradations.id')
+            ->orderByRaw('CASE WHEN tasks.assigned_to IS NULL THEN 0 WHEN tasks.completed_at IS NULL THEN 1 ELSE 2 END')
+            ->orderByRaw('COALESCE(resource_upgradations.created_at, resource_downgradations.created_at) ASC');
+
+        // Filter tasks for KAMs to show only those they created (assigned by themselves)
+        if (! Auth::user()->isAdmin() && ! Auth::user()->isProKam()) {
+            $query->where(function ($q) {
+                $q->where('resource_upgradations.inserted_by', Auth::id())
+                    ->orWhere('resource_downgradations.inserted_by', Auth::id());
+            });
+        }
+
+        // Apply filters (same as index)
+        if ($request->filled('allocation_type')) {
+            $query->where('allocation_type', $request->allocation_type);
+        }
+
+        if ($request->filled('assigned_status')) {
+            if ($request->assigned_status === 'pending') {
+                $query->whereNull('assigned_to');
+            } elseif ($request->assigned_status === 'assigned') {
+                $query->whereNotNull('assigned_to');
+            }
+        }
+
+        if ($request->filled('completion_status')) {
+            if ($request->completion_status === 'completed') {
+                $query->whereNotNull('completed_at');
+            } elseif ($request->completion_status === 'incomplete') {
+                $query->whereNull('completed_at');
+            }
+        }
+
+        $tasks = $query->select('tasks.*')->get();
+
+        $userName = str_replace(' ', '_', Auth::user()->name);
+        $dateTime = now()->format('Ymd_His');
+        $prefix = Auth::user()->isProKam() ? 'Pro-KAM' : 'KAM';
+        $fileName = "{$prefix}_Task_Summary_{$userName}-{$dateTime}.xlsx";
+
+        return Excel::download(new KamTasksExport($tasks), $fileName);
+    }
+
+    /**
+     * Export customer resource summaries to Excel
+     */
+    public function exportCustomers(Request $request)
+    {
+        // Check authorization
+        if (! Auth::user()->isAdmin() && ! Auth::user()->isProKam() && ! Auth::user()->isKam()) {
+            abort(403, 'Unauthorized access.');
+        }
+
+        $query = Customer::with(['platform']);
+
+        // Filter customers for KAMs to show only those they have interacted with
+        if (! Auth::user()->isAdmin() && ! Auth::user()->isProKam()) {
+            $query->where(function ($q) {
+                $q->whereHas('resourceUpgradations', function ($sq) {
+                    $sq->where('inserted_by', Auth::id());
+                })->orWhereHas('resourceDowngradations', function ($sq) {
+                    $sq->where('inserted_by', Auth::id());
+                });
+            });
+        }
+
+        $customers = $query->get();
+
+        $userName = str_replace(' ', '_', Auth::user()->name);
+        $dateTime = now()->format('Ymd_His');
+        $prefix = Auth::user()->isProKam() ? 'Pro-KAM' : 'KAM';
+        $fileName = "{$prefix}_Customer_Summary_{$userName}-{$dateTime}.xlsx";
+
+        return Excel::download(new KamCustomerSummaryExport($customers), $fileName);
     }
 
     /**

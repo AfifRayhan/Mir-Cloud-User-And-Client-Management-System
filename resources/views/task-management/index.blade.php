@@ -434,8 +434,7 @@
             if (deepTaskId) {
                 console.log('Deep link detected:', { dtid: deepTaskId, da: deepAction });
                 
-                // Clear query params immediately to prevent reopening on reload
-                // We do this via replaceState so it doesn't trigger a reload
+                // Clear query params immediately via replaceState to prevent reopening on reload
                 const newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
                 window.history.replaceState({path: newUrl}, '', newUrl);
 

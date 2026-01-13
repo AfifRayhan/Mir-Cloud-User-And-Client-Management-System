@@ -4,17 +4,16 @@ namespace App\Http\Controllers;
 
 use App\Models\Customer;
 use App\Models\Platform;
+use App\Models\ResourceDowngradation;
+use App\Models\ResourceUpgradation;
+use App\Models\Service;
+use App\Models\Summary;
+use App\Models\Task;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Mostafaznv\PdfOptimizer\Laravel\Facade\PdfOptimizer;
-use App\Models\Task;
-use App\Models\ResourceUpgradation;
-use App\Models\ResourceDowngradation;
-use App\Models\Summary;
-use App\Models\Service;
-use App\Models\CustomerStatus;
 
 class CustomerController extends Controller
 {
@@ -277,7 +276,7 @@ class CustomerController extends Controller
         $summaries = Summary::where('customer_id', $customer->id)
             ->where(function ($q) {
                 $q->where('test_quantity', '>', 0)
-                  ->orWhere('billable_quantity', '>', 0);
+                    ->orWhere('billable_quantity', '>', 0);
             })
             ->with('service') // Eager load service to get names
             ->get();
@@ -288,13 +287,13 @@ class CustomerController extends Controller
 
         $testSummaries = $summaries->where('test_quantity', '>', 0);
         $billableSummaries = $summaries->where('billable_quantity', '>', 0);
-        
+
         // Calculate deadline: 8 working hours from now
         $deadline = $this->calculateDeadline(now());
 
         DB::transaction(function () use ($customer, $testSummaries, $billableSummaries, $newPlatformId, $deadline) {
             // Task Status ID 1 = Proceed from KAM (Pending Tech Action)
-            $pendingTaskStatusId = 1; 
+            $pendingTaskStatusId = 1;
 
             // Handle Test Resources (Status ID 2 = Test)
             if ($testSummaries->isNotEmpty()) {
@@ -327,13 +326,16 @@ class CustomerController extends Controller
         $hasUpgradeDetails = false;
         foreach ($summaries as $summary) {
             $oldService = $summary->service;
-            if (!$oldService) continue;
+            if (! $oldService) {
+                continue;
+            }
 
             $oldServiceName = $oldService->service_name;
-            
+
             // normalize function for comparison
             $normalize = function ($name) {
                 $name = strtolower(trim($name));
+
                 return ($name === 'nvme') ? 'ssd' : $name;
             };
 
@@ -343,7 +345,7 @@ class CustomerController extends Controller
             $newService = $newPlatformServices->first(function ($service) use ($normalize, $normalizedOldName) {
                 return $normalize($service->service_name) === $normalizedOldName;
             });
-            
+
             if ($newService) {
                 $currentQty = $summary->{$quantityColumn};
                 $upgrade->details()->create([
@@ -381,7 +383,7 @@ class CustomerController extends Controller
             }
         } else {
             // Cleanup empty upgrade if no services matched
-             $upgrade->delete();
+            $upgrade->delete();
         }
 
         // 2. Dismantle Task (Downgrade)

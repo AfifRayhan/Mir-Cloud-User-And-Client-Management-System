@@ -10,7 +10,6 @@ trait CalculatesDeadlines
      * Calculate deadline based on working hours (Sun-Thu, 9:30 AM - 5:30 PM).
      * Duration: 8 hours.
      *
-     * @param Carbon $startTime
      * @return Carbon
      */
     protected function calculateDeadline(Carbon $startTime)

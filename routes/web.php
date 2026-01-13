@@ -81,8 +81,9 @@ Route::middleware('auth')->group(function () {
         Route::post('task-management/{task}/assign', [\App\Http\Controllers\TaskManagementController::class, 'assign'])->name('task-management.assign');
     });
 
-    // KAM Task Management (Admin, KAM, Pro-KAM)
     Route::middleware('role:admin,kam,pro-kam')->group(function () {
+        Route::get('kam-task-management/export', [\App\Http\Controllers\KamTaskManagementController::class, 'export'])->name('kam-task-management.export');
+        Route::get('kam-task-management/export-customers', [\App\Http\Controllers\KamTaskManagementController::class, 'exportCustomers'])->name('kam-task-management.export-customers');
         Route::get('kam-task-management', [\App\Http\Controllers\KamTaskManagementController::class, 'index'])->name('kam-task-management.index');
         Route::get('kam-task-management/{task}/details', [\App\Http\Controllers\KamTaskManagementController::class, 'getDetails'])->name('kam-task-management.details');
         Route::put('kam-task-management/{task}', [\App\Http\Controllers\KamTaskManagementController::class, 'update'])->name('kam-task-management.update');

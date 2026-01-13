@@ -60,8 +60,6 @@ class MyTaskController extends Controller
         return view('my-tasks.show', compact('task'));
     }
 
-
-
     /**
      * Mark task as complete with VDC assignment
      */
@@ -206,10 +204,10 @@ class MyTaskController extends Controller
 
         // Get all services and current resources (which now returns independent pools)
         $resources = $customer->getCurrentResources();
-        
+
         // fetch services on current platform
         $platformServiceIds = \App\Models\Service::where('platform_id', $customer->platform_id)->pluck('id')->toArray();
-        
+
         // Identify all service IDs involved (from current platform OR from resource history)
         // This ensures that if a resource was on an old platform (and is now 0), we still update its summary row to 0
         $allServiceIds = array_unique(array_merge($platformServiceIds, array_keys($resources)));

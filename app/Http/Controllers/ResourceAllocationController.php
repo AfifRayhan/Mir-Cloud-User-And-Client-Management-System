@@ -219,36 +219,6 @@ class ResourceAllocationController extends Controller
             ], 422);
         }
 
-        // SYNC VALIDATION: Block allocation if resources are out of sync (incomplete tasks exist)
-        // NOTE: Transfers are excluded - they use quantity validation instead
-        if ($actionType === 'upgrade' || $actionType === 'downgrade') {
-            $currentHistory = $customer->getCurrentResources();
-            $summaries = \App\Models\Summary::where('customer_id', $customer->id)
-                ->get()
-                ->keyBy('service_id');
-
-            $isOutOfSync = false;
-
-            foreach ($currentHistory as $serviceId => $pools) {
-                $summary = $summaries->get($serviceId);
-                $summaryTest = $summary->test_quantity ?? 0;
-                $summaryBillable = $summary->billable_quantity ?? 0;
-
-                if ($pools['test'] != $summaryTest || $pools['billable'] != $summaryBillable) {
-                    $isOutOfSync = true;
-                    break;
-                }
-            }
-
-            if ($isOutOfSync) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'The pre-requisite task has not been completed',
-                    'errors' => ['sync' => ['The pre-requisite task has not been completed']],
-                ], 422);
-            }
-        }
-
         // ADDITIONAL VALIDATION FOR TRANSFERS: Check if move amount exceeds available quantity
         if ($actionType === 'transfer') {
             $transferType = $validated['transfer_type'];
@@ -521,4 +491,3 @@ class ResourceAllocationController extends Controller
 
     use \App\Traits\CalculatesDeadlines;
 }
-

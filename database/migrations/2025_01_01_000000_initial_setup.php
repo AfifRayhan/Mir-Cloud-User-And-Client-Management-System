@@ -316,7 +316,7 @@ return new class extends Migration
         Schema::dropIfExists('resource_upgradation_details');
         Schema::dropIfExists('resource_upgradations');
         Schema::dropIfExists('customers');
-        
+
         Schema::table('users', function (Blueprint $table) {
             $table->dropForeign(['role_id']);
             $table->dropForeign(['department_id']);

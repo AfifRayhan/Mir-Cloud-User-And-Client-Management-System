@@ -32,11 +32,12 @@ class KamTaskManagementController extends Controller
             abort(403, 'Unauthorized access.');
         }
 
-        $query = Task::with(['customer', 'status', 'assignedTo', 'resourceUpgradation.details.service', 'resourceDowngradation.details.service'])
+        $query = Task::with(['customer', 'status', 'assignedTo', 'resourceUpgradation.details.service', 'resourceDowngradation.details.service', 'resourceTransfer.details.service'])
             ->leftJoin('resource_upgradations', 'tasks.resource_upgradation_id', '=', 'resource_upgradations.id')
             ->leftJoin('resource_downgradations', 'tasks.resource_downgradation_id', '=', 'resource_downgradations.id')
+            ->leftJoin('resource_transfers', 'tasks.resource_transfer_id', '=', 'resource_transfers.id')
             ->orderByRaw('CASE WHEN tasks.assigned_to IS NULL THEN 0 WHEN tasks.completed_at IS NULL THEN 1 ELSE 2 END')
-            ->orderByRaw('COALESCE(resource_upgradations.created_at, resource_downgradations.created_at) ASC');
+            ->orderByRaw('COALESCE(resource_upgradations.created_at, resource_downgradations.created_at, resource_transfers.created_at) ASC');
 
         // Prioritize specific task if provided (for deep linking)
         if ($request->filled('dtid')) {
@@ -47,7 +48,8 @@ class KamTaskManagementController extends Controller
         if (! Auth::user()->isAdmin() && ! Auth::user()->isProKam()) {
             $query->where(function ($q) {
                 $q->where('resource_upgradations.inserted_by', Auth::id())
-                    ->orWhere('resource_downgradations.inserted_by', Auth::id());
+                    ->orWhere('resource_downgradations.inserted_by', Auth::id())
+                    ->orWhere('resource_transfers.inserted_by', Auth::id());
             });
         }
 
@@ -92,11 +94,12 @@ class KamTaskManagementController extends Controller
             abort(403, 'Unauthorized access.');
         }
 
-        $query = Task::with(['customer', 'status', 'assignedTo', 'resourceUpgradation.details.service', 'resourceDowngradation.details.service'])
+        $query = Task::with(['customer', 'status', 'assignedTo', 'resourceUpgradation.details.service', 'resourceDowngradation.details.service', 'resourceTransfer.details.service'])
             ->leftJoin('resource_upgradations', 'tasks.resource_upgradation_id', '=', 'resource_upgradations.id')
             ->leftJoin('resource_downgradations', 'tasks.resource_downgradation_id', '=', 'resource_downgradations.id')
+            ->leftJoin('resource_transfers', 'tasks.resource_transfer_id', '=', 'resource_transfers.id')
             ->orderByRaw('CASE WHEN tasks.assigned_to IS NULL THEN 0 WHEN tasks.completed_at IS NULL THEN 1 ELSE 2 END')
-            ->orderByRaw('COALESCE(resource_upgradations.created_at, resource_downgradations.created_at) ASC');
+            ->orderByRaw('COALESCE(resource_upgradations.created_at, resource_downgradations.created_at, resource_transfers.created_at) ASC');
 
         // Filter tasks for KAMs to show only those they created (assigned by themselves)
         if (! Auth::user()->isAdmin() && ! Auth::user()->isProKam()) {
@@ -147,7 +150,17 @@ class KamTaskManagementController extends Controller
             abort(403, 'Unauthorized access.');
         }
 
-        $query = Customer::with(['platform']);
+        $query = Customer::where(function ($q) {
+            $q->whereHas('resourceUpgradations', function ($sq) {
+                $sq->whereHas('task', function ($ssq) {
+                    $ssq->whereNotNull('completed_at');
+                });
+            })->orWhereHas('resourceDowngradations', function ($sq) {
+                $sq->whereHas('task', function ($ssq) {
+                    $ssq->whereNotNull('completed_at');
+                });
+            });
+        })->with(['platform']);
 
         // Filter customers for KAMs to show only those they have interacted with
         if (! Auth::user()->isAdmin() && ! Auth::user()->isProKam()) {
@@ -180,7 +193,7 @@ class KamTaskManagementController extends Controller
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 
-        $task->load(['customer', 'status', 'assignedTo', 'assignedBy', 'resourceUpgradation.details.service', 'resourceDowngradation.details.service']);
+        $task->load(['customer', 'status', 'assignedTo', 'assignedBy', 'resourceUpgradation.details.service', 'resourceDowngradation.details.service', 'resourceTransfer.details.service']);
 
         // Get all services
         $allServices = Service::where('platform_id', $task->customer->platform_id)->get();

@@ -69,6 +69,12 @@
                                         <i class="fas fa-building me-2"></i>Customer
                                     </th>
                                     <th class="custom-my-task-table-header">
+                                        <i class="fas fa-fingerprint me-2"></i>Task ID
+                                    </th>
+                                    <th class="custom-my-task-table-header">
+                                        <i class="fas fa-user-edit me-2"></i>Inserted By
+                                    </th>
+                                    <th class="custom-my-task-table-header">
                                         <i class="fas fa-server me-2"></i>Platform
                                     </th>
                                     <th class="custom-my-task-table-header">
@@ -86,10 +92,7 @@
                                     <th class="custom-my-task-table-header">
                                         <i class="fas fa-info-circle me-2"></i>Status
                                     </th>
-                                    <th class="custom-my-task-table-header">
-                                        <i class="fas fa-user-tie me-2"></i>Assigned By
-                                    </th>
-                                    <th class="custom-my-task-table-header">
+                                    <th class="custom-my-task-table-header text-center">
                                         <i class="fas fa-cogs me-2"></i>Actions
                                     </th>
                                 </tr>
@@ -99,11 +102,16 @@
                                     <tr class="custom-my-task-table-row {{ $task->completed_at ? 'task-completed' : '' }}" data-task-id="{{ $task->id }}">
                                         <td class="custom-my-task-table-cell">
                                             <strong>{{ $task->customer->customer_name }}</strong>
+                                        </td>
+                                        <td class="custom-my-task-table-cell">
                                             @if($task->task_id)
-                                                <div class="text-muted small mt-1" style="opacity: 0.7; font-size: 0.75rem;">
-                                                    Task ID: {{ $task->task_id }}
-                                                </div>
+                                                <span class="text-nowrap">{{ $task->task_id }}</span>
+                                            @else
+                                                <span class="text-muted">N/A</span>
                                             @endif
+                                        </td>
+                                        <td class="custom-my-task-table-cell">
+                                            {{ $task->insertedBy->name ?? 'System' }}
                                         </td>
                                         <td class="custom-my-task-table-cell">
                                             {{ $task->customer->platform ? $task->customer->platform->platform_name : 'N/A' }}
@@ -172,16 +180,6 @@
                                             @endif
                                         </td>
                                         <td class="custom-my-task-table-cell">
-                                            @if($task->assignedBy)
-                                                <div class="d-flex align-items-center">
-                                                    <i class="fas fa-user-circle text-primary me-2"></i>
-                                                    {{ $task->assignedBy->name }}
-                                                </div>
-                                            @else
-                                                <span class="text-muted">N/A</span>
-                                            @endif
-                                        </td>
-                                        <td class="custom-my-task-table-cell">
                                             <div class="d-flex flex-column gap-1">
                                                 <button class="custom-my-task-action-btn custom-my-task-edit-btn view-task-btn" data-task-id="{{ $task->id }}">
                                                     <i class="fas fa-eye me-1"></i> <span class="btn-text">View</span>
@@ -217,7 +215,7 @@
 
                                     <!-- Expandable details row (hidden by default) -->
                                     <tr class="task-details-row" id="details-{{ $task->id }}" style="display: none;">
-                                        <td colspan="9" class="p-0">
+                                        <td colspan="10" class="p-0">
                                             <div class="task-details-container p-4 bg-light">
                                                 <div class="text-center py-3">
                                                     <div class="spinner-border text-primary" role="status">

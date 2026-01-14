@@ -14,7 +14,9 @@ export default defineConfig({
                 'resources/css/custom-resource-allocation.css',
                 'resources/js/app.js',
                 'resources/js/custom-js-styles.js',
-                'resources/css/custom-tech-resource.css'
+                'resources/css/custom-tech-resource.css',
+                'resources/css/custom-kam-task-management.css',
+                'resources/css/custom-billing-task-management.css'
             ],
             refresh: true,
         }),

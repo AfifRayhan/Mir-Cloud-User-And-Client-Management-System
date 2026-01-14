@@ -49,7 +49,7 @@ class TechResourceAllocationController extends Controller
         }
         $customers = $customers->sortBy('customer_name', SORT_NATURAL | SORT_FLAG_CASE);
 
-        $customerStatuses = CustomerStatus::all();
+        $customerStatuses = CustomerStatus::whereIn('name', ['Test', 'Billable'])->get();
 
         return view('tech-resource-allocation.index', compact('customers', 'customerStatuses'));
     }

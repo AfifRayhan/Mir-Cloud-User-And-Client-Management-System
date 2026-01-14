@@ -17,6 +17,8 @@ class KamCustomerSummaryExport implements FromCollection, ShouldAutoSize, WithHe
 
     protected $allServices;
 
+    protected $rowCount = 0;
+
     public function __construct($customers)
     {
         $this->customers = $customers;
@@ -34,12 +36,6 @@ class KamCustomerSummaryExport implements FromCollection, ShouldAutoSize, WithHe
         $rows = [];
 
         foreach ($this->customers as $customer) {
-            $row = [
-                'Customer ID' => $customer->id,
-                'Customer Name' => $customer->customer_name,
-                'Platform' => $customer->platform->platform_name ?? 'N/A',
-            ];
-
             // Get summaries for this customer
             $summaries = Summary::where('customer_id', $customer->id)
                 ->get()
@@ -47,14 +43,56 @@ class KamCustomerSummaryExport implements FromCollection, ShouldAutoSize, WithHe
                     return $summary->service->service_name;
                 });
 
+            // Determine which statuses have non-zero data
+            $hasTest = false;
+            $hasBillable = false;
+
             foreach ($this->allServices as $service) {
                 $summary = $summaries->get($service->service_name);
-                $quantity = $summary ? ($summary->billable_quantity + $summary->test_quantity) : 0;
-                $row[$service->service_name] = (int) $quantity;
+                if ($summary) {
+                    if ($summary->test_quantity > 0) {
+                        $hasTest = true;
+                    }
+                    if ($summary->billable_quantity > 0) {
+                        $hasBillable = true;
+                    }
+                }
             }
 
-            $rows[] = $row;
+            // Always show at least one row, defaulting to Billable if no data exists
+            $statuses = [];
+            if ($hasTest) {
+                $statuses[] = 'Test';
+            }
+            if ($hasBillable) {
+                $statuses[] = 'Billable';
+            }
+            if (empty($statuses)) {
+                $statuses = ['Billable'];
+            }
+
+            foreach ($statuses as $status) {
+                $row = [
+                    'Customer ID' => $customer->id,
+                    'Customer Name' => $customer->customer_name,
+                    'Platform' => $customer->platform->platform_name ?? 'N/A',
+                    'Status' => $status,
+                ];
+
+                foreach ($this->allServices as $service) {
+                    $summary = $summaries->get($service->service_name);
+                    $quantity = 0;
+                    if ($summary) {
+                        $quantity = ($status === 'Test') ? $summary->test_quantity : $summary->billable_quantity;
+                    }
+                    $row[$service->service_name] = (int) $quantity;
+                }
+
+                $rows[] = $row;
+            }
         }
+
+        $this->rowCount = count($rows);
 
         return collect($rows);
     }
@@ -65,6 +103,7 @@ class KamCustomerSummaryExport implements FromCollection, ShouldAutoSize, WithHe
             'Customer ID',
             'Customer Name',
             'Platform',
+            'Status',
         ];
 
         foreach ($this->allServices as $service) {
@@ -85,7 +124,7 @@ class KamCustomerSummaryExport implements FromCollection, ShouldAutoSize, WithHe
         $sheet->getStyle($headerRange)->getBorders()->getAllBorders()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
 
         // Add borders to all data rows
-        $totalRows = count($this->customers) + 1;
+        $totalRows = $this->rowCount + 1;
         if ($totalRows > 1) {
             $sheet->getStyle('A2:'.$lastColumn.$totalRows)->getBorders()->getAllBorders()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
         }

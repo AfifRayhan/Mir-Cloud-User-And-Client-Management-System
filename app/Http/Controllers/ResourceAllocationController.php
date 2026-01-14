@@ -45,7 +45,7 @@ class ResourceAllocationController extends Controller
         // Re-sort entire collection by modified name so they appear in order
         $customers = $customers->sortBy('customer_name', SORT_NATURAL | SORT_FLAG_CASE);
 
-        $customerStatuses = \App\Models\CustomerStatus::all();
+        $customerStatuses = \App\Models\CustomerStatus::whereIn('name', ['Test', 'Billable'])->get();
 
         return view('resource-allocation.index', compact('customers', 'customerStatuses'));
     }
@@ -388,14 +388,20 @@ class ResourceAllocationController extends Controller
             } elseif ($actionType === 'transfer') {
                 $transferType = $validated['transfer_type'];
                 $testStatus = \App\Models\CustomerStatus::where('name', 'Test')->first();
-                $billableStatus = \App\Models\CustomerStatus::where('name', 'Billable')->first(); // Assuming Billable is the target status
+                $billableStatus = \App\Models\CustomerStatus::where('name', 'Billable')->first();
+
+                // New statuses
+                $testToBillableStatus = \App\Models\CustomerStatus::where('name', 'Test to Billable')->first();
+                $billableToTestStatus = \App\Models\CustomerStatus::where('name', 'Billable to Test')->first();
 
                 if ($transferType === 'test_to_billable') {
                     $statusFromId = $testStatus->id;
                     $statusToId = $billableStatus->id;
+                    $taskStatusIdForTask = $testToBillableStatus->id;
                 } else {
                     $statusFromId = $billableStatus->id;
                     $statusToId = $testStatus->id;
+                    $taskStatusIdForTask = $billableToTestStatus->id;
                 }
 
                 $transfer = \App\Models\ResourceTransfer::create([
@@ -404,6 +410,21 @@ class ResourceAllocationController extends Controller
                     'status_to_id' => $statusToId,
                     'transfer_datetime' => now(),
                     'inserted_by' => \Illuminate\Support\Facades\Auth::id(),
+                ]);
+
+                // Create Task for transfer
+                \App\Models\Task::create([
+                    'customer_id' => $lockedCustomer->id,
+                    'status_id' => $taskStatusIdForTask,
+                    'activation_date' => $validated['activation_date'],
+                    'allocation_type' => 'transfer',
+                    'resource_transfer_id' => $transfer->id,
+                    'assignment_datetime' => $transfer->transfer_datetime,
+                    'deadline_datetime' => $transfer->transfer_datetime,
+                    'assigned_to' => \Illuminate\Support\Facades\Auth::id(),
+                    'assigned_by' => \Illuminate\Support\Facades\Auth::id(),
+                    'assigned_at' => now(),
+                    'completed_at' => now(),
                 ]);
 
                 foreach ($servicesInput as $serviceId => $transferAmount) {
@@ -472,6 +493,29 @@ class ResourceAllocationController extends Controller
                 } catch (\Exception $e) {
                     // Log error but don't stop execution
                     \Illuminate\Support\Facades\Log::error('Failed to send recommendation email: '.$e->getMessage());
+                }
+            }
+
+            // Send email notification to all Bill users for transfers
+            if ($actionType === 'transfer' && isset($transfer)) {
+                try {
+                    $billingUsers = \App\Models\User::whereHas('role', function ($q) {
+                        $q->where('role_name', 'bill');
+                    })->get();
+
+                    $sender = \Illuminate\Support\Facades\Auth::user();
+                    $latestTask = \App\Models\Task::where('customer_id', $lockedCustomer->id)
+                        ->where('allocation_type', 'transfer')
+                        ->latest()
+                        ->first();
+
+                    foreach ($billingUsers as $billingUser) {
+                        \Illuminate\Support\Facades\Mail::to($billingUser->email)
+                            ->send(new \App\Mail\BillAssignmentEmail($transfer, $sender, $latestTask));
+                    }
+                } catch (\Exception $e) {
+                    // Log error but don't stop execution
+                    \Illuminate\Support\Facades\Log::error('Failed to send bill assignment email: '.$e->getMessage());
                 }
             }
 

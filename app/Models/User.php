@@ -108,6 +108,11 @@ class User extends Authenticatable
         return $this->role && $this->role->role_name === 'management';
     }
 
+    public function isBill()
+    {
+        return $this->role && $this->role->role_name === 'bill';
+    }
+
     public function submittedCustomers()
     {
         return $this->hasMany(Customer::class, 'submitted_by');

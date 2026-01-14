@@ -71,6 +71,7 @@
                             <option value="">All Types</option>
                             <option value="upgrade" {{ request('allocation_type') == 'upgrade' ? 'selected' : '' }}>Upgrade</option>
                             <option value="downgrade" {{ request('allocation_type') == 'downgrade' ? 'selected' : '' }}>Downgrade</option>
+                            <option value="transfer" {{ request('allocation_type') == 'transfer' ? 'selected' : '' }}>Transfer</option>
                         </select>
                     </div>
                     <div class="col-md-3">
@@ -201,9 +202,13 @@
                                                 <span class="custom-task-management-badge custom-task-management-badge-upgrade">
                                                     <i class="fas fa-arrow-up me-1"></i> Upgrade
                                                 </span>
-                                            @else
+                                            @elseif($task->allocation_type === 'downgrade')
                                                 <span class="custom-task-management-badge custom-task-management-badge-downgrade">
                                                     <i class="fas fa-arrow-down me-1"></i> Downgrade
+                                                </span>
+                                            @else
+                                                <span class="custom-task-management-badge custom-task-management-badge-transfer">
+                                                    <i class="fas fa-exchange-alt me-1"></i> Transfer
                                                 </span>
                                             @endif
                                         </td>
@@ -518,9 +523,26 @@
                         
                         if (resourceDetails && resourceDetails.length > 0) {
                             const isUpgrade = task.allocation_type === 'upgrade';
-                            const label = isUpgrade ? 'Increase By' : 'Reduce By';
-                            const badgeClass = isUpgrade ? 'badge bg-success' : 'badge bg-warning text-dark';
-                            const arrowIcon = isUpgrade ? '<i class="fas fa-arrow-up me-2"></i>' : '<i class="fas fa-arrow-down me-2"></i>';
+                            const isTransfer = task.allocation_type === 'transfer';
+                            
+                            let label = isUpgrade ? 'Increase By' : 'Reduce By';
+                            if (isTransfer) label = 'Transfer Amount';
+                            
+                            let currentHeader = 'Current';
+                            let newHeader = 'New Total';
+
+                            if (isTransfer) {
+                                if (task.status && task.status.name === 'Billable to Test') {
+                                    currentHeader = 'Billable';
+                                    newHeader = 'Test';
+                                } else if (task.status && task.status.name === 'Test to Billable') {
+                                    currentHeader = 'Test';
+                                    newHeader = 'Billable';
+                                }
+                            }
+
+                            const badgeClass = isTransfer ? 'custom-task-management-value-badge-transfer' : (isUpgrade ? 'badge bg-success' : 'badge bg-warning text-dark');
+                            const arrowIcon = isTransfer ? '<i class="fas fa-exchange-alt me-2"></i>' : (isUpgrade ? '<i class="fas fa-arrow-up me-2"></i>' : '<i class="fas fa-arrow-down me-2"></i>');
                             
                             html += `
                                 <div class="table-responsive">
@@ -528,25 +550,33 @@
                                         <thead class="table-light">
                                             <tr>
                                                 <th class="resource-alloc-service-cell"><i class="fas fa-tools me-2"></i>Service</th>
-                                                <th><i class="fas fa-chart-line me-2"></i>Current</th>
+                                                <th><i class="fas fa-chart-line me-2"></i>${currentHeader}</th>
                                                 <th>${arrowIcon}${label}</th>
-                                                <th><i class="fas fa-equals me-2"></i>New Total</th>
+                                                <th><i class="fas fa-equals me-2"></i>${newHeader}</th>
                                             </tr>
                                         </thead>
                                         <tbody>
                             `;
                             
                             resourceDetails.forEach(detail => {
-                                const amount = isUpgrade ? detail.upgrade_amount : detail.downgrade_amount;
-                                const prev = isUpgrade ? (detail.quantity - amount) : (detail.quantity + amount);
+                                let amount, prev, next;
+                                if (isTransfer) {
+                                    amount = detail.transfer_amount || 0;
+                                    prev = detail.current_source_quantity || 0;
+                                    next = detail.new_target_quantity || 0;
+                                } else {
+                                    amount = isUpgrade ? (detail.upgrade_amount || 0) : (detail.downgrade_amount || 0);
+                                    next = detail.quantity || 0;
+                                    prev = isUpgrade ? (next - amount) : (next + amount);
+                                }
                                 
                                 const prevDisplay = prev < 0 
                                     ? `<span class="text-danger fw-bold">${prev}</span>` 
                                     : `<span class="badge bg-secondary">${prev}</span>`;
                                     
-                                const newDisplay = detail.quantity < 0 
-                                    ? `<span class="text-danger fw-bold">${detail.quantity}</span>` 
-                                    : `<span class="resource-alloc-new-total-value">${detail.quantity}</span>`;
+                                const newDisplay = next < 0 
+                                    ? `<span class="text-danger fw-bold">${next}</span>` 
+                                    : `<span class="resource-alloc-new-total-value">${next}</span>`;
 
                                 // Display service name with unit inline
                                 const serviceName = detail.service.service_name;
@@ -559,7 +589,7 @@
                                         <td>${prevDisplay} ${detail.service.unit || ''}</td>
                                         <td>
                                             <span class="${badgeClass}">
-                                                ${isUpgrade ? '+' : '-'}${amount}
+                                                ${(isTransfer || isUpgrade) ? '+' : '-'}${amount}
                                             </span>
                                         </td>
                                         <td>

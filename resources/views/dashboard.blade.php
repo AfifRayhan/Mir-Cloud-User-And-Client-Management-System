@@ -317,6 +317,36 @@
                     </a>
                 </div>
             @endif
+
+            <!-- Billing Task Management Card -->
+            @if(Auth::user()->isAdmin() || Auth::user()->isBill())
+                <div class="col-12 col-md-6 col-lg-4">
+                    <a href="{{ route('billing-task-management.index') }}" class="custom-dashboard-card-link">
+                        <div class="card custom-dashboard-card custom-dashboard-card-info border-0 shadow-sm h-100">
+                            <div class="card-body p-4">
+                                <div class="d-flex align-items-start mb-4">
+                                    <div class="custom-dashboard-icon-wrapper bg-info bg-opacity-10">
+                                        <i class="fas fa-file-invoice text-info"></i>
+                                    </div>
+                                    <div class="ms-3">
+                                        <h5 class="custom-dashboard-card-title mb-1">Billing Task Management</h5>
+                                        <p class="custom-dashboard-card-subtitle text-muted mb-0">
+                                            View completed tasks and reports
+                                         </p>
+                                    </div>
+                                </div>
+                                <div class="custom-dashboard-card-footer">
+                                    <span class="custom-dashboard-card-action">
+                                        Manage Billing Tasks
+                                        <i class="fas fa-arrow-right ms-2"></i>
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="custom-dashboard-card-hover"></div>
+                        </div>
+                    </a>
+                </div>
+            @endif
  
             <!-- Tech Resource Management Card -->
             @if(Auth::user()->isTech() || Auth::user()->isAdmin())

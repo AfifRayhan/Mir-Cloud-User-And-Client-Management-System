@@ -386,6 +386,21 @@
     border: 1px solid var(--custom-task-management-warning);
 }
 
+.custom-task-management-badge-transfer {
+    background-color: #e0f2fe;
+    color: #0369a1;
+    border: 1px solid #0369a1;
+}
+
+.custom-task-management-value-badge-transfer {
+    background-color: #0ea5e9;
+    color: white;
+    border-radius: 10px;
+    padding: 0.1rem 0.7rem;
+    font-weight: 600;
+    display: inline-block;
+}
+
 .custom-task-management-badge-completed {
     background-color: var(--custom-task-management-success-light);
     color: var(--custom-task-management-success);

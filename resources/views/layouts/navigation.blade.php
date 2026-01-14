@@ -52,6 +52,10 @@
                     <li class="nav-item">
                         <a class="nav-link custom-nav-link {{ request()->routeIs('task-management.*') ? 'active' : '' }}" href="{{ route('task-management.index') }}">Task</a>
                     </li>
+                @elseif(Auth::user()->isBill())
+                    <li class="nav-item">
+                        <a class="nav-link custom-nav-link {{ request()->routeIs('billing-task-management.*') ? 'active' : '' }}" href="{{ route('billing-task-management.index') }}">Task</a>
+                    </li>
                 @endif
                 {{-- Service Management --}}
                 @if(Auth::user()->isAdmin() || Auth::user()->isProTech() || Auth::user()->isManagement())

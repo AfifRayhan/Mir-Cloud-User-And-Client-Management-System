@@ -14,10 +14,19 @@ class MyTaskController extends Controller
      */
     public function index()
     {
-        $tasks = Task::with(['customer.platform', 'status', 'assignedBy', 'resourceUpgradation.details.service', 'resourceDowngradation.details.service'])
+        $tasks = Task::with([
+            'customer.platform',
+            'status',
+            'assignedBy',
+            'resourceUpgradation.details.service',
+            'resourceUpgradation.insertedBy',
+            'resourceDowngradation.details.service',
+            'resourceDowngradation.insertedBy',
+        ])
             ->leftJoin('resource_upgradations', 'tasks.resource_upgradation_id', '=', 'resource_upgradations.id')
             ->leftJoin('resource_downgradations', 'tasks.resource_downgradation_id', '=', 'resource_downgradations.id')
             ->where('tasks.assigned_to', Auth::id())
+            ->where('tasks.allocation_type', '!=', 'transfer')
             ->orderByRaw('CASE WHEN tasks.id = ? THEN 0 ELSE 1 END', [request('dtid')])
             ->orderByRaw('tasks.completed_at IS NOT NULL')
             ->orderByRaw('COALESCE(resource_upgradations.created_at, resource_downgradations.created_at) ASC')
@@ -37,7 +46,17 @@ class MyTaskController extends Controller
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 
-        $task->load(['customer', 'status', 'assignedTo', 'assignedBy', 'vdc', 'resourceUpgradation.details.service', 'resourceDowngradation.details.service']);
+        $task->load([
+            'customer',
+            'status',
+            'assignedTo',
+            'assignedBy',
+            'vdc',
+            'resourceUpgradation.details.service',
+            'resourceUpgradation.insertedBy',
+            'resourceDowngradation.details.service',
+            'resourceDowngradation.insertedBy',
+        ]);
 
         return response()->json([
             'task' => $task,
@@ -55,7 +74,16 @@ class MyTaskController extends Controller
             abort(403, 'Unauthorized access to this task.');
         }
 
-        $task->load(['customer', 'status', 'assignedTo', 'assignedBy', 'resourceUpgradation.details.service', 'resourceDowngradation.details.service']);
+        $task->load([
+            'customer',
+            'status',
+            'assignedTo',
+            'assignedBy',
+            'resourceUpgradation.details.service',
+            'resourceUpgradation.insertedBy',
+            'resourceDowngradation.details.service',
+            'resourceDowngradation.insertedBy',
+        ]);
 
         return view('my-tasks.show', compact('task'));
     }
@@ -149,11 +177,18 @@ class MyTaskController extends Controller
                     $q->where('role_name', 'management');
                 })->get();
 
-                // Prepare CC list (assigned_by user)
+                // Prepare CC list (assigned_by user and Billing users)
                 $ccUsers = [];
                 if ($lockedTask->assignedBy) {
                     $ccUsers[] = $lockedTask->assignedBy->email;
                 }
+
+                // Add Billing users to CC
+                $billingEmails = \App\Models\User::whereHas('role', function ($q) {
+                    $q->where('role_name', 'bill');
+                })->pluck('email')->toArray();
+
+                $ccUsers = array_unique(array_merge($ccUsers, $billingEmails));
 
                 foreach ($managementUsers as $manager) {
                     try {

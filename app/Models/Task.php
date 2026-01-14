@@ -15,6 +15,7 @@ class Task extends Model
         'allocation_type',
         'resource_upgradation_id',
         'resource_downgradation_id',
+        'resource_transfer_id',
         'assigned_to',
         'assigned_by',
         'assigned_at',
@@ -23,6 +24,7 @@ class Task extends Model
         'has_resource_conflict',
         'assignment_datetime',
         'deadline_datetime',
+        'billed_at',
     ];
 
     protected static function booted()
@@ -38,21 +40,35 @@ class Task extends Model
         $platformId = $this->customer->platform_id;
         $statusId = $this->status_id;
 
-        $typeBit = $this->allocation_type === 'upgrade' ? '1' : '0';
-        $resourceId = $this->allocation_type === 'upgrade'
-            ? $this->resource_upgradation_id
-            : $this->resource_downgradation_id;
+        $typeBit = '0'; // Default to 0 (downgrade)
+        if ($this->allocation_type === 'upgrade') {
+            $typeBit = '1';
+        } elseif ($this->allocation_type === 'transfer') {
+            $typeBit = '2';
+        }
+
+        $resourceId = null;
+        if ($this->allocation_type === 'upgrade') {
+            $resourceId = $this->resource_upgradation_id;
+        } elseif ($this->allocation_type === 'downgrade') {
+            $resourceId = $this->resource_downgradation_id;
+        } elseif ($this->allocation_type === 'transfer') {
+            $resourceId = $this->resource_transfer_id;
+        }
 
         $assignmentDateTime = '';
         if ($this->allocation_type === 'upgrade' && $this->resourceUpgradation) {
             $assignmentDateTime = $this->resourceUpgradation->assignment_datetime?->format('YmdHi') ?? '';
         } elseif ($this->allocation_type === 'downgrade' && $this->resourceDowngradation) {
             $assignmentDateTime = $this->resourceDowngradation->assignment_datetime?->format('YmdHi') ?? '';
+        } elseif ($this->allocation_type === 'transfer' && $this->resourceTransfer) {
+            $assignmentDateTime = $this->resourceTransfer->transfer_datetime?->format('YmdHi') ?? '';
         }
 
         $generatedId = "{$customerId}-{$platformId}-{$statusId}-{$assignmentDateTime}-{$typeBit}-{$resourceId}";
-
         $this->update(['task_id' => $generatedId]);
+
+        return $generatedId;
     }
 
     protected $casts = [
@@ -61,6 +77,7 @@ class Task extends Model
         'completed_at' => 'datetime',
         'assignment_datetime' => 'datetime',
         'deadline_datetime' => 'datetime',
+        'billed_at' => 'datetime',
     ];
 
     public function customer()
@@ -88,6 +105,11 @@ class Task extends Model
         return $this->belongsTo(ResourceDowngradation::class);
     }
 
+    public function resourceTransfer()
+    {
+        return $this->belongsTo(ResourceTransfer::class);
+    }
+
     public function assignedTo()
     {
         return $this->belongsTo(User::class, 'assigned_to');
@@ -112,6 +134,8 @@ class Task extends Model
             return $this->resourceUpgradation->insertedBy;
         } elseif ($this->allocation_type === 'downgrade' && $this->resourceDowngradation) {
             return $this->resourceDowngradation->insertedBy;
+        } elseif ($this->allocation_type === 'transfer' && $this->resourceTransfer) {
+            return $this->resourceTransfer->insertedBy;
         }
 
         return null;
@@ -124,6 +148,8 @@ class Task extends Model
             return $this->resourceUpgradation->details;
         } elseif ($this->allocation_type === 'downgrade' && $this->resourceDowngradation) {
             return $this->resourceDowngradation->details;
+        } elseif ($this->allocation_type === 'transfer' && $this->resourceTransfer) {
+            return $this->resourceTransfer->details;
         }
 
         return collect();

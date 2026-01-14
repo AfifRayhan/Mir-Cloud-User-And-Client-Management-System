@@ -9,7 +9,7 @@ class CustomerStatusSeeder extends Seeder
 {
     public function run(): void
     {
-        $statuses = ['Billable', 'Test'];
+        $statuses = ['Billable', 'Test', 'Test to Billable', 'Billable to Test'];
 
         foreach ($statuses as $status) {
             CustomerStatus::firstOrCreate(['name' => $status]);

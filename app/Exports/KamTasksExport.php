@@ -14,6 +14,8 @@ class KamTasksExport implements FromCollection, ShouldAutoSize, WithHeadings, Wi
 
     protected $detailRows = [];
 
+    protected $transferRows = [];
+
     public function __construct($tasks)
     {
         $this->tasks = $tasks;
@@ -45,22 +47,44 @@ class KamTasksExport implements FromCollection, ShouldAutoSize, WithHeadings, Wi
                     return $existingDetail;
                 }
 
-                return (object) [
+                // Default empty detail object
+                $default = (object) [
                     'service' => $service,
                     'service_id' => $service->id,
-                    'upgrade_amount' => 0,
-                    'downgrade_amount' => 0,
-                    'quantity' => $task->status_id == $testStatusId
-                        ? $task->customer->getResourceTestQuantity($service->service_name)
-                        : $task->customer->getResourceBillableQuantity($service->service_name),
                 ];
+
+                if ($task->allocation_type === 'transfer') {
+                    $default->transfer_amount = 0;
+                    $default->current_source_quantity = $task->status_id == $testStatusId
+                        ? $task->customer->getResourceTestQuantity($service->service_name)
+                        : $task->customer->getResourceBillableQuantity($service->service_name);
+                    $default->new_target_quantity = $default->current_source_quantity;
+                } else {
+                    $default->upgrade_amount = 0;
+                    $default->downgrade_amount = 0;
+                    $default->quantity = $task->status_id == $testStatusId
+                        ? $task->customer->getResourceTestQuantity($service->service_name)
+                        : $task->customer->getResourceBillableQuantity($service->service_name);
+                }
+
+                return $default;
             });
 
             $firstRow = true;
             foreach ($resourceDetails as $detail) {
                 $isUpgrade = $task->allocation_type === 'upgrade';
-                $amount = $isUpgrade ? $detail->upgrade_amount : $detail->downgrade_amount;
-                $prev = $isUpgrade ? ($detail->quantity - $amount) : ($detail->quantity + $amount);
+                $isTransfer = $task->allocation_type === 'transfer';
+
+                if ($isTransfer) {
+                    $amount = $detail->transfer_amount ?? 0;
+                    $prev = $detail->current_source_quantity ?? 0;
+                    $next = $detail->new_target_quantity ?? 0;
+                    $this->transferRows[] = $currentRow;
+                } else {
+                    $amount = $isUpgrade ? ($detail->upgrade_amount ?? 0) : ($detail->downgrade_amount ?? 0);
+                    $next = $detail->quantity ?? 0;
+                    $prev = $isUpgrade ? ($next - $amount) : ($next + $amount);
+                }
 
                 $rows[] = [
                     'Customer' => $firstRow ? $task->customer->customer_name : '',
@@ -74,8 +98,8 @@ class KamTasksExport implements FromCollection, ShouldAutoSize, WithHeadings, Wi
                     'Assigned To' => $firstRow ? ($task->assignedTo->name ?? 'Unassigned') : '',
                     'Service' => $detail->service->service_name.($detail->service->unit ? " ({$detail->service->unit})" : ''),
                     'Current' => (int) $prev,
-                    'Change' => ($amount > 0 ? ($isUpgrade ? '+ ' : '- ') : '').$amount,
-                    'New Total' => '→ ' . (int) $detail->quantity,
+                    'Change' => ($isTransfer ? '+ ' : ($amount > 0 ? ($isUpgrade ? '+ ' : '- ') : '')).$amount,
+                    'New Total' => '→ '.(int) $next,
                 ];
 
                 $this->detailRows[] = $currentRow;
@@ -120,19 +144,26 @@ class KamTasksExport implements FromCollection, ShouldAutoSize, WithHeadings, Wi
 
         // Apply stripes/borders/colors to detail sections
         foreach ($this->detailRows as $row) {
-            // Service column (J) - Light Blue
+            // Service column (J) - Light Blue background tint
             $sheet->getStyle('J'.$row)->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)->getStartColor()->setARGB('FFE9EEF5');
             // Current column (K) - Light Gray
             $sheet->getStyle('K'.$row)->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)->getStartColor()->setARGB('FFF2F2F2');
+
             // Increase/Reduce column (L) - Custom
             $val = (string) $sheet->getCell('L'.$row)->getValue();
-            if (str_contains($val, '+')) {
+
+            if (in_array($row, $this->transferRows)) {
+                // Transfer row - Light solid blue (per image)
+                $sheet->getStyle('L'.$row)->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)->getStartColor()->setARGB('FFD9E1F2'); // Light Blue/Purple
+                $sheet->getStyle('L'.$row)->getFont()->getColor()->setARGB('FF305496'); // Dark Blue text
+            } elseif (str_contains($val, '+')) {
                 $sheet->getStyle('L'.$row)->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)->getStartColor()->setARGB('FFE2F0D9'); // Light Green
                 $sheet->getStyle('L'.$row)->getFont()->getColor()->setARGB('FF385623');
             } elseif (str_contains($val, '-')) {
                 $sheet->getStyle('L'.$row)->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)->getStartColor()->setARGB('FFFFEBD6'); // Light Orange
                 $sheet->getStyle('L'.$row)->getFont()->getColor()->setARGB('FF974706');
             }
+
             // New Total column (M) - Cyan-ish
             $sheet->getStyle('M'.$row)->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)->getStartColor()->setARGB('FFDAE3F3');
             $sheet->getStyle('M'.$row)->getFont()->setBold(true);

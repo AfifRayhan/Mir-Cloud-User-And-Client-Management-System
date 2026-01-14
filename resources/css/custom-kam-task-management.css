@@ -276,6 +276,21 @@
     border: 1px solid var(--custom-kam-task-management-warning);
 }
 
+.custom-kam-task-management-badge-transfer {
+    background-color: #e0f2fe;
+    color: #0369a1;
+    border: 1px solid #0369a1;
+}
+
+.custom-kam-task-management-value-badge-transfer {
+    background-color: #0ea5e9;
+    color: white;
+    border-radius: 10px;
+    padding: 0.1rem 0.7rem;
+    font-weight: 600;
+    display: inline-block;
+}
+
 /* Date Display */
 .custom-kam-task-management-date {
     display: flex;

@@ -62,6 +62,7 @@
                                                id="customer_name" 
                                                name="customer_name" 
                                                value="{{ old('customer_name') }}" 
+                                               maxlength="100"
                                                required 
                                                autofocus>
                                         @error('customer_name')
@@ -98,6 +99,7 @@
                                                   id="customer_address" 
                                                   name="customer_address" 
                                                   rows="3" 
+                                                  maxlength="500"
                                                   placeholder="Street, city, country">{{ old('customer_address') }}</textarea>
                                         @error('customer_address')
                                             <div class="invalid-feedback">{{ $message }}</div>
@@ -135,6 +137,7 @@
                                                id="bin_number" 
                                                name="bin_number" 
                                                value="{{ old('bin_number') }}" 
+                                               maxlength="50"
                                                placeholder="Enter BIN number">
                                         @error('bin_number')
                                             <div class="invalid-feedback">{{ $message }}</div>
@@ -151,6 +154,7 @@
                                                id="po_number" 
                                                name="po_number" 
                                                value="{{ old('po_number') }}" 
+                                               maxlength="50"
                                                placeholder="Enter PO number">
                                         @error('po_number')
                                             <div class="invalid-feedback">{{ $message }}</div>
@@ -202,6 +206,7 @@
                                                class="form-control custom-addcustomer-input" 
                                                id="commercial_contact_name" 
                                                name="commercial_contact_name" 
+                                               maxlength="100"
                                                value="{{ old('commercial_contact_name') }}">
                                     </div>
                                     <div class="col-md-6">
@@ -210,6 +215,7 @@
                                                class="form-control custom-addcustomer-input" 
                                                id="commercial_contact_designation" 
                                                name="commercial_contact_designation" 
+                                               maxlength="100"
                                                value="{{ old('commercial_contact_designation') }}">
                                     </div>
                                     <div class="col-md-6">
@@ -218,6 +224,7 @@
                                                class="form-control custom-addcustomer-input" 
                                                id="commercial_contact_email" 
                                                name="commercial_contact_email" 
+                                               maxlength="100"
                                                value="{{ old('commercial_contact_email') }}">
                                     </div>
                                     <div class="col-md-6">
@@ -226,6 +233,7 @@
                                                class="form-control custom-addcustomer-input" 
                                                id="commercial_contact_phone" 
                                                name="commercial_contact_phone" 
+                                               maxlength="20"
                                                value="{{ old('commercial_contact_phone') }}">
                                     </div>
                                 </div>
@@ -254,6 +262,7 @@
                                                class="form-control custom-addcustomer-input" 
                                                id="technical_contact_name" 
                                                name="technical_contact_name" 
+                                               maxlength="100"
                                                value="{{ old('technical_contact_name') }}">
                                     </div>
                                     <div class="col-md-6">
@@ -262,6 +271,7 @@
                                                class="form-control custom-addcustomer-input" 
                                                id="technical_contact_designation" 
                                                name="technical_contact_designation" 
+                                               maxlength="100"
                                                value="{{ old('technical_contact_designation') }}">
                                     </div>
                                     <div class="col-md-6">
@@ -270,6 +280,7 @@
                                                class="form-control custom-addcustomer-input" 
                                                id="technical_contact_email" 
                                                name="technical_contact_email" 
+                                               maxlength="100"
                                                value="{{ old('technical_contact_email') }}">
                                     </div>
                                     <div class="col-md-6">
@@ -278,6 +289,7 @@
                                                class="form-control custom-addcustomer-input" 
                                                id="technical_contact_phone" 
                                                name="technical_contact_phone" 
+                                               maxlength="20"
                                                value="{{ old('technical_contact_phone') }}">
                                     </div>
                                 </div>
@@ -305,6 +317,7 @@
                                                class="form-control custom-addcustomer-input" 
                                                id="optional_contact_name" 
                                                name="optional_contact_name" 
+                                               maxlength="100"
                                                value="{{ old('optional_contact_name') }}">
                                     </div>
                                     <div class="col-md-6">
@@ -313,6 +326,7 @@
                                                class="form-control custom-addcustomer-input" 
                                                id="optional_contact_designation" 
                                                name="optional_contact_designation" 
+                                               maxlength="100"
                                                value="{{ old('optional_contact_designation') }}">
                                     </div>
                                     <div class="col-md-6">
@@ -321,6 +335,7 @@
                                                class="form-control custom-addcustomer-input" 
                                                id="optional_contact_email" 
                                                name="optional_contact_email" 
+                                               maxlength="100"
                                                value="{{ old('optional_contact_email') }}">
                                     </div>
                                     <div class="col-md-6">
@@ -329,6 +344,7 @@
                                                class="form-control custom-addcustomer-input" 
                                                id="optional_contact_phone" 
                                                name="optional_contact_phone" 
+                                               maxlength="20"
                                                value="{{ old('optional_contact_phone') }}">
                                     </div>
                                 </div>

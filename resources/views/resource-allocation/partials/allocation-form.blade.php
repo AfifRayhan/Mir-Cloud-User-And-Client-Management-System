@@ -344,6 +344,12 @@
     <form id="allocation-form" method="POST" data-customer-id="{{ $customer->id }}" data-action-type="{{ $actionType }}" data-transfer-type="{{ $transferType }}" onsubmit="return window.handleAllocationSubmit(event, this)">
         @csrf
         <div class="card border-0 shadow-sm h-100">
+            @if($hasPendingTasks ?? false)
+                <div class="alert alert-danger m-3 mb-0" role="alert">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    Cannot confirm transfer: There are unassigned or incomplete tasks for this customer.
+                </div>
+            @endif
             <div class="card-header resource-alloc-card-header">
                 <h5 class="resource-alloc-card-title">
                     <span class="resource-alloc-card-title-icon" style="background: rgba(13, 110, 253, 0.1); color: #0d6efd;">
@@ -434,7 +440,7 @@
                                     @endif
                                     <td>
                                         <div class="resource-alloc-stepper-group">
-                                            <button type="button" class="resource-alloc-stepper-btn" onclick="decrementValue(this)">−</button>
+                                            <button type="button" class="resource-alloc-stepper-btn" onclick="decrementValue(this)" {{ ($hasPendingTasks ?? false) ? 'disabled' : '' }}>−</button>
                                             <input 
                                                 type="number" 
                                                 name="services[{{ $service->id }}]" 
@@ -455,6 +461,7 @@
                                                 @endphp
                                                 max="{{ $maxAllowed }}"
                                                 value="0"
+                                                {{ ($hasPendingTasks ?? false) ? 'disabled' : '' }}
                                                 data-current-test="{{ $currentTestValue }}"
                                                 data-current-billable="{{ $currentBillableValue }}"
                                                 data-service-id="{{ $service->id }}"
@@ -464,7 +471,7 @@
                                                 onblur="this.value == '' ? this.value = '0' : null"
                                                 placeholder="0"
                                             >
-                                            <button type="button" class="resource-alloc-stepper-btn" onclick="incrementValue(this)">+</button>
+                                            <button type="button" class="resource-alloc-stepper-btn" onclick="incrementValue(this)" {{ ($hasPendingTasks ?? false) ? 'disabled' : '' }}>+</button>
                                         </div>
                                     </td>
                                     <td class="resource-alloc-test-col {{ $transferType === 'billable_to_test' ? 'status-highlighted' : '' }}">
@@ -488,12 +495,12 @@
                 </div>
 
                 <div class="mt-4 d-flex justify-content-between align-items-center">
-                    <button type="button" class="btn btn-primary" onclick="window.fillTransferAllValues()">
+                    <button type="button" class="btn btn-primary" onclick="window.fillTransferAllValues()" {{ ($hasPendingTasks ?? false) ? 'disabled' : '' }}>
                         <i class="fas fa-exchange-alt"></i> Transfer All
                     </button>
                     <div class="d-flex gap-2">
                         <button type="button" class="btn btn-outline-secondary" onclick="window.clearAllocationForm()">Cancel</button>
-                        <button type="submit" class="btn resource-alloc-confirm-btn" style="background: #0d6efd; color: white;">
+                        <button type="submit" class="btn resource-alloc-confirm-btn" style="background: #0d6efd; color: white;" {{ ($hasPendingTasks ?? false) ? 'disabled' : '' }}>
                             <i class="fas fa-check-circle"></i>
                             Confirm Transfer
                         </button>

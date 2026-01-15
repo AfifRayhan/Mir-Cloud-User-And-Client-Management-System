@@ -398,6 +398,22 @@
                     customerNameSpan.textContent = customerName;
                 });
             }
+
+            // Auto-open task details if query params exist (e.g. from email link)
+            const urlParams = new URLSearchParams(window.location.search);
+            const dtid = urlParams.get('dtid');
+            const da = urlParams.get('da');
+
+            if (dtid && da === 'view') {
+                const targetBtn = document.querySelector(`.view-task-btn[data-task-id="${dtid}"]`);
+                if (targetBtn) {
+                    // Slight delay to ensure DOM is fully ready / other scripts initialized
+                    setTimeout(() => {
+                        targetBtn.click();
+                        targetBtn.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }, 500);
+                }
+            }
         });
     </script>
     @endpush

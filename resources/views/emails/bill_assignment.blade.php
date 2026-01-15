@@ -221,23 +221,6 @@
            ">
             📋 Bill
         </a>
-        @else
-        <a href="{{ route('billing-task-management.index') }}"
-            style="
-               display:inline-block;
-               width: 220px;
-               text-align: center;
-               margin: 10px 5px;
-               padding:12px 22px;
-               background-color:#0d6efd;
-               color:#ffffff;
-               text-decoration:none;
-               font-size:16px;
-               font-weight:bold;
-               border-radius:4px;
-           ">
-            🔍 View Transfers
-        </a>
         @endif
         <p style="margin-top: 30px; font-size: 0.9em; color: #666;">
             This is an automated notification from Mir Cloud Management System.

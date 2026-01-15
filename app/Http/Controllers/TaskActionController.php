@@ -126,14 +126,17 @@ class TaskActionController extends Controller
 
             // 1. Create reverse allocation
             $newResourceId = null;
+            $now = now();
+
             if ($newType === 'upgrade') {
                 $upgradation = ResourceUpgradation::create([
                     'customer_id' => $customer->id,
-                    'status_id' => $customer->status_id,
-                    'activation_date' => now(),
+                    'status_id' => $task->status_id,
+                    'activation_date' => $now,
                     'inactivation_date' => '3000-01-01',
                     'task_status_id' => 1, // Assigned
                     'inserted_by' => $kam->id,
+                    'assignment_datetime' => $now,
                 ]);
                 $newResourceId = $upgradation->id;
 
@@ -151,11 +154,12 @@ class TaskActionController extends Controller
             } else {
                 $downgradation = ResourceDowngradation::create([
                     'customer_id' => $customer->id,
-                    'status_id' => $customer->status_id,
-                    'activation_date' => now(),
+                    'status_id' => $task->status_id,
+                    'activation_date' => $now,
                     'inactivation_date' => '3000-01-01',
                     'task_status_id' => 1, // Assigned
                     'inserted_by' => $kam->id,
+                    'assignment_datetime' => $now,
                 ]);
                 $newResourceId = $downgradation->id;
 
@@ -175,14 +179,15 @@ class TaskActionController extends Controller
             // 2. Create new Task
             $newTask = Task::create([
                 'customer_id' => $customer->id,
+                'status_id' => $task->status_id,
                 'allocation_type' => $newType,
                 'resource_upgradation_id' => ($newType === 'upgrade') ? $newResourceId : null,
                 'resource_downgradation_id' => ($newType === 'downgrade') ? $newResourceId : null,
                 'assigned_to' => $techUser->id,
                 'assigned_by' => $kam->id,
                 'task_status_id' => 1, // Assigned
-                'activation_date' => now(),
-                'assignment_datetime' => now(),
+                'activation_date' => $now,
+                'assignment_datetime' => $now,
                 // 'deadline_datetime' => null, // Leaving null for now as we don't have calculation logic here and it's an undo action
                 'completed_at' => null,
                 'vdc_id' => $task->vdc_id,

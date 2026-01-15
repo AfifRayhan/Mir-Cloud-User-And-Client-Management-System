@@ -172,24 +172,23 @@ class MyTaskController extends Controller
                     \Illuminate\Support\Facades\Log::error('Failed to send tech confirmation email: '.$e->getMessage());
                 }
             } else {
-                // Case 2: Standard My Tasks Completion - Send Completion Email to Management
+                // Case 2: Standard My Tasks Completion - Send Completion Email to Management & Billing
                 $managementUsers = \App\Models\User::whereHas('role', function ($q) {
                     $q->where('role_name', 'management');
                 })->get();
 
-                // Prepare CC list (assigned_by user and Billing users)
+                // Billing Users get a specific email
+                $billingUsers = \App\Models\User::whereHas('role', function ($q) {
+                    $q->where('role_name', 'bill');
+                })->get();
+
+                // Prepare CC list (assigned_by user)
                 $ccUsers = [];
                 if ($lockedTask->assignedBy) {
                     $ccUsers[] = $lockedTask->assignedBy->email;
                 }
 
-                // Add Billing users to CC
-                $billingEmails = \App\Models\User::whereHas('role', function ($q) {
-                    $q->where('role_name', 'bill');
-                })->pluck('email')->toArray();
-
-                $ccUsers = array_unique(array_merge($ccUsers, $billingEmails));
-
+                // Send to Management (Standard Email)
                 foreach ($managementUsers as $manager) {
                     try {
                         $mail = \Illuminate\Support\Facades\Mail::to($manager->email);
@@ -201,6 +200,17 @@ class MyTaskController extends Controller
                         $mail->send(new \App\Mail\TaskCompletionEmail($lockedTask, $sender, $actionType));
                     } catch (\Exception $e) {
                         \Illuminate\Support\Facades\Log::error('Failed to send completion email to '.$manager->email.': '.$e->getMessage());
+                    }
+                }
+
+                // Send to Billing (Specific Email with Buttons)
+                foreach ($billingUsers as $biller) {
+                    try {
+                        // Billing users don't need CCs of KAMs, they just need the notification
+                        \Illuminate\Support\Facades\Mail::to($biller->email)
+                            ->send(new \App\Mail\BillTaskCompletionEmail($lockedTask, $sender, $actionType));
+                    } catch (\Exception $e) {
+                        \Illuminate\Support\Facades\Log::error('Failed to send billing completion email to '.$biller->email.': '.$e->getMessage());
                     }
                 }
             }

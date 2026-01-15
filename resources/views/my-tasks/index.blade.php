@@ -266,7 +266,7 @@
                         </div>
                         <h5 class="fw-bold mb-3">Order of Operations</h5>
                         <p class="text-muted mb-0">
-                            Complete the first task for this customer to ensure consistency.
+                            Complete the previous task for this customer to ensure consistency.
                         </p>
                     </div>
                     <div class="modal-footer border-0 bg-light d-flex gap-2">

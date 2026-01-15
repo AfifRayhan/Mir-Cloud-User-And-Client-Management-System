@@ -150,6 +150,11 @@ class ResourceAllocationController extends Controller
             ? $customerActivationDate->format('Y-m-d')
             : now()->format('Y-m-d');
 
+        // Check for pending tasks
+        $hasPendingTasks = \App\Models\Task::where('customer_id', $customer->id)
+            ->whereNull('completed_at')
+            ->exists();
+
         // Fetch summaries for transfer validation and display
         $summaries = \App\Models\Summary::where('customer_id', $customer->id)
             ->get()
@@ -168,8 +173,10 @@ class ResourceAllocationController extends Controller
                 'isFirstAllocation',
                 'testStatusId',
                 'defaultActivationDate',
-                'transferType'
+                'transferType',
+                'hasPendingTasks'
             ))->render(),
+            'has_pending_tasks' => $hasPendingTasks,
             'status_id' => $statusId,
             'test_status_id' => $testStatusId,
             'customer_name' => $customer->customer_name,
@@ -221,6 +228,15 @@ class ResourceAllocationController extends Controller
 
         // ADDITIONAL VALIDATION FOR TRANSFERS: Check if move amount exceeds available quantity
         if ($actionType === 'transfer') {
+            // Check for pending tasks
+            if (\App\Models\Task::where('customer_id', $customer->id)->whereNull('completed_at')->exists()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Cannot confirm transfer: There are unassigned or incomplete tasks for this customer.',
+                    'errors' => ['transfer' => ['Cannot confirm transfer: There are unassigned or incomplete tasks for this customer.']],
+                ], 422);
+            }
+
             $transferType = $validated['transfer_type'];
             $summaries = \App\Models\Summary::where('customer_id', $customer->id)
                 ->get()

@@ -36,6 +36,11 @@
                                 Rapid resource allocation and automated task completion for tech users.
                             </p>
                         </div>
+                        <div id="po-button-container" class="d-none">
+                            <button type="button" class="btn btn-outline-primary fw-semibold" onclick="openPoSheetModal()">
+                                <i class="fas fa-file-pdf me-2"></i>Add PO Project Sheet
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -202,6 +207,7 @@
                 const statusContainer = document.getElementById('status-container');
                 const statusSelect = document.getElementById('status_id');
                 const container = document.getElementById('cloud-detail-container');
+                const poButtonContainer = document.getElementById('po-button-container');
                 const testStatusId = {{ \App\Models\CustomerStatus::where('name', 'Test')->first()?->id ?? 1 }};
 
                 function renderPlaceholder(message = 'Select options to begin.', icon = 'fas fa-layer-group') {
@@ -221,6 +227,7 @@
 
                 function toggleStatus() {
                     if (!actionSelect || !statusContainer) return;
+                    
                     if (actionSelect.value === 'upgrade' || actionSelect.value === 'downgrade') {
                         statusContainer.classList.remove('d-none');
                         statusSelect.required = true;
@@ -228,6 +235,13 @@
                         statusContainer.classList.add('d-none');
                         statusSelect.required = false;
                         statusSelect.value = "";
+                    }
+
+                    // Toggle PO Button
+                    if (actionSelect.value === 'upgrade') {
+                        if(poButtonContainer) poButtonContainer.classList.remove('d-none');
+                    } else {
+                        if(poButtonContainer) poButtonContainer.classList.add('d-none');
                     }
                 }
 
@@ -258,9 +272,8 @@
                         return;
                     }
 
-                    if (actionType === 'upgrade' && !statusId) {
-                        renderPlaceholder('Please select a customer status to proceed with upgrade.', 'fas fa-info-circle');
-                        return;
+                    if ((actionType === 'upgrade' || actionType === 'downgrade') && !statusId) {
+                         // Allow proceeding so backend can provide default status
                     }
 
                     renderPlaceholder('Loading allocation form...', 'fas fa-circle-notch fa-spin');
@@ -285,9 +298,16 @@
                         const data = await response.json();
                         container.innerHTML = data.html;
 
-                        // Sync status dropdown if server returned a default status
-                        if (data.status_id && statusSelect) {
-                            statusSelect.value = data.status_id;
+                        // If the backend provided a status_id, update the select
+                        if (data.status_id && (actionType === 'upgrade' || actionType === 'downgrade')) {
+                             if (!statusSelect.value) {
+                                statusSelect.value = data.status_id;
+                             }
+                        }
+                        
+                        // Store testStatusId if provided
+                        if (data.test_status_id) {
+                            window.currentTestStatusId = data.test_status_id;
                         }
                         
                         // Initialize flatpickr on new inputs with Friday/Saturday restriction
@@ -643,6 +663,115 @@
                     toggleStatus();
                 };
 
+                // PO Project Sheets Modal Functions
+                window.openPoSheetModal = async function() {
+                    const customerId = customerSelect.value;
+                    if (!customerId) {
+                        alert('Please select a customer first.');
+                        return;
+                    }
+
+                    const modal = new bootstrap.Modal(document.getElementById('poSheetModal'));
+                    const modalBody = document.getElementById('poSheetModalBody');
+                    
+                    modalBody.innerHTML = '<div class="text-center py-4"><div class="spinner-border text-primary" role="status"></div><p class="mt-2">Loading sheets...</p></div>';
+                    modal.show();
+
+                    try {
+                        const response = await fetch(`{{ url('customers') }}/${customerId}/po-sheets`);
+                        const data = await response.json();
+                        
+                        if (data.success) {
+                            renderPoSheetsList(data.po_project_sheets);
+                        } else {
+                            modalBody.innerHTML = '<div class="alert alert-danger">Failed to load PO sheets.</div>';
+                        }
+                    } catch (error) {
+                        console.error(error);
+                        modalBody.innerHTML = '<div class="alert alert-danger">An error occurred while fetching PO sheets.</div>';
+                    }
+                };
+
+                function renderPoSheetsList(sheets) {
+                    const modalBody = document.getElementById('poSheetModalBody');
+                    if (!sheets || sheets.length === 0) {
+                        modalBody.innerHTML = '<p class="text-muted text-center py-3">No PO Project Sheets uploaded yet.</p>';
+                    } else {
+                        let html = '<div class="list-group mb-4">';
+                        sheets.forEach(sheet => {
+                            html += `
+                                <div class="list-group-item d-flex justify-content-between align-items-center">
+                                    <div class="d-flex align-items-center">
+                                        <i class="fas fa-file-pdf text-danger me-3 fs-4"></i>
+                                        <div>
+                                            <div class="fw-semibold text-truncate" style="max-width: 250px;">${sheet.name}</div>
+                                            <small class="text-muted">${(sheet.size / 1024 / 1024).toFixed(2)} MB</small>
+                                        </div>
+                                    </div>
+                                    <a href="{{ asset('storage') }}/${sheet.path}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-eye me-1"></i>View
+                                    </a>
+                                </div>
+                            `;
+                        });
+                        html += '</div>';
+                        modalBody.innerHTML = html;
+                    }
+                    
+                    // Add upload form
+                    modalBody.innerHTML += `
+                        <hr>
+                        <div class="mt-3">
+                            <label class="form-label fw-semibold">Upload New Sheets</label>
+                            <div class="input-group">
+                                <input type="file" id="new_po_sheets" class="form-control" multiple accept=".pdf">
+                                <button class="btn btn-primary" type="button" onclick="uploadPoSheets()">Upload</button>
+                            </div>
+                            <div id="upload-status" class="mt-2"></div>
+                        </div>
+                    `;
+                }
+
+                window.uploadPoSheets = async function() {
+                    const customerId = customerSelect.value;
+                    const fileInput = document.getElementById('new_po_sheets');
+                    const statusDiv = document.getElementById('upload-status');
+                    
+                    if (!fileInput.files.length) {
+                        statusDiv.innerHTML = '<small class="text-danger">Please select files to upload.</small>';
+                        return;
+                    }
+
+                    const formData = new FormData();
+                    for (let i = 0; i < fileInput.files.length; i++) {
+                        formData.append('po_project_sheets[]', fileInput.files[i]);
+                    }
+
+                    statusDiv.innerHTML = '<small class="text-primary"><i class="fas fa-spinner fa-spin me-1"></i>Uploading and optimizing...</small>';
+                    
+                    try {
+                        const response = await fetch(`{{ url('customers') }}/${customerId}/po-sheets`, {
+                            method: 'POST',
+                            headers: {
+                                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                                'Accept': 'application/json'
+                            },
+                            body: formData
+                        });
+                        
+                        const data = await response.json();
+                        if (data.success) {
+                            statusDiv.innerHTML = '<small class="text-success">Uploaded successfully!</small>';
+                            renderPoSheetsList(data.po_project_sheets);
+                        } else {
+                            statusDiv.innerHTML = `<small class="text-danger">${data.message || 'Upload failed'}</small>`;
+                        }
+                    } catch (error) {
+                        console.error(error);
+                        statusDiv.innerHTML = '<small class="text-danger">An error occurred during upload.</small>';
+                    }
+                };
+
                 // Initialize state
                 toggleStatus();
                 updateKamInfo();
@@ -656,5 +785,26 @@
                 @endif
             })();
         </script>
+    @endpush
+    @push('modals')
+    <!-- PO Project Sheets Modal -->
+    <div class="modal fade" id="poSheetModal" tabindex="-1" aria-labelledby="poSheetModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header bg-light">
+                    <h5 class="modal-title fw-bold" id="poSheetModalLabel">
+                        <i class="fas fa-file-pdf text-primary me-2"></i>PO Project Sheets
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="poSheetModalBody">
+                    <!-- Content loaded via AJAX -->
+                </div>
+                <div class="modal-footer border-0">
+                    <button type="button" class="btn btn-light fw-semibold" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
     @endpush
 </x-app-layout>

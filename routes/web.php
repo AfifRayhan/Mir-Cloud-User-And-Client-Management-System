@@ -37,6 +37,13 @@ Route::middleware('auth')->group(function () {
     Route::put('/password', [PasswordController::class, 'update'])->name('profile.password');
 
     // Customer routes (Admin, Pro-Tech, KAM, Pro-KAM, Management)
+    // Customer PO sheet routes (Everyone who can allocate)
+    Route::middleware('role:admin,pro-tech,kam,pro-kam,management,tech')->group(function () {
+        Route::get('customers/{customer}/po-sheets', [CustomerController::class, 'getPoSheets'])->name('customers.po-sheets.get');
+        Route::post('customers/{customer}/po-sheets', [CustomerController::class, 'uploadPoSheets'])->name('customers.po-sheets.upload');
+    });
+
+    // Customer routes (Admin, Pro-Tech, KAM, Pro-KAM, Management)
     Route::middleware('role:admin,pro-tech,kam,pro-kam,management')->group(function () {
         Route::resource('customers', CustomerController::class);
     });

@@ -109,6 +109,7 @@ class TechResourceAllocationController extends Controller
         return response()->json([
             'html' => $html,
             'status_id' => $statusId,
+            'test_status_id' => $testStatusId,
             'customer_name' => $customer->customer_name,
             'action_type' => $actionType,
         ]);

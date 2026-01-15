@@ -15,12 +15,19 @@
                                 Manage customers, dismantle resources, or rewrite cloud details in real time.
                             </p>
                         </div>
-                        <a href="{{ route('customers.create') }}" class="btn btn-primary custom-customer-index-add-btn">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="me-2" viewBox="0 0 16 16">
-                                <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4" />
-                            </svg>
-                            Add New Customer
-                        </a>
+                        <div id="header-action-container">
+                            <a href="{{ route('customers.create') }}" id="add-customer-btn" class="btn btn-primary custom-customer-index-add-btn">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="me-2" viewBox="0 0 16 16">
+                                    <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4" />
+                                </svg>
+                                Add New Customer
+                            </a>
+                            <div id="po-button-container" class="d-none ms-3">
+                                <button type="button" class="btn btn-outline-primary fw-semibold" onclick="openPoSheetModal()">
+                                    <i class="fas fa-file-pdf me-2"></i>Add PO Project Sheet
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -165,6 +172,8 @@
                 const transferTypeSelect = document.getElementById('transfer_type');
                 const container = document.getElementById('cloud-detail-container');
                 const resourceForm = document.getElementById('resource-action-form');
+                const addCustomerBtn = document.getElementById('add-customer-btn');
+                const poButtonContainer = document.getElementById('po-button-container');
                 const testStatusId = {{ \App\Models\CustomerStatus::where('name', 'Test')->first()?->id ?? 1 }};
 
                 if (!customerSelect || !actionSelect || !container || !actionTypeContainer) {
@@ -204,7 +213,17 @@
                         transferTypeContainer.classList.add('d-none');
                         transferTypeSelect.required = false;
                         transferTypeSelect.value = "";
+                        transferTypeSelect.value = "";
                         console.log('All extra containers hidden');
+                    }
+
+                    // Toggle Add Customer Button / PO Upload
+                    if (action === 'upgrade') {
+                        if(addCustomerBtn) addCustomerBtn.classList.add('d-none');
+                        if(poButtonContainer) poButtonContainer.classList.remove('d-none');
+                    } else {
+                        if(addCustomerBtn) addCustomerBtn.classList.remove('d-none');
+                        if(poButtonContainer) poButtonContainer.classList.add('d-none');
                     }
                 }
 
@@ -267,9 +286,6 @@
 
                         // If the backend provided a status_id, update the select
                         if (data.status_id && (actionType === 'upgrade' || actionType === 'downgrade')) {
-                            // Only update if the user hasn't explicitly selected one (which is mostly true here since we allowed empty statusId)
-                            // But since simple toggle clears value, checking if it matches is good.
-                            // Actually, we want to force update it if it came from backend default
                              if (!statusSelect.value) {
                                 statusSelect.value = data.status_id;
                              }
@@ -749,6 +765,115 @@
 
                 });
 
+                // PO Project Sheets Modal Functions
+                window.openPoSheetModal = async function() {
+                    const customerId = customerSelect.value;
+                    if (!customerId) {
+                        alert('Please select a customer first.');
+                        return;
+                    }
+
+                    const modal = new bootstrap.Modal(document.getElementById('poSheetModal'));
+                    const modalBody = document.getElementById('poSheetModalBody');
+                    
+                    modalBody.innerHTML = '<div class="text-center py-4"><div class="spinner-border text-primary" role="status"></div><p class="mt-2">Loading sheets...</p></div>';
+                    modal.show();
+
+                    try {
+                        const response = await fetch(`{{ url('customers') }}/${customerId}/po-sheets`);
+                        const data = await response.json();
+                        
+                        if (data.success) {
+                            renderPoSheetsList(data.po_project_sheets);
+                        } else {
+                            modalBody.innerHTML = '<div class="alert alert-danger">Failed to load PO sheets.</div>';
+                        }
+                    } catch (error) {
+                        console.error(error);
+                        modalBody.innerHTML = '<div class="alert alert-danger">An error occurred while fetching PO sheets.</div>';
+                    }
+                };
+
+                function renderPoSheetsList(sheets) {
+                    const modalBody = document.getElementById('poSheetModalBody');
+                    if (!sheets || sheets.length === 0) {
+                        modalBody.innerHTML = '<p class="text-muted text-center py-3">No PO Project Sheets uploaded yet.</p>';
+                    } else {
+                        let html = '<div class="list-group mb-4">';
+                        sheets.forEach(sheet => {
+                            html += `
+                                <div class="list-group-item d-flex justify-content-between align-items-center">
+                                    <div class="d-flex align-items-center">
+                                        <i class="fas fa-file-pdf text-danger me-3 fs-4"></i>
+                                        <div>
+                                            <div class="fw-semibold text-truncate" style="max-width: 250px;">${sheet.name}</div>
+                                            <small class="text-muted">${(sheet.size / 1024 / 1024).toFixed(2)} MB</small>
+                                        </div>
+                                    </div>
+                                    <a href="{{ asset('storage') }}/${sheet.path}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-eye me-1"></i>View
+                                    </a>
+                                </div>
+                            `;
+                        });
+                        html += '</div>';
+                        modalBody.innerHTML = html;
+                    }
+                    
+                    // Add upload form
+                    modalBody.innerHTML += `
+                        <hr>
+                        <div class="mt-3">
+                            <label class="form-label fw-semibold">Upload New Sheets</label>
+                            <div class="input-group">
+                                <input type="file" id="new_po_sheets" class="form-control" multiple accept=".pdf">
+                                <button class="btn btn-primary" type="button" onclick="uploadPoSheets()">Upload</button>
+                            </div>
+                            <div id="upload-status" class="mt-2"></div>
+                        </div>
+                    `;
+                }
+
+                window.uploadPoSheets = async function() {
+                    const customerId = customerSelect.value;
+                    const fileInput = document.getElementById('new_po_sheets');
+                    const statusDiv = document.getElementById('upload-status');
+                    
+                    if (!fileInput.files.length) {
+                        statusDiv.innerHTML = '<small class="text-danger">Please select files to upload.</small>';
+                        return;
+                    }
+
+                    const formData = new FormData();
+                    for (let i = 0; i < fileInput.files.length; i++) {
+                        formData.append('po_project_sheets[]', fileInput.files[i]);
+                    }
+
+                    statusDiv.innerHTML = '<small class="text-primary"><i class="fas fa-spinner fa-spin me-1"></i>Uploading and optimizing...</small>';
+                    
+                    try {
+                        const response = await fetch(`{{ url('customers') }}/${customerId}/po-sheets`, {
+                            method: 'POST',
+                            headers: {
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                                'Accept': 'application/json'
+                            },
+                            body: formData
+                        });
+                        
+                        const data = await response.json();
+                        if (data.success) {
+                            statusDiv.innerHTML = '<small class="text-success">Uploaded successfully!</small>';
+                            renderPoSheetsList(data.po_project_sheets);
+                        } else {
+                            statusDiv.innerHTML = `<small class="text-danger">${data.message || 'Upload failed'}</small>`;
+                        }
+                    } catch (error) {
+                        console.error(error);
+                        statusDiv.innerHTML = '<small class="text-danger">An error occurred during upload.</small>';
+                    }
+                };
+
                 // Initialize
                 toggleStatus();
                 renderPlaceholder();
@@ -764,6 +889,27 @@
                 @endif
             })();
         </script>
+    @endpush
+    @push('modals')
+    <!-- PO Project Sheets Modal -->
+    <div class="modal fade" id="poSheetModal" tabindex="-1" aria-labelledby="poSheetModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header bg-light">
+                    <h5 class="modal-title fw-bold" id="poSheetModalLabel">
+                        <i class="fas fa-file-pdf text-primary me-2"></i>PO Project Sheets
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="poSheetModalBody">
+                    <!-- Content loaded via AJAX -->
+                </div>
+                <div class="modal-footer border-0">
+                    <button type="button" class="btn btn-light fw-semibold" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
     @endpush
 </x-app-layout>
 

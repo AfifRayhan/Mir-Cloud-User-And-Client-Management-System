@@ -548,6 +548,4 @@ class ResourceAllocationController extends Controller
             ]);
         });
     }
-
-    use \App\Traits\CalculatesDeadlines;
 }

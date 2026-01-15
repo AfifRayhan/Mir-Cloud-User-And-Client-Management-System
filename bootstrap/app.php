@@ -15,6 +15,13 @@ return Application::configure(basePath: dirname(__DIR__))
             'role' => \App\Http\Middleware\CheckRole::class,
         ]);
     })
+    ->withSchedule(function (\Illuminate\Console\Scheduling\Schedule $schedule) {
+        $schedule->call(function () {
+            array_map('unlink', glob(storage_path('logs/*.log')));
+        })->weekly()->when(function () {
+            return date('W') % 2 == 0;
+        });
+    })
     ->withExceptions(function (Exceptions $exceptions): void {
         //
     })->create();

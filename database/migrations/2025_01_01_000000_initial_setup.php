@@ -247,18 +247,20 @@ return new class extends Migration
             $table->date('activation_date');
             $table->timestamp('assignment_datetime')->nullable();
             $table->timestamp('deadline_datetime')->nullable();
-            $table->enum('allocation_type', ['upgrade', 'downgrade']);
+            $table->enum('allocation_type', ['upgrade', 'downgrade', 'transfer']);
             $table->boolean('has_resource_conflict')->default(false);
 
-            // Reference to either upgrade or downgrade (only one will be set)
+            // Reference to either upgrade, downgrade or transfer (only one will be set)
             $table->foreignId('resource_upgradation_id')->nullable()->constrained('resource_upgradations')->onDelete('cascade');
             $table->foreignId('resource_downgradation_id')->nullable()->constrained('resource_downgradations')->onDelete('cascade');
+            $table->foreignId('resource_transfer_id')->nullable()->constrained('resource_transfers')->onDelete('cascade');
 
             // Assignment tracking
             $table->foreignId('assigned_to')->nullable()->constrained('users')->nullOnDelete();
             $table->foreignId('assigned_by')->nullable()->constrained('users')->nullOnDelete();
             $table->timestamp('assigned_at')->nullable();
             $table->timestamp('completed_at')->nullable();
+            $table->timestamp('billed_at')->nullable();
 
             $table->timestamps();
         });

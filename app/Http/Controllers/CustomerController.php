@@ -172,6 +172,44 @@ class CustomerController extends Controller
     }
 
     /**
+     * Get PO Project Sheets for a customer (AJAX).
+     */
+    public function getPoSheets(Customer $customer)
+    {
+        return response()->json([
+            'success' => true,
+            'po_project_sheets' => $customer->po_project_sheets ?? [],
+        ]);
+    }
+
+    /**
+     * Upload PO Project Sheets for a customer (AJAX).
+     */
+    public function uploadPoSheets(Request $request, Customer $customer)
+    {
+        $request->validate([
+            'po_project_sheets' => 'required|array',
+            'po_project_sheets.*' => 'file|mimes:pdf|max:20480',
+        ]);
+
+        $poSheets = $customer->po_project_sheets ?? [];
+
+        if ($request->hasFile('po_project_sheets')) {
+            foreach ($request->file('po_project_sheets') as $file) {
+                $poSheets[] = $this->optimizeAndStorePdf($file, $customer->po_number);
+            }
+        }
+
+        $customer->update(['po_project_sheets' => $poSheets]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'PO Project Sheets uploaded successfully.',
+            'po_project_sheets' => $poSheets,
+        ]);
+    }
+
+    /**
      * Optimize and store PDF file.
      */
     private function optimizeAndStorePdf($file, $poNumber = null): array

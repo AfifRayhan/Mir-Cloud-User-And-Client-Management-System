@@ -49,7 +49,7 @@ class BillAssignmentEmailTest extends TestCase
 
         $statusTest = CustomerStatus::firstWhere('name', 'test') ?? CustomerStatus::create(['name' => 'test']);
         $statusBillable = CustomerStatus::firstWhere('name', 'billable') ?? CustomerStatus::create(['name' => 'billable']);
-        
+
         $transfer = ResourceTransfer::create([
             'customer_id' => $customer->id,
             'status_from_id' => $statusTest->id,
@@ -97,7 +97,7 @@ class BillAssignmentEmailTest extends TestCase
         $mailable->assertSeeInHtml('7 Core');
         $mailable->assertSeeInHtml('2 Core');
         $mailable->assertSeeInHtml('8 Core');
-        
+
         $mailable->assertSeeInHtml('color:#0d6efd; font-weight:bold;'); // Blue transfer
         $mailable->assertSeeInHtml('color: #7c3aed; font-weight:bold;'); // Purple Test
     }
@@ -167,7 +167,7 @@ class BillAssignmentEmailTest extends TestCase
         $mailable->assertSeeInHtml('RAM');
         $mailable->assertSeeInHtml('15 GB');
         $mailable->assertSeeInHtml('5 GB'); // This appears twice
-        
+
         $mailable->assertSeeInHtml('color:#0d6efd; font-weight:bold;'); // Blue transfer
         $mailable->assertSeeInHtml('color: #7c3aed; font-weight:bold;'); // Purple Test
     }
@@ -182,7 +182,7 @@ class BillAssignmentEmailTest extends TestCase
             'platform_id' => $platform->id,
             'submitted_by' => $kam->id,
         ]);
-        
+
         $testStatus = CustomerStatus::firstWhere('name', 'test') ?? CustomerStatus::create(['name' => 'test']);
         $billableStatus = CustomerStatus::firstWhere('name', 'billable') ?? CustomerStatus::create(['name' => 'billable']);
 

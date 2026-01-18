@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Exports\KamCustomerSummaryExport;
 use App\Exports\KamTasksExport;
 use App\Mail\RecommendationSubmissionEmail;
+use App\Mail\TaskUpdatedEmail;
 use App\Models\Customer;
 use App\Models\CustomerStatus;
 use App\Models\ResourceDowngradationDetail;
@@ -22,6 +23,8 @@ use Maatwebsite\Excel\Facades\Excel;
 
 class KamTaskManagementController extends Controller
 {
+    use \App\Traits\HandlesResourceAllocations;
+
     /**
      * Display a listing of all tasks (KAM and Pro-KAM only)
      */
@@ -258,15 +261,29 @@ class KamTaskManagementController extends Controller
             $customerId = $task->customer_id;
             $affectedServiceIds = [];
 
-            // Update Task activation date
+            // Update Task activation date and calculate new deadlines
+            $activationDate = \Illuminate\Support\Carbon::parse($validated['activation_date']);
+            $now = now();
+
+            if ($activationDate->isSameDay($now)) {
+                $assignmentDatetime = $now;
+            } else {
+                $assignmentDatetime = $activationDate->copy()->setTime(9, 30, 0);
+            }
+            $deadlineDatetime = $this->calculateDeadline($assignmentDatetime);
+
             $task->update([
                 'activation_date' => $validated['activation_date'],
+                'assignment_datetime' => $assignmentDatetime,
+                'deadline_datetime' => $deadlineDatetime,
             ]);
 
             // Update Resource Record (Upgradation or Downgradation)
             if ($task->allocation_type === 'upgrade' && $task->resourceUpgradation) {
                 $task->resourceUpgradation->update([
                     'activation_date' => $validated['activation_date'],
+                    'assignment_datetime' => $assignmentDatetime,
+                    'deadline_datetime' => $deadlineDatetime,
                 ]);
 
                 // Get existing details mapped by service_id
@@ -297,6 +314,8 @@ class KamTaskManagementController extends Controller
             } elseif ($task->allocation_type === 'downgrade' && $task->resourceDowngradation) {
                 $task->resourceDowngradation->update([
                     'activation_date' => $validated['activation_date'],
+                    'assignment_datetime' => $assignmentDatetime,
+                    'deadline_datetime' => $deadlineDatetime,
                 ]);
 
                 // Get existing details mapped by service_id
@@ -330,21 +349,27 @@ class KamTaskManagementController extends Controller
                 $this->syncCustomerResourceChains($customerId, array_unique($affectedServiceIds));
             }
 
-            // Re-sync summary table
-            $this->updateCustomerSummary($customerId);
+            // Send updated recommendation email
+            $sender = Auth::user();
+            
+            // Recipient list: Pro-Techs and Assigned Tech
+            $recipients = User::whereHas('role', function ($q) {
+                $q->where('role_name', 'pro-tech');
+            })->pluck('email')->toArray();
 
-            // Send recommendation email to Pro-Techs (like a new resource allocation)
-            $proTechUsers = User::where('role_id', 4)->get(); // Pro-Tech Role ID is 4
+            if ($task->assigned_to && $task->assignedTo && !in_array($task->assignedTo->email, $recipients)) {
+                $recipients[] = $task->assignedTo->email;
+            }
 
-            foreach ($proTechUsers as $recipient) {
+            foreach ($recipients as $email) {
                 try {
-                    Mail::to($recipient->email)->send(new RecommendationSubmissionEmail(
+                    Mail::to($email)->send(new TaskUpdatedEmail(
                         $task,
-                        Auth::user(),
+                        $sender,
                         $task->allocation_type
                     ));
                 } catch (\Exception $e) {
-                    Log::error('Failed to send email: '.$e->getMessage());
+                    Log::error('Failed to send task update email to '.$email.': '.$e->getMessage());
                 }
             }
 
@@ -390,8 +415,7 @@ class KamTaskManagementController extends Controller
                 $this->syncCustomerResourceChains($customerId, array_unique($affectedServiceIds));
             }
 
-            // Re-sync summary table
-            $this->updateCustomerSummary($customerId);
+            // Summary will only be updated if a Tech completes a related task
 
             return back()->with('success', 'Task and associated resource request deleted successfully.');
         });
@@ -496,36 +520,6 @@ class KamTaskManagementController extends Controller
                     ->where('id', $item->id)
                     ->update(['quantity' => $currentPoolQuantity]);
             }
-        }
-    }
-
-    /**
-     * Update the summary table with latest service values for a customer
-     */
-    protected function updateCustomerSummary(int $customerId): void
-    {
-        $customer = Customer::find($customerId);
-        if (! $customer) {
-            return;
-        }
-
-        $resources = $customer->getCurrentResources();
-        $services = Service::where('platform_id', $customer->platform_id)->get();
-
-        foreach ($services as $service) {
-            $pool = $resources[$service->id] ?? ['test' => 0, 'billable' => 0];
-
-            // Upsert summary record with separate quantity columns
-            Summary::updateOrCreate(
-                [
-                    'customer_id' => $customerId,
-                    'service_id' => $service->id,
-                ],
-                [
-                    'test_quantity' => $pool['test'],
-                    'billable_quantity' => $pool['billable'],
-                ]
-            );
         }
     }
 }

@@ -10,34 +10,30 @@ use Illuminate\View\View;
 
 class ResourceAllocationController extends Controller
 {
+    use \App\Traits\HandlesResourceAllocations;
+
     public function index(): View
     {
-        $customersRaw = Customer::orderBy('customer_name')->get();
+        $customersRaw = Customer::withExists(['resourceUpgradations', 'resourceDowngradations'])
+            ->orderBy('customer_name')
+            ->get();
         $customers = collect();
 
         // Group by name to identify duplicates
         $grouped = $customersRaw->groupBy('customer_name');
 
         foreach ($grouped as $name => $group) {
-            if ($group->count() > 1) {
-                // If duplicates exist, append index to each
-                $index = 1;
-                foreach ($group as $customer) {
-                    $customer->is_new = ! $customer->hasResourceAllocations();
-                    $customer->customer_name = $customer->customer_name.'-'.$index;
-                    if ($customer->is_new) {
-                        $customer->customer_name .= ' (No Resources)';
-                    }
-                    $customers->push($customer);
-                    $index++;
+            foreach ($group as $index => $customer) {
+                $customer->is_new = ! ($customer->resource_upgradations_exists || $customer->resource_downgradations_exists);
+
+                if ($group->count() > 1) {
+                    $customer->customer_name = $customer->customer_name.'-'.($index + 1);
                 }
-            } else {
-                // No duplicates, just add
-                $customer = $group->first();
-                $customer->is_new = ! $customer->hasResourceAllocations();
+
                 if ($customer->is_new) {
                     $customer->customer_name .= ' (No Resources)';
                 }
+
                 $customers->push($customer);
             }
         }
@@ -189,25 +185,9 @@ class ResourceAllocationController extends Controller
         return response()->json($responseData);
     }
 
-    public function storeAllocation(Request $request, Customer $customer)
+    public function storeAllocation(\App\Http\Requests\ResourceAllocationRequest $request, Customer $customer)
     {
-        // Fetch services to map IDs to Names for validation attributes
-        $services = \App\Models\Service::where('platform_id', $customer->platform_id)->get();
-        $attributes = [];
-        foreach ($services as $service) {
-            $attributes['services.'.$service->id] = $service->service_name;
-        }
-
-        $validated = $request->validate([
-            'action_type' => 'required|in:upgrade,downgrade,transfer',
-            'status_id' => 'required_if:action_type,upgrade,downgrade|exists:customer_statuses,id',
-            'transfer_type' => 'required_if:action_type,transfer|in:test_to_billable,billable_to_test',
-            'task_status_id' => 'required|exists:task_statuses,id',
-            'activation_date' => 'required|date',
-            'inactivation_date' => 'nullable|date',
-            'services' => 'required|array',
-            'services.*' => 'nullable|integer|min:0',
-        ], [], $attributes);
+        $validated = $request->validated();
 
         $actionType = $validated['action_type'];
         $statusId = $validated['status_id'] ?? null;
@@ -278,13 +258,11 @@ class ResourceAllocationController extends Controller
 
             if ($activationDate->isSameDay($now)) {
                 $assignmentDatetime = $now;
-                // Calculate deadline: 8 working hours from now
-                $deadlineDatetime = $this->calculateDeadline($now);
             } else {
                 // If any date other than current is selected
                 $assignmentDatetime = $activationDate->copy()->setTime(9, 30, 0);
-                $deadlineDatetime = $activationDate->copy()->addHours(8)->setTime(17, 30, 0);
             }
+            $deadlineDatetime = $this->calculateDeadline($assignmentDatetime);
 
             if ($actionType === 'upgrade') {
                 $upgradation = \App\Models\ResourceUpgradation::create([
@@ -443,37 +421,27 @@ class ResourceAllocationController extends Controller
                     'completed_at' => now(),
                 ]);
 
-                foreach ($servicesInput as $serviceId => $transferAmount) {
-                    // Get current summary to record state before transfer
-                    $summary = \App\Models\Summary::where('customer_id', $lockedCustomer->id)
-                        ->where('service_id', $serviceId)
-                        ->first();
+                // Get fresh resources directly from the historical records to avoid stale Summary table issues
+                $currentResources = $lockedCustomer->getCurrentResources();
 
-                    if ($summary) {
-                        $currentTest = $summary->test_quantity;
-                        $currentBillable = $summary->billable_quantity;
+                foreach ($servicesInput as $serviceId => $transferAmount) {
+                    if ($transferAmount <= 0) continue;
+
+                    $pool = $currentResources[$serviceId] ?? ['test' => 0, 'billable' => 0];
+                    $currentTest = $pool['test'];
+                    $currentBillable = $pool['billable'];
 
                         if ($transferType === 'test_to_billable') {
                             $currentSource = $currentTest;
                             $currentTarget = $currentBillable;
-
-                            $summary->test_quantity = max(0, $summary->test_quantity - $transferAmount);
-                            $summary->billable_quantity += $transferAmount;
-
-                            $newSource = $summary->test_quantity;
-                            $newTarget = $summary->billable_quantity;
+                            $newSource = max(0, $currentTest - $transferAmount);
+                            $newTarget = $currentBillable + $transferAmount;
                         } else {
                             $currentSource = $currentBillable;
                             $currentTarget = $currentTest;
-
-                            $summary->billable_quantity = max(0, $summary->billable_quantity - $transferAmount);
-                            $summary->test_quantity += $transferAmount;
-
-                            $newSource = $summary->billable_quantity;
-                            $newTarget = $summary->test_quantity;
+                            $newSource = max(0, $currentBillable - $transferAmount);
+                            $newTarget = $currentTest + $transferAmount;
                         }
-
-                        $summary->save();
 
                         \App\Models\ResourceTransferDetail::create([
                             'resource_transfer_id' => $transfer->id,
@@ -484,8 +452,11 @@ class ResourceAllocationController extends Controller
                             'new_source_quantity' => $newSource,
                             'new_target_quantity' => $newTarget,
                         ]);
-                    }
                 }
+
+                // IMPORTANT: Since transfers are auto-completed by the system (KAM), 
+                // we MUST update the summary table here so the dashboard shows the change.
+                $this->updateCustomerSummary($lockedCustomer->id);
             }
 
             // Send email notification to all Pro-Tech users (skip for transfers)

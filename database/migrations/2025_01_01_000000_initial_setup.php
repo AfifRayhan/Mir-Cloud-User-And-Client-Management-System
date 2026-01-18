@@ -236,48 +236,6 @@ return new class extends Migration
             $table->unique(['customer_id', 'vdc_name']);
         });
 
-        // 14. Tasks
-        Schema::create('tasks', function (Blueprint $table) {
-            $table->id();
-            $table->string('task_id')->unique()->nullable();
-            $table->foreignId('customer_id')->constrained('customers')->onDelete('cascade');
-            $table->foreignId('status_id')->nullable()->constrained('customer_statuses');
-            $table->foreignId('task_status_id')->default(1)->constrained('task_statuses');
-            $table->foreignId('vdc_id')->nullable()->constrained('vdcs')->nullOnDelete();
-            $table->date('activation_date');
-            $table->timestamp('assignment_datetime')->nullable();
-            $table->timestamp('deadline_datetime')->nullable();
-            $table->enum('allocation_type', ['upgrade', 'downgrade', 'transfer']);
-            $table->boolean('has_resource_conflict')->default(false);
-
-            // Reference to either upgrade, downgrade or transfer (only one will be set)
-            $table->foreignId('resource_upgradation_id')->nullable()->constrained('resource_upgradations')->onDelete('cascade');
-            $table->foreignId('resource_downgradation_id')->nullable()->constrained('resource_downgradations')->onDelete('cascade');
-            $table->foreignId('resource_transfer_id')->nullable()->constrained('resource_transfers')->onDelete('cascade');
-
-            // Assignment tracking
-            $table->foreignId('assigned_to')->nullable()->constrained('users')->nullOnDelete();
-            $table->foreignId('assigned_by')->nullable()->constrained('users')->nullOnDelete();
-            $table->timestamp('assigned_at')->nullable();
-            $table->timestamp('completed_at')->nullable();
-            $table->timestamp('billed_at')->nullable();
-
-            $table->timestamps();
-        });
-
-        // 16. Summaries
-        Schema::create('summaries', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('customer_id')->constrained('customers')->onDelete('cascade');
-            $table->foreignId('service_id')->constrained('services')->onDelete('cascade');
-            $table->integer('test_quantity')->default(0);
-            $table->integer('billable_quantity')->default(0);
-            $table->timestamps();
-
-            // Unique constraint: one summary record per customer-service pair
-            $table->unique(['customer_id', 'service_id']);
-        });
-
         // 17. Resource Transfers
         Schema::create('resource_transfers', function (Blueprint $table) {
             $table->id();
@@ -301,6 +259,49 @@ return new class extends Migration
             $table->integer('new_target_quantity');
             $table->timestamps();
         });
+
+        // 14. Tasks
+        Schema::create('tasks', function (Blueprint $table) {
+            $table->id();
+            $table->string('task_id')->unique()->nullable();
+            $table->foreignId('customer_id')->constrained('customers')->onDelete('cascade');
+            $table->foreignId('status_id')->nullable()->constrained('customer_statuses');
+            $table->foreignId('task_status_id')->default(1)->constrained('task_statuses');
+            $table->foreignId('vdc_id')->nullable()->constrained('vdcs')->nullOnDelete();
+            $table->date('activation_date');
+            $table->timestamp('assignment_datetime')->nullable()->index();
+            $table->timestamp('deadline_datetime')->nullable()->index();
+            $table->enum('allocation_type', ['upgrade', 'downgrade', 'transfer']);
+            $table->boolean('has_resource_conflict')->default(false);
+
+            // Reference to either upgrade, downgrade or transfer (only one will be set)
+            $table->foreignId('resource_upgradation_id')->nullable()->constrained('resource_upgradations')->onDelete('cascade');
+            $table->foreignId('resource_downgradation_id')->nullable()->constrained('resource_downgradations')->onDelete('cascade');
+            $table->foreignId('resource_transfer_id')->nullable()->constrained('resource_transfers')->onDelete('cascade');
+
+            // Assignment tracking
+            $table->foreignId('assigned_to')->nullable()->constrained('users')->nullOnDelete();
+            $table->foreignId('assigned_by')->nullable()->constrained('users')->nullOnDelete();
+            $table->timestamp('assigned_at')->nullable()->index();
+            $table->timestamp('completed_at')->nullable()->index();
+            $table->timestamp('billed_at')->nullable();
+
+            $table->timestamps();
+        });
+
+        // 16. Summaries
+        Schema::create('summaries', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('customer_id')->constrained('customers')->onDelete('cascade');
+            $table->foreignId('service_id')->constrained('services')->onDelete('cascade');
+            $table->integer('test_quantity')->default(0);
+            $table->integer('billable_quantity')->default(0);
+            $table->timestamps();
+
+            // Unique constraint: one summary record per customer-service pair
+            $table->unique(['customer_id', 'service_id']);
+        });
+
     }
 
     /**

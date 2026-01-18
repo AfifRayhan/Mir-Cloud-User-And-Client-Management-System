@@ -9,6 +9,8 @@ use Illuminate\Support\Facades\Auth;
 
 class MyTaskController extends Controller
 {
+    use \App\Traits\HandlesResourceAllocations;
+
     /**
      * Display tasks assigned to the authenticated user
      */
@@ -235,42 +237,5 @@ class MyTaskController extends Controller
         $vdcs = Vdc::where('customer_id', $customerId)->get();
 
         return response()->json(['vdcs' => $vdcs]);
-    }
-
-    /**
-     * Update the summary table with latest service values for a customer
-     */
-    protected function updateCustomerSummary(int $customerId): void
-    {
-        $customer = \App\Models\Customer::find($customerId);
-        if (! $customer) {
-            return;
-        }
-
-        // Get all services and current resources (which now returns independent pools)
-        $resources = $customer->getCurrentResources();
-
-        // fetch services on current platform
-        $platformServiceIds = \App\Models\Service::where('platform_id', $customer->platform_id)->pluck('id')->toArray();
-
-        // Identify all service IDs involved (from current platform OR from resource history)
-        // This ensures that if a resource was on an old platform (and is now 0), we still update its summary row to 0
-        $allServiceIds = array_unique(array_merge($platformServiceIds, array_keys($resources)));
-
-        foreach ($allServiceIds as $serviceId) {
-            $pool = $resources[$serviceId] ?? ['test' => 0, 'billable' => 0];
-
-            // Upsert summary record with separate quantity columns
-            \App\Models\Summary::updateOrCreate(
-                [
-                    'customer_id' => $customerId,
-                    'service_id' => $serviceId,
-                ],
-                [
-                    'test_quantity' => $pool['test'],
-                    'billable_quantity' => $pool['billable'],
-                ]
-            );
-        }
     }
 }

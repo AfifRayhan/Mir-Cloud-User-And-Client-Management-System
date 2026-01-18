@@ -9,8 +9,8 @@
     </style> -->
 </head>
 <body style="font-family: Arial, sans-serif;">
-    <h1 style="color: #4f46e5;">New Resource Recommendation</h1>
-    <p>A new resource {{ $actionType }} recommendation has been submitted by {{ $sender->name }}.</p>
+    <h1 style="color: #4f46e5;">Resource Recommendation Updated</h1>
+    <p>A resource {{ $actionType }} recommendation has been updated by {{ $sender->name }}.</p>
  
     @php
         $isUpgrade = $task->allocation_type === 'upgrade';

@@ -10,24 +10,22 @@ use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
 
-class BillTaskCompletionEmail extends Mailable implements ShouldQueue
+class TaskUpdatedEmail extends Mailable implements ShouldQueue
 {
     use Queueable, SerializesModels;
 
     public $task;
-
     public $sender;
-
     public $actionType;
 
     /**
      * Create a new message instance.
      */
-    public function __construct($task, $sender, $actionType = null)
+    public function __construct($task, $sender, $actionType)
     {
         $this->task = $task;
         $this->sender = $sender;
-        $this->actionType = $actionType ?? ($task->allocation_type ?? 'allocation');
+        $this->actionType = $actionType;
     }
 
     /**
@@ -36,7 +34,7 @@ class BillTaskCompletionEmail extends Mailable implements ShouldQueue
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'New Resource '.ucfirst($this->actionType),
+            subject: 'Updated: Resource '.ucfirst($this->actionType).' Recommendation',
             from: new Address($this->sender->email, $this->sender->name),
         );
     }
@@ -47,7 +45,7 @@ class BillTaskCompletionEmail extends Mailable implements ShouldQueue
     public function content(): Content
     {
         return new Content(
-            view: 'emails.bill_task_completion',
+            view: 'emails.task_updated',
         );
     }
 

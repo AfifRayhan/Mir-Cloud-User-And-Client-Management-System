@@ -19,31 +19,31 @@ use Illuminate\View\View;
 
 class TechResourceAllocationController extends Controller
 {
+    use \App\Traits\HandlesResourceAllocations;
+
     public function index(): View
     {
-        $customersRaw = Customer::with(['submitter.role'])->orderBy('customer_name')->get();
+        $customersRaw = Customer::with(['submitter.role'])
+            ->withExists(['resourceUpgradations', 'resourceDowngradations'])
+            ->orderBy('customer_name')
+            ->get();
+
         $customers = collect();
 
         // Group by name to identify duplicates (same logic as ResourceAllocationController)
         $grouped = $customersRaw->groupBy('customer_name');
         foreach ($grouped as $name => $group) {
-            if ($group->count() > 1) {
-                $index = 1;
-                foreach ($group as $customer) {
-                    $customer->is_new = ! $customer->hasResourceAllocations();
-                    $customer->customer_name = $customer->customer_name.'-'.$index;
-                    if ($customer->is_new) {
-                        $customer->customer_name .= ' (No Resources)';
-                    }
-                    $customers->push($customer);
-                    $index++;
+            foreach ($group as $index => $customer) {
+                $customer->is_new = ! ($customer->resource_upgradations_exists || $customer->resource_downgradations_exists);
+
+                if ($group->count() > 1) {
+                    $customer->customer_name = $customer->customer_name.'-'.($index + 1);
                 }
-            } else {
-                $customer = $group->first();
-                $customer->is_new = ! $customer->hasResourceAllocations();
+
                 if ($customer->is_new) {
                     $customer->customer_name .= ' (No Resources)';
                 }
+
                 $customers->push($customer);
             }
         }
@@ -172,11 +172,10 @@ class TechResourceAllocationController extends Controller
 
             if ($activationDate->isToday()) {
                 $assignmentDatetime = $now;
-                $deadlineDatetime = $this->calculateDeadline($now);
             } else {
                 $assignmentDatetime = $activationDate->copy()->setTime(9, 30);
-                $deadlineDatetime = $activationDate->copy()->setTime(17, 30);
             }
+            $deadlineDatetime = $this->calculateDeadline($assignmentDatetime);
 
             $resourceId = null;
             if ($actionType === 'upgrade') {
@@ -267,8 +266,7 @@ class TechResourceAllocationController extends Controller
                 'completed_at' => null, // Will be filled by VDC selection
             ]);
 
-            // Re-sync summary table
-            $this->updateCustomerSummary($lockedCustomer->id);
+            // Task will be finalized in MyTaskController
 
             return response()->json([
                 'success' => true,
@@ -277,78 +275,5 @@ class TechResourceAllocationController extends Controller
                 'customer_id' => $lockedCustomer->id,
             ]);
         });
-    }
-
-    protected function updateCustomerSummary(int $customerId): void
-    {
-        $customer = Customer::find($customerId);
-        if (! $customer) {
-            return;
-        }
-
-        $resources = $customer->getCurrentResources();
-        $services = Service::where('platform_id', $customer->platform_id)->get();
-
-        foreach ($services as $service) {
-            $pool = $resources[$service->id] ?? ['test' => 0, 'billable' => 0];
-
-            \App\Models\Summary::updateOrCreate(
-                ['customer_id' => $customerId, 'service_id' => $service->id],
-                [
-                    'test_quantity' => $pool['test'],
-                    'billable_quantity' => $pool['billable'],
-                ]
-            );
-        }
-    }
-
-    private function calculateDeadline(\Carbon\Carbon $assignmentTime): \Carbon\Carbon
-    {
-        $workStart = 9.5; // 9:30 AM
-        $workEnd = 17.5;  // 5:30 PM
-        $workHoursPerDay = $workEnd - $workStart; // 8 hours
-        $hoursToAdd = 8;
-
-        $deadline = $assignmentTime->copy();
-
-        while ($hoursToAdd > 0) {
-            // Skip to next working day if currently on Friday (5) or Saturday (6)
-            while (in_array($deadline->dayOfWeek, [5, 6])) {
-                $deadline->addDay()->setTime(9, 30);
-            }
-
-            $currentHour = $deadline->hour + ($deadline->minute / 60);
-
-            // If before work hours, move to start of work day
-            if ($currentHour < $workStart) {
-                $deadline->setTime(9, 30);
-                $currentHour = $workStart;
-            }
-
-            // If after work hours, move to next working day
-            if ($currentHour >= $workEnd) {
-                $deadline->addDay()->setTime(9, 30);
-
-                continue;
-            }
-
-            // Calculate remaining work hours today
-            $remainingToday = $workEnd - $currentHour;
-
-            if ($hoursToAdd <= $remainingToday) {
-                // Can finish today
-                $totalMinutes = ($currentHour + $hoursToAdd) * 60;
-                $hours = floor($totalMinutes / 60);
-                $minutes = $totalMinutes % 60;
-                $deadline->setTime((int) $hours, (int) $minutes);
-                $hoursToAdd = 0;
-            } else {
-                // Use remaining hours today, continue tomorrow
-                $hoursToAdd -= $remainingToday;
-                $deadline->addDay()->setTime(9, 30);
-            }
-        }
-
-        return $deadline;
     }
 }

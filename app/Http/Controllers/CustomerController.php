@@ -22,7 +22,10 @@ class CustomerController extends Controller
      */
     public function index()
     {
-        $customers = Customer::with(['submitter', 'processor'])->latest()->paginate(10);
+        $customers = Customer::accessibleBy(Auth::user())
+            ->with(['submitter', 'processor'])
+            ->latest()
+            ->paginate(10);
 
         return view('customers.index', compact('customers'));
     }
@@ -90,6 +93,10 @@ class CustomerController extends Controller
      */
     public function show(Customer $customer)
     {
+        if (! Customer::accessibleBy(Auth::user())->where('id', $customer->id)->exists()) {
+            abort(403, 'Unauthorized access.');
+        }
+
         $customer->load(['submitter', 'processor', 'platform']);
 
         return view('customers.show', compact('customer'));
@@ -100,6 +107,10 @@ class CustomerController extends Controller
      */
     public function edit(Customer $customer)
     {
+        if (! Customer::accessibleBy(Auth::user())->where('id', $customer->id)->exists()) {
+            abort(403, 'Unauthorized access.');
+        }
+
         $platforms = Platform::orderBy('platform_name')->get();
 
         return view('customers.edit', compact('customer', 'platforms'));
@@ -110,6 +121,10 @@ class CustomerController extends Controller
      */
     public function update(Request $request, Customer $customer)
     {
+        if (! Customer::accessibleBy(Auth::user())->where('id', $customer->id)->exists()) {
+            abort(403, 'Unauthorized access.');
+        }
+
         $validated = $request->validate([
             'customer_name' => 'required|string|max:100',
             'customer_activation_date' => 'required|date',
@@ -176,6 +191,10 @@ class CustomerController extends Controller
      */
     public function getPoSheets(Customer $customer)
     {
+        if (! Customer::accessibleBy(Auth::user())->where('id', $customer->id)->exists()) {
+            return response()->json(['error' => 'Unauthorized access.'], 403);
+        }
+
         return response()->json([
             'success' => true,
             'po_project_sheets' => $customer->po_project_sheets ?? [],
@@ -187,6 +206,10 @@ class CustomerController extends Controller
      */
     public function uploadPoSheets(Request $request, Customer $customer)
     {
+        if (! Customer::accessibleBy(Auth::user())->where('id', $customer->id)->exists()) {
+            return response()->json(['error' => 'Unauthorized access.'], 403);
+        }
+
         $request->validate([
             'po_project_sheets' => 'required|array',
             'po_project_sheets.*' => 'file|mimes:pdf|max:20480',
@@ -283,6 +306,13 @@ class CustomerController extends Controller
     {
         // Check authorization (Only Admin or Management can delete)
         if (! Auth::user()->isAdmin() && ! Auth::user()->isManagement()) {
+            abort(403, 'Unauthorized access.');
+        }
+
+        // Additional check for KAM to only see their own (though destroy is already restricted to Admin/Management above)
+        // If the above roles are the only ones permitted, we don't strictly need accessibleBy here for KAM,
+        // but it doesn't hurt if the policy changes later.
+        if (! Customer::accessibleBy(Auth::user())->where('id', $customer->id)->exists()) {
             abort(403, 'Unauthorized access.');
         }
 

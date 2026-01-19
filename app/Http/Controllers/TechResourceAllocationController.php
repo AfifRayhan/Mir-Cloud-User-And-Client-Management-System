@@ -23,7 +23,8 @@ class TechResourceAllocationController extends Controller
 
     public function index(): View
     {
-        $customersRaw = Customer::with(['submitter.role'])
+        $customersRaw = Customer::accessibleBy(Auth::user())
+            ->with(['submitter.role'])
             ->withExists(['resourceUpgradations', 'resourceDowngradations'])
             ->orderBy('customer_name')
             ->get();
@@ -56,6 +57,10 @@ class TechResourceAllocationController extends Controller
 
     public function allocationForm(Request $request, Customer $customer)
     {
+        if (! Customer::accessibleBy(Auth::user())->where('id', $customer->id)->exists()) {
+            return response()->json(['error' => 'Unauthorized access.'], 403);
+        }
+
         $actionType = $request->query('action_type');
         $statusId = $request->query('status_id');
 
@@ -117,6 +122,10 @@ class TechResourceAllocationController extends Controller
 
     public function storeAllocation(Request $request, Customer $customer)
     {
+        if (! Customer::accessibleBy(Auth::user())->where('id', $customer->id)->exists()) {
+            return response()->json(['error' => 'Unauthorized access.'], 403);
+        }
+
         // Fetch services to map IDs to Names for validation attributes
         $services = Service::where('platform_id', $customer->platform_id)->get();
         $attributes = [];

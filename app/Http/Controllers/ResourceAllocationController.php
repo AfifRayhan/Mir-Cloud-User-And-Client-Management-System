@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Customer;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -14,7 +15,8 @@ class ResourceAllocationController extends Controller
 
     public function index(): View
     {
-        $customersRaw = Customer::withExists(['resourceUpgradations', 'resourceDowngradations'])
+        $customersRaw = Customer::accessibleBy(Auth::user())
+            ->withExists(['resourceUpgradations', 'resourceDowngradations'])
             ->orderBy('customer_name')
             ->get();
         $customers = collect();
@@ -64,6 +66,10 @@ class ResourceAllocationController extends Controller
 
     public function allocationForm(Request $request, Customer $customer)
     {
+        if (! Customer::accessibleBy(Auth::user())->where('id', $customer->id)->exists()) {
+            return response()->json(['error' => 'Unauthorized access.'], 403);
+        }
+
         $actionType = $request->query('action_type');
         $statusId = $request->query('status_id');
         $transferType = $request->query('transfer_type');
@@ -187,6 +193,10 @@ class ResourceAllocationController extends Controller
 
     public function storeAllocation(\App\Http\Requests\ResourceAllocationRequest $request, Customer $customer)
     {
+        if (! Customer::accessibleBy(Auth::user())->where('id', $customer->id)->exists()) {
+            return response()->json(['error' => 'Unauthorized access.'], 403);
+        }
+
         $validated = $request->validated();
 
         $actionType = $validated['action_type'];

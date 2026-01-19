@@ -22,3 +22,6 @@
 Homestead.json
 Homestead.yaml
 Thumbs.db
+*.docx
+*.md
+generate_manual_docx.php

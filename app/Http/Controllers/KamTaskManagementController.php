@@ -47,12 +47,10 @@ class KamTaskManagementController extends Controller
             $query->orderByRaw('CASE WHEN tasks.id = ? THEN 0 ELSE 1 END', [$request->dtid]);
         }
 
-        // Filter tasks for KAMs to show only those they created (assigned by themselves)
+        // Filter tasks for KAMs to show only those related to accessible customers
         if (! Auth::user()->isAdmin() && ! Auth::user()->isProKam()) {
-            $query->where(function ($q) {
-                $q->where('resource_upgradations.inserted_by', Auth::id())
-                    ->orWhere('resource_downgradations.inserted_by', Auth::id())
-                    ->orWhere('resource_transfers.inserted_by', Auth::id());
+            $query->whereHas('customer', function ($q) {
+                $q->accessibleBy(Auth::user());
             });
         }
 
@@ -104,11 +102,10 @@ class KamTaskManagementController extends Controller
             ->orderByRaw('CASE WHEN tasks.assigned_to IS NULL THEN 0 WHEN tasks.completed_at IS NULL THEN 1 ELSE 2 END')
             ->orderByRaw('COALESCE(resource_upgradations.created_at, resource_downgradations.created_at, resource_transfers.created_at) ASC');
 
-        // Filter tasks for KAMs to show only those they created (assigned by themselves)
+        // Filter tasks for KAMs to show only those related to accessible customers
         if (! Auth::user()->isAdmin() && ! Auth::user()->isProKam()) {
-            $query->where(function ($q) {
-                $q->where('resource_upgradations.inserted_by', Auth::id())
-                    ->orWhere('resource_downgradations.inserted_by', Auth::id());
+            $query->whereHas('customer', function ($q) {
+                $q->accessibleBy(Auth::user());
             });
         }
 
@@ -165,15 +162,9 @@ class KamTaskManagementController extends Controller
             });
         })->with(['platform']);
 
-        // Filter customers for KAMs to show only those they have interacted with
+        // Filter customers for KAMs to show only those they have access to
         if (! Auth::user()->isAdmin() && ! Auth::user()->isProKam()) {
-            $query->where(function ($q) {
-                $q->whereHas('resourceUpgradations', function ($sq) {
-                    $sq->where('inserted_by', Auth::id());
-                })->orWhereHas('resourceDowngradations', function ($sq) {
-                    $sq->where('inserted_by', Auth::id());
-                });
-            });
+            $query->accessibleBy(Auth::user());
         }
 
         $customers = $query->get();
@@ -194,6 +185,11 @@ class KamTaskManagementController extends Controller
         // Check authorization
         if (! Auth::user()->isAdmin() && ! Auth::user()->isProKam() && ! Auth::user()->isKam()) {
             return response()->json(['error' => 'Unauthorized'], 403);
+        }
+
+        // Check if task belongs to an accessible customer
+        if (! Customer::accessibleBy(Auth::user())->where('id', $task->customer_id)->exists()) {
+            return response()->json(['error' => 'Unauthorized access to customer details.'], 403);
         }
 
         $task->load(['customer', 'status', 'assignedTo', 'assignedBy', 'resourceUpgradation.details.service', 'resourceDowngradation.details.service', 'resourceTransfer.details.service']);
@@ -244,6 +240,11 @@ class KamTaskManagementController extends Controller
         // Check authorization
         if (! Auth::user()->isAdmin() && ! Auth::user()->isProKam() && ! Auth::user()->isKam()) {
             abort(403, 'Unauthorized access.');
+        }
+
+        // Check if task belongs to an accessible customer
+        if (! Customer::accessibleBy(Auth::user())->where('id', $task->customer_id)->exists()) {
+            abort(403, 'Unauthorized access to customer task.');
         }
 
         // Only unassigned tasks can be edited CHECK REMOVED per user request
@@ -385,6 +386,11 @@ class KamTaskManagementController extends Controller
         // Check authorization
         if (! Auth::user()->isAdmin() && ! Auth::user()->isProKam() && ! Auth::user()->isKam()) {
             abort(403, 'Unauthorized access.');
+        }
+
+        // Check if task belongs to an accessible customer
+        if (! Customer::accessibleBy(Auth::user())->where('id', $task->customer_id)->exists()) {
+            abort(403, 'Unauthorized access to customer task.');
         }
 
         // Only unassigned tasks can be deleted

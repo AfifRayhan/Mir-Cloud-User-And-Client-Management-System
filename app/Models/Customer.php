@@ -42,6 +42,23 @@ class Customer extends Model
         'po_project_sheets' => 'array',
     ];
 
+    /**
+     * Scope a query to only include customers accessible by the given user.
+     */
+    public function scopeAccessibleBy($query, User $user)
+    {
+        if ($user->isAdmin() || $user->isProKam() || $user->isProTech() || $user->isManagement() || $user->isBill() || $user->isTech()) {
+            return $query;
+        }
+
+        if ($user->isKam()) {
+            return $query->where('submitted_by', $user->id);
+        }
+
+        // Default to no access if role is unrecognized
+        return $query->whereRaw('1 = 0');
+    }
+
     public function submitter(): BelongsTo
     {
         return $this->belongsTo(User::class, 'submitted_by');

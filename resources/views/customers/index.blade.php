@@ -47,6 +47,66 @@
         </div>
         @endif
 
+        <!-- Search and Filter Section -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card custom-customer-index-filter-card border-0 shadow-sm">
+                    <div class="card-body p-3">
+                        <form action="{{ route('customers.index') }}" method="GET" id="filterForm">
+                            <div class="row g-3 align-items-end">
+                                <!-- Search -->
+                                <div class="col-12 col-md-4">
+                                    <label class="form-label small fw-bold text-muted">Search Customer</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-white border-end-0">
+                                            <i class="fas fa-search text-muted"></i>
+                                        </span>
+                                        <input type="text" name="search" class="form-control border-start-0 ps-0" 
+                                               placeholder="Search by name..." value="{{ request('search') }}">
+                                    </div>
+                                </div>
+
+                                <!-- Platform Filter -->
+                                <div class="col-12 col-md-3">
+                                    <label class="form-label small fw-bold text-muted">Filter by Platform</label>
+                                    <select name="platform_id" class="form-select" onchange="this.form.submit()">
+                                        <option value="">All Platforms</option>
+                                        @foreach($platforms as $platform)
+                                            <option value="{{ $platform->id }}" {{ request('platform_id') == $platform->id ? 'selected' : '' }}>
+                                                {{ $platform->platform_name }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </div>
+
+                                <!-- Status Filter -->
+                                <div class="col-12 col-md-3">
+                                    <label class="form-label small fw-bold text-muted">Filter by Status</label>
+                                    <select name="status" class="form-select" onchange="this.form.submit()">
+                                        <option value="">All Statuses</option>
+                                        <option value="active" {{ request('status') === 'active' ? 'selected' : '' }}>Active customers (Has Resources)</option>
+                                        <option value="inactive" {{ request('status') === 'inactive' ? 'selected' : '' }}>Inactive customers (No Resources)</option>
+                                    </select>
+                                </div>
+
+                                <!-- Actions -->
+                                <div class="col-12 col-md-2 d-flex gap-2">
+                                    <button type="submit" class="btn btn-primary w-100">
+                                        <i class="fas fa-filter me-1"></i> Filter
+                                    </button>
+                                    @if(request()->anyFilled(['search', 'platform_id', 'status']))
+                                        <a href="{{ route('customers.index') }}" class="btn btn-outline-secondary" title="Clear All">
+                                            <i class="fas fa-times"></i>
+                                        </a>
+                                    @endif
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Main Content -->
         <div class="row">
             <div class="col-12">
@@ -244,7 +304,7 @@
                     <!-- Card Footer -->
                     <div class="card-footer custom-customer-index-card-footer border-0 bg-white">
                         <div class="d-flex justify-content-center">
-                            {{ $customers->links() }}
+                            {{ $customers->appends(request()->query())->links() }}
                         </div>
                     </div>
                 </div>

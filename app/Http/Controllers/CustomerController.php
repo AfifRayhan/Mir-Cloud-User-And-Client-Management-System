@@ -20,14 +20,38 @@ class CustomerController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $customers = Customer::accessibleBy(Auth::user())
-            ->with(['submitter', 'processor'])
-            ->latest()
-            ->paginate(10);
+        $query = Customer::accessibleBy(Auth::user())
+            ->with(['submitter', 'processor', 'platform']);
 
-        return view('customers.index', compact('customers'));
+        // Search by customer name
+        if ($request->filled('search')) {
+            $query->where('customer_name', 'like', '%'.$request->search.'%');
+        }
+
+        // Filter by platform
+        if ($request->filled('platform_id')) {
+            $query->where('platform_id', $request->platform_id);
+        }
+
+        // Filter by Status
+        if ($request->filled('status')) {
+            if ($request->status === 'inactive') {
+                $query->whereDoesntHave('resourceUpgradations')
+                    ->whereDoesntHave('resourceDowngradations');
+            } elseif ($request->status === 'active') {
+                $query->where(function ($q) {
+                    $q->has('resourceUpgradations')
+                        ->orHas('resourceDowngradations');
+                });
+            }
+        }
+
+        $customers = $query->latest()->paginate(10);
+        $platforms = Platform::orderBy('platform_name')->get();
+
+        return view('customers.index', compact('customers', 'platforms'));
     }
 
     /**

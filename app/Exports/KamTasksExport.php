@@ -95,6 +95,7 @@ class KamTasksExport implements FromCollection, ShouldAutoSize, WithHeadings, Wi
                     'Resource Assignment' => $firstRow ? ($task->assignment_datetime ? $task->assignment_datetime->format('Y-m-d H:i') : ($task->activation_date ? $task->activation_date->format('Y-m-d') : 'N/A')) : '',
                     'Resource Deadline' => $firstRow ? ($task->deadline_datetime ? $task->deadline_datetime->format('Y-m-d H:i') : 'N/A') : '',
                     'Completion Status' => $firstRow ? $completionStatus : '',
+                    'Billing Status' => $firstRow ? ($task->billed_at ? 'Billed' : 'Unbilled') : '',
                     'Assigned To' => $firstRow ? ($task->assignedTo->name ?? 'Unassigned') : '',
                     'Service' => $detail->service->service_name.($detail->service->unit ? " ({$detail->service->unit})" : ''),
                     'Current' => (int) $prev,
@@ -108,7 +109,7 @@ class KamTasksExport implements FromCollection, ShouldAutoSize, WithHeadings, Wi
             }
 
             // Empty separator row
-            $rows[] = array_fill(0, 13, '');
+            $rows[] = array_fill(0, 14, '');
             $currentRow++;
         }
 
@@ -126,6 +127,7 @@ class KamTasksExport implements FromCollection, ShouldAutoSize, WithHeadings, Wi
             'Resource Assignment',
             'Resource Deadline',
             'Completion Status',
+            'Billing Status',
             'Assigned To',
             'Service',
             'Current',
@@ -137,39 +139,39 @@ class KamTasksExport implements FromCollection, ShouldAutoSize, WithHeadings, Wi
     public function styles(Worksheet $sheet)
     {
         // Header styling
-        $headerRange = 'A1:M1';
+        $headerRange = 'A1:N1';
         $sheet->getStyle($headerRange)->getFont()->setBold(true);
         $sheet->getStyle($headerRange)->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)->getStartColor()->setARGB('FFDEEAF6');
         $sheet->getStyle($headerRange)->getBorders()->getAllBorders()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
 
         // Apply stripes/borders/colors to detail sections
         foreach ($this->detailRows as $row) {
-            // Service column (J) - Light Blue background tint
-            $sheet->getStyle('J'.$row)->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)->getStartColor()->setARGB('FFE9EEF5');
-            // Current column (K) - Light Gray
-            $sheet->getStyle('K'.$row)->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)->getStartColor()->setARGB('FFF2F2F2');
+            // Service column (K) - Light Blue background tint
+            $sheet->getStyle('K'.$row)->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)->getStartColor()->setARGB('FFE9EEF5');
+            // Current column (L) - Light Gray
+            $sheet->getStyle('L'.$row)->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)->getStartColor()->setARGB('FFF2F2F2');
 
-            // Increase/Reduce column (L) - Custom
-            $val = (string) $sheet->getCell('L'.$row)->getValue();
+            // Increase/Reduce column (M) - Custom
+            $val = (string) $sheet->getCell('M'.$row)->getValue();
 
             if (in_array($row, $this->transferRows)) {
                 // Transfer row - Light solid blue (per image)
-                $sheet->getStyle('L'.$row)->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)->getStartColor()->setARGB('FFD9E1F2'); // Light Blue/Purple
-                $sheet->getStyle('L'.$row)->getFont()->getColor()->setARGB('FF305496'); // Dark Blue text
+                $sheet->getStyle('M'.$row)->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)->getStartColor()->setARGB('FFD9E1F2'); // Light Blue/Purple
+                $sheet->getStyle('M'.$row)->getFont()->getColor()->setARGB('FF305496'); // Dark Blue text
             } elseif (str_contains($val, '+')) {
-                $sheet->getStyle('L'.$row)->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)->getStartColor()->setARGB('FFE2F0D9'); // Light Green
-                $sheet->getStyle('L'.$row)->getFont()->getColor()->setARGB('FF385623');
+                $sheet->getStyle('M'.$row)->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)->getStartColor()->setARGB('FFE2F0D9'); // Light Green
+                $sheet->getStyle('M'.$row)->getFont()->getColor()->setARGB('FF385623');
             } elseif (str_contains($val, '-')) {
-                $sheet->getStyle('L'.$row)->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)->getStartColor()->setARGB('FFFFEBD6'); // Light Orange
-                $sheet->getStyle('L'.$row)->getFont()->getColor()->setARGB('FF974706');
+                $sheet->getStyle('M'.$row)->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)->getStartColor()->setARGB('FFFFEBD6'); // Light Orange
+                $sheet->getStyle('M'.$row)->getFont()->getColor()->setARGB('FF974706');
             }
 
-            // New Total column (M) - Cyan-ish
-            $sheet->getStyle('M'.$row)->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)->getStartColor()->setARGB('FFDAE3F3');
-            $sheet->getStyle('M'.$row)->getFont()->setBold(true);
+            // New Total column (N) - Cyan-ish
+            $sheet->getStyle('N'.$row)->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)->getStartColor()->setARGB('FFDAE3F3');
+            $sheet->getStyle('N'.$row)->getFont()->setBold(true);
 
-            // Borders for the "table" part (J to M)
-            $sheet->getStyle('J'.$row.':M'.$row)->getBorders()->getAllBorders()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
+            // Borders for the "table" part (K to N)
+            $sheet->getStyle('K'.$row.':N'.$row)->getBorders()->getAllBorders()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
         }
 
         return [

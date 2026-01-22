@@ -1,5 +1,5 @@
 @push('styles')
-    @vite(['resources/css/custom-billing-task-management.css'])
+@vite(['resources/css/custom-billing-task-management.css'])
 @endpush
 
 <x-app-layout>
@@ -36,7 +36,7 @@
             </div>
             <div class="card-body">
                 <form method="GET" action="{{ route('billing-task-management.index') }}" class="row g-3">
-                    <div class="col-md-3">
+                    <div class="col-md-2">
                         <label class="form-label fw-semibold">Allocation Type</label>
                         <select name="allocation_type" class="form-select border-0 bg-light shadow-none">
                             <option value="">All Types</option>
@@ -45,38 +45,49 @@
                             <option value="transfer" {{ request('allocation_type') == 'transfer' ? 'selected' : '' }}>Transfer</option>
                         </select>
                     </div>
-                    <div class="col-md-3">
+                    <div class="col-md-2">
                         <label class="form-label fw-semibold">Inserted By</label>
                         <select name="inserted_by" class="form-select border-0 bg-light shadow-none">
                             <option value="">All KAMs</option>
                             @foreach($kams as $kam)
-                                <option value="{{ $kam->id }}" {{ request('inserted_by') == $kam->id ? 'selected' : '' }}>
-                                    {{ $kam->name }}
-                                </option>
+                            <option value="{{ $kam->id }}" {{ request('inserted_by') == $kam->id ? 'selected' : '' }}>
+                                {{ $kam->name }}
+                            </option>
                             @endforeach
                         </select>
                     </div>
-                    <div class="col-md-3">
+                    <div class="col-md-2">
                         <label class="form-label fw-semibold">Assigned To</label>
                         <select name="assigned_to" class="form-select border-0 bg-light shadow-none">
                             <option value="">All Users</option>
                             @foreach($techs as $tech)
-                                <option value="{{ $tech->id }}" {{ request('assigned_to') == $tech->id ? 'selected' : '' }}>
-                                    {{ $tech->name }}
-                                </option>
+                            <option value="{{ $tech->id }}" {{ request('assigned_to') == $tech->id ? 'selected' : '' }}>
+                                {{ $tech->name }}
+                            </option>
                             @endforeach
                         </select>
                     </div>
-                    <div class="col-md-3">
+                    <div class="col-md-2">
                         <label class="form-label fw-semibold">Status</label>
                         <select name="status_id" class="form-select border-0 bg-light shadow-none">
                             <option value="">All Statuses</option>
                             @foreach($statuses as $status)
-                                <option value="{{ $status->id }}" {{ request('status_id') == $status->id ? 'selected' : '' }}>
-                                    {{ $status->name }}
-                                </option>
+                            <option value="{{ $status->id }}" {{ request('status_id') == $status->id ? 'selected' : '' }}>
+                                {{ $status->name }}
+                            </option>
                             @endforeach
                         </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label fw-semibold">Search Customer</label>
+                        <input type="text" name="search" class="form-control border-0 bg-light shadow-none"
+                            placeholder="Search by name..." value="{{ request('search') }}"
+                            list="customerList" autocomplete="off">
+                        <datalist id="customerList">
+                            @foreach($allCustomers as $customerOption)
+                            <option value="{{ $customerOption->customer_name }}">
+                                @endforeach
+                        </datalist>
                     </div>
                     <div class="col-md-12 d-flex align-items-end justify-content-end gap-2 mt-4">
                         <button type="submit" class="btn btn-primary px-4 shadow-sm custom-billing-task-management-filter-btn">
@@ -99,134 +110,134 @@
             </div>
             <div class="card-body">
                 @if($tasks->count() > 0)
-                    <div class="table-responsive">
-                        <table class="table table-hover align-middle custom-billing-task-management-table">
-                            <thead class="bg-light">
-                                <tr>
-                                    <th class="py-3 px-4 border-0">
-                                        <i class="fas fa-building me-2"></i>Customer
-                                    </th>
-                                    <th class="py-3 px-4 border-0">
-                                        <i class="fas fa-fingerprint me-2"></i>Task ID
-                                    </th>
-                                    <th class="py-3 px-4 border-0">
-                                        <i class="fas fa-user-edit me-2"></i>Inserted By
-                                    </th>
-                                    <th class="py-3 px-4 border-0">
-                                        <i class="fas fa-server me-2"></i>Platform
-                                    </th>
-                                    <th class="py-3 px-4 border-0">
-                                        <i class="fas fa-exchange-alt me-2"></i>Type
-                                    </th>
-                                    <th class="py-3 px-4 border-0">
-                                        <i class="fas fa-calendar-check me-2"></i>Completed At
-                                    </th>
-                                    <th class="py-3 px-4 border-0">
-                                        <i class="fas fa-info-circle me-2"></i>Status
-                                    </th>
-                                    <th class="py-3 px-4 border-0">
-                                        <i class="fas fa-user-check me-2"></i>Assigned To
-                                    </th>
-                                    <th class="py-3 px-4 border-0 text-center">
-                                        <i class="fas fa-cogs me-2"></i>Actions
-                                    </th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach($tasks as $task)
-                                    <tr class="border-bottom custom-billing-task-management-table-row {{ $task->billed_at ? 'task-billed' : 'task-completed' }}">
-                                        <td class="py-4 px-4 fw-bold">{{ $task->customer->customer_name }}</td>
-                                        <td class="py-4 px-4">
-                                            @if($task->task_id)
-                                                <span class="text-nowrap">{{ $task->task_id }}</span>
-                                            @else
-                                                <span class="text-muted">N/A</span>
-                                            @endif
-                                        </td>
-                                        <td class="py-4 px-4">{{ $task->insertedBy->name ?? 'System' }}</td>
-                                        <td class="py-4 px-4">
-                                            @if($task->customer->platform)
-                                                <span>{{ $task->customer->platform->platform_name }}</span>
-                                            @endif
-                                        </td>
-                                        <td class="py-4 px-4">
-                                            @if($task->allocation_type === 'upgrade')
-                                                <span class="custom-billing-task-management-badge custom-billing-task-management-badge-upgrade">
-                                                    <i class="fas fa-arrow-up me-1"></i> Upgrade
-                                                </span>
-                                            @elseif($task->allocation_type === 'downgrade')
-                                                <span class="custom-billing-task-management-badge custom-billing-task-management-badge-downgrade">
-                                                    <i class="fas fa-arrow-down me-1"></i> Downgrade
-                                                </span>
-                                            @else
-                                                <span class="custom-billing-task-management-badge custom-billing-task-management-badge-transfer">
-                                                    <i class="fas fa-exchange-alt me-1"></i> Transfer
-                                                </span>
-                                            @endif
-                                        </td>
-                                        <td class="py-4 px-4">
-                                            <div class="custom-billing-task-management-date">
-                                                <div class="custom-billing-task-management-date-day">
-                                                    {{ $task->completed_at ? $task->completed_at->format('d') : 'N/A' }}
-                                                </div>
-                                                <div class="d-flex flex-column ms-2">
-                                                    <span class="fw-bold">{{ $task->completed_at ? $task->completed_at->format('F') : '' }}</span>
-                                                    <span class="text-muted small">
-                                                        {{ $task->completed_at ? $task->completed_at->format('Y') : '' }}
-                                                        @if($task->completed_at)
-                                                            <br> {{ $task->completed_at->format('H:i') }}
-                                                        @endif
-                                                    </span>
-                                                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle custom-billing-task-management-table">
+                        <thead class="bg-light">
+                            <tr>
+                                <th class="py-3 px-4 border-0">
+                                    <i class="fas fa-building me-2"></i>Customer
+                                </th>
+                                <th class="py-3 px-4 border-0">
+                                    <i class="fas fa-fingerprint me-2"></i>Task ID
+                                </th>
+                                <th class="py-3 px-4 border-0">
+                                    <i class="fas fa-user-edit me-2"></i>Inserted By
+                                </th>
+                                <th class="py-3 px-4 border-0">
+                                    <i class="fas fa-server me-2"></i>Platform
+                                </th>
+                                <th class="py-3 px-4 border-0">
+                                    <i class="fas fa-exchange-alt me-2"></i>Type
+                                </th>
+                                <th class="py-3 px-4 border-0">
+                                    <i class="fas fa-calendar-check me-2"></i>Completed At
+                                </th>
+                                <th class="py-3 px-4 border-0">
+                                    <i class="fas fa-info-circle me-2"></i>Status
+                                </th>
+                                <th class="py-3 px-4 border-0">
+                                    <i class="fas fa-user-check me-2"></i>Assigned To
+                                </th>
+                                <th class="py-3 px-4 border-0 text-center">
+                                    <i class="fas fa-cogs me-2"></i>Actions
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($tasks as $task)
+                            <tr class="border-bottom custom-billing-task-management-table-row {{ $task->billed_at ? 'task-billed' : 'task-completed' }}">
+                                <td class="py-4 px-4 fw-bold">{{ $task->customer->customer_name }}</td>
+                                <td class="py-4 px-4">
+                                    @if($task->task_id)
+                                    <span class="text-nowrap">{{ $task->task_id }}</span>
+                                    @else
+                                    <span class="text-muted">N/A</span>
+                                    @endif
+                                </td>
+                                <td class="py-4 px-4">{{ $task->insertedBy->name ?? 'System' }}</td>
+                                <td class="py-4 px-4">
+                                    @if($task->customer->platform)
+                                    <span>{{ $task->customer->platform->platform_name }}</span>
+                                    @endif
+                                </td>
+                                <td class="py-4 px-4">
+                                    @if($task->allocation_type === 'upgrade')
+                                    <span class="custom-billing-task-management-badge custom-billing-task-management-badge-upgrade">
+                                        <i class="fas fa-arrow-up me-1"></i> Upgrade
+                                    </span>
+                                    @elseif($task->allocation_type === 'downgrade')
+                                    <span class="custom-billing-task-management-badge custom-billing-task-management-badge-downgrade">
+                                        <i class="fas fa-arrow-down me-1"></i> Downgrade
+                                    </span>
+                                    @else
+                                    <span class="custom-billing-task-management-badge custom-billing-task-management-badge-transfer">
+                                        <i class="fas fa-exchange-alt me-1"></i> Transfer
+                                    </span>
+                                    @endif
+                                </td>
+                                <td class="py-4 px-4">
+                                    <div class="custom-billing-task-management-date">
+                                        <div class="custom-billing-task-management-date-day">
+                                            {{ $task->completed_at ? $task->completed_at->format('d') : 'N/A' }}
+                                        </div>
+                                        <div class="d-flex flex-column ms-2">
+                                            <span class="fw-bold">{{ $task->completed_at ? $task->completed_at->format('F') : '' }}</span>
+                                            <span class="text-muted small">
+                                                {{ $task->completed_at ? $task->completed_at->format('Y') : '' }}
+                                                @if($task->completed_at)
+                                                <br> {{ $task->completed_at->format('H:i') }}
+                                                @endif
+                                            </span>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="py-4 px-4">
+                                    @if($task->status)
+                                    <span class="text-secondary">{{ $task->status->name }}</span>
+                                    @endif
+                                </td>
+                                <td class="py-4 px-4">{{ $task->assignedTo->name ?? 'Unassigned' }}</td>
+                                <td class="py-4 px-4 text-center">
+                                    <button class="btn btn-sm btn-outline-primary view-task-btn custom-billing-task-management-action-btn custom-billing-task-management-view-btn" data-task-id="{{ $task->id }}">
+                                        <i class="fas fa-eye me-1"></i> <span class="btn-text">View</span>
+                                    </button>
+
+                                    @if(!$task->billed_at)
+                                    <button type="button"
+                                        class="btn btn-sm btn-success custom-billing-task-management-action-btn bill-task-btn"
+                                        data-task-id="{{ $task->id }}"
+                                        data-customer-name="{{ $task->customer->customer_name }}"
+                                        data-action-url="{{ route('billing-task-management.bill', $task->id) }}"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#billingConfirmModal">
+                                        <i class="fas fa-check-double me-1"></i> Bill
+                                    </button>
+                                    @else
+                                    <span class="badge bg-success py-2 px-3">
+                                        <i class="fas fa-file-invoice-dollar me-1"></i> Billed
+                                    </span>
+                                    @endif
+                                </td>
+                            </tr>
+                            <!-- Details Row -->
+                            <tr class="task-details-row" id="details-{{ $task->id }}" style="display: none;">
+                                <td colspan="9" class="p-0 border-0">
+                                    <div class="task-details-container p-4 bg-light shadow-inner">
+                                        <div class="text-center py-3">
+                                            <div class="spinner-border text-primary spinner-border-sm" role="status">
+                                                <span class="visually-hidden">Loading...</span>
                                             </div>
-                                        </td>
-                                        <td class="py-4 px-4">
-                                            @if($task->status)
-                                                <span class="text-secondary">{{ $task->status->name }}</span>
-                                            @endif
-                                        </td>
-                                        <td class="py-4 px-4">{{ $task->assignedTo->name ?? 'Unassigned' }}</td>
-                                        <td class="py-4 px-4 text-center">
-                                            <button class="btn btn-sm btn-outline-primary view-task-btn custom-billing-task-management-action-btn custom-billing-task-management-view-btn" data-task-id="{{ $task->id }}">
-                                                <i class="fas fa-eye me-1"></i> <span class="btn-text">View</span>
-                                            </button>
-                                            
-                                            @if(!$task->billed_at)
-                                                <button type="button" 
-                                                        class="btn btn-sm btn-success custom-billing-task-management-action-btn bill-task-btn"
-                                                        data-task-id="{{ $task->id }}"
-                                                        data-customer-name="{{ $task->customer->customer_name }}"
-                                                        data-action-url="{{ route('billing-task-management.bill', $task->id) }}"
-                                                        data-bs-toggle="modal"
-                                                        data-bs-target="#billingConfirmModal">
-                                                    <i class="fas fa-check-double me-1"></i> Bill
-                                                </button>
-                                            @else
-                                                <span class="badge bg-success py-2 px-3">
-                                                    <i class="fas fa-file-invoice-dollar me-1"></i> Billed
-                                                </span>
-                                            @endif
-                                        </td>
-                                    </tr>
-                                    <!-- Details Row -->
-                                    <tr class="task-details-row" id="details-{{ $task->id }}" style="display: none;">
-                                        <td colspan="9" class="p-0 border-0">
-                                            <div class="task-details-container p-4 bg-light shadow-inner">
-                                                <div class="text-center py-3">
-                                                    <div class="spinner-border text-primary spinner-border-sm" role="status">
-                                                        <span class="visually-hidden">Loading...</span>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
-                    </div>
-                    <div class="mt-4">
-                        {{ $tasks->links() }}
-                    </div>
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+                <div class="mt-4">
+                    {{ $tasks->links() }}
+                </div>
                 @endif
             </div>
         </div>
@@ -271,14 +282,14 @@
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const viewButtons = document.querySelectorAll('.view-task-btn');
-            
+
             viewButtons.forEach(button => {
                 button.addEventListener('click', function() {
                     const taskId = this.dataset.taskId;
                     const detailsRow = document.getElementById('details-' + taskId);
                     const btnText = this.querySelector('.btn-text');
                     const btnIcon = this.querySelector('i');
-                    
+
                     if (detailsRow.style.display === 'none') {
                         // Close others
                         document.querySelectorAll('.task-details-row').forEach(row => row.style.display = 'none');
@@ -290,7 +301,7 @@
                         detailsRow.style.display = 'table-row';
                         btnText.textContent = 'Hide';
                         btnIcon.className = 'fas fa-eye-slash me-1';
-                        
+
                         if (!detailsRow.dataset.loaded) {
                             loadTaskDetails(taskId);
                         }
@@ -301,25 +312,25 @@
                     }
                 });
             });
-            
+
             function loadTaskDetails(taskId) {
                 const detailsRow = document.getElementById('details-' + taskId);
                 const container = detailsRow.querySelector('.task-details-container');
-                
+
                 fetch(`/billing-task-management/${taskId}/details`)
                     .then(response => response.json())
                     .then(data => {
                         const task = data.task;
                         const resourceDetails = data.resourceDetails;
                         let html = '';
-                        
+
                         if (resourceDetails && resourceDetails.length > 0) {
                             const isUpgrade = task.allocation_type === 'upgrade';
                             const isTransfer = task.allocation_type === 'transfer';
-                            
+
                             let label = isUpgrade ? 'Increase By' : 'Reduce By';
                             if (isTransfer) label = 'Transfer Amount';
-                            
+
                             let currentHeader = 'Current';
                             let newHeader = 'New Total';
 
@@ -334,7 +345,7 @@
                             }
 
                             const badgeClass = isTransfer ? 'custom-billing-task-management-value-badge-transfer' : (isUpgrade ? 'badge bg-success' : 'badge bg-warning text-dark');
-                            
+
                             html += `
                                 <div class="table-responsive">
                                     <table class="table table-bordered align-middle bg-white mb-0 shadow-sm">
@@ -348,7 +359,7 @@
                                         </thead>
                                         <tbody>
                             `;
-                            
+
                             resourceDetails.forEach(detail => {
                                 let amount, prev, next;
                                 if (isTransfer) {
@@ -360,7 +371,7 @@
                                     next = detail.quantity || 0;
                                     prev = isUpgrade ? (next - amount) : (next + amount);
                                 }
-                                
+
                                 html += `
                                     <tr>
                                         <td>${detail.service.service_name} ${detail.service.unit ? `(${detail.service.unit})` : ''}</td>
@@ -370,12 +381,12 @@
                                     </tr>
                                 `;
                             });
-                            
+
                             html += `</tbody></table></div>`;
                         } else {
                             html = '<div class="text-center text-muted py-3">No details found</div>';
                         }
-                        
+
                         container.innerHTML = html;
                         detailsRow.dataset.loaded = 'true';
                     });
@@ -387,13 +398,13 @@
                 billingConfirmModal.addEventListener('show.bs.modal', function(event) {
                     const button = event.relatedTarget.closest('.bill-task-btn');
                     if (!button) return;
-                    
+
                     const actionUrl = button.getAttribute('data-action-url');
                     const customerName = button.getAttribute('data-customer-name');
-                    
+
                     const form = this.querySelector('#billingConfirmForm');
                     const customerNameSpan = this.querySelector('#modalCustomerName');
-                    
+
                     form.action = actionUrl;
                     customerNameSpan.textContent = customerName;
                 });
@@ -410,7 +421,10 @@
                     // Slight delay to ensure DOM is fully ready / other scripts initialized
                     setTimeout(() => {
                         targetBtn.click();
-                        targetBtn.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        targetBtn.scrollIntoView({
+                            behavior: 'smooth',
+                            block: 'center'
+                        });
                     }, 500);
                 }
             }

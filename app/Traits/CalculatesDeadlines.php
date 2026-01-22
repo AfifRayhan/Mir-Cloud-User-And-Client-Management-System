@@ -12,7 +12,7 @@ trait CalculatesDeadlines
      *
      * @return Carbon
      */
-    protected function calculateDeadline(Carbon $startTime)
+    protected function calculateDeadline(Carbon $startTime): Carbon
     {
         $start = $startTime->copy();
         $remainingMinutes = 8 * 60; // 8 hours in minutes

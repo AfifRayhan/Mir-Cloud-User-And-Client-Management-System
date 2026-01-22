@@ -61,6 +61,11 @@ class KamTaskManagementController extends Controller
             $query->where('allocation_type', $request->allocation_type);
         }
 
+        // Filter by Assigned To
+        if ($request->filled('assigned_to')) {
+            $query->where('assigned_to', $request->assigned_to);
+        }
+
         if ($request->filled('assigned_status')) {
             if ($request->assigned_status === 'pending') {
                 $query->whereNull('assigned_to');
@@ -77,12 +82,23 @@ class KamTaskManagementController extends Controller
             }
         }
 
+        if ($request->filled('search')) {
+            $query->whereHas('customer', function ($q) use ($request) {
+                $q->where('customer_name', 'like', '%' . $request->search . '%');
+            });
+        }
+
         $tasks = $query->paginate(10)->appends($request->query());
 
-        // Get all services for the edit modal
-        $services = Service::all();
+        // Get all Tech, Pro-Tech, and Admin users for the 'Assigned To' filter
+        $techs = User::whereHas('role', function ($q) {
+            $q->whereIn('role_name', ['tech', 'pro-tech', 'admin']);
+        })->orderBy('name')->get();
 
-        return view('task-management.kam-index', compact('tasks', 'services'));
+        $services = Service::all();
+        $allCustomers = Customer::accessibleBy(Auth::user())->orderBy('customer_name')->get();
+
+        return view('task-management.kam-index', compact('tasks', 'services', 'allCustomers', 'techs'));
     }
 
     /**
@@ -114,6 +130,11 @@ class KamTaskManagementController extends Controller
             $query->where('allocation_type', $request->allocation_type);
         }
 
+        // Filter by Assigned To
+        if ($request->filled('assigned_to')) {
+            $query->where('assigned_to', $request->assigned_to);
+        }
+
         if ($request->filled('assigned_status')) {
             if ($request->assigned_status === 'pending') {
                 $query->whereNull('assigned_to');
@@ -128,6 +149,12 @@ class KamTaskManagementController extends Controller
             } elseif ($request->completion_status === 'incomplete') {
                 $query->whereNull('completed_at');
             }
+        }
+
+        if ($request->filled('search')) {
+            $query->whereHas('customer', function ($q) use ($request) {
+                $q->where('customer_name', 'like', '%' . $request->search . '%');
+            });
         }
 
         $tasks = $query->select('tasks.*')->get();
@@ -165,6 +192,10 @@ class KamTaskManagementController extends Controller
         // Filter customers for KAMs to show only those they have access to
         if (! Auth::user()->isAdmin() && ! Auth::user()->isProKam()) {
             $query->accessibleBy(Auth::user());
+        }
+
+        if ($request->filled('search')) {
+            $query->where('customer_name', 'like', '%' . $request->search . '%');
         }
 
         $customers = $query->get();
@@ -311,7 +342,6 @@ class KamTaskManagementController extends Controller
 
                 // Delete details with 0 amount
                 $task->resourceUpgradation->details()->where('upgrade_amount', 0)->delete();
-
             } elseif ($task->allocation_type === 'downgrade' && $task->resourceDowngradation) {
                 $task->resourceDowngradation->update([
                     'activation_date' => $validated['activation_date'],
@@ -352,7 +382,7 @@ class KamTaskManagementController extends Controller
 
             // Send updated recommendation email
             $sender = Auth::user();
-            
+
             // Recipient list: Pro-Techs and Assigned Tech
             $recipients = User::whereHas('role', function ($q) {
                 $q->where('role_name', 'pro-tech');
@@ -370,7 +400,7 @@ class KamTaskManagementController extends Controller
                         $task->allocation_type
                     ));
                 } catch (\Exception $e) {
-                    Log::error('Failed to send task update email to '.$email.': '.$e->getMessage());
+                    Log::error('Failed to send task update email to ' . $email . ': ' . $e->getMessage());
                 }
             }
 

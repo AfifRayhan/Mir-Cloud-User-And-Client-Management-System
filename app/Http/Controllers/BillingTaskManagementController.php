@@ -57,9 +57,14 @@ class BillingTaskManagementController extends Controller
             $query->where('assigned_to', $request->assigned_to);
         }
 
-        // Filter by Status (Test/Billable)
         if ($request->filled('status_id')) {
             $query->where('tasks.status_id', $request->status_id);
+        }
+
+        if ($request->filled('search')) {
+            $query->whereHas('customer', function ($q) use ($request) {
+                $q->where('customer_name', 'like', '%' . $request->search . '%');
+            });
         }
 
         $tasks = $query->paginate(10)->appends($request->query());
@@ -74,8 +79,9 @@ class BillingTaskManagementController extends Controller
         })->orderBy('name')->get();
 
         $statuses = \App\Models\CustomerStatus::all();
+        $allCustomers = Customer::accessibleBy(Auth::user())->orderBy('customer_name')->get();
 
-        return view('task-management.billing-index', compact('tasks', 'kams', 'techs', 'statuses'));
+        return view('task-management.billing-index', compact('tasks', 'kams', 'techs', 'statuses', 'allCustomers'));
     }
 
     public function getDetails(Task $task)
@@ -128,6 +134,12 @@ class BillingTaskManagementController extends Controller
             $query->where('status_id', $request->status_id);
         }
 
+        if ($request->filled('search')) {
+            $query->whereHas('customer', function ($q) use ($request) {
+                $q->where('customer_name', 'like', '%' . $request->search . '%');
+            });
+        }
+
         $tasks = $query->get();
 
         $userName = str_replace(' ', '_', Auth::user()->name);
@@ -149,15 +161,23 @@ class BillingTaskManagementController extends Controller
         }
 
         // For billing, show all customers who have at least one completed task (excluding transfers)
-        $customers = Customer::whereHas('resourceUpgradations', function ($q) {
-            $q->whereHas('task', function ($sq) {
-                $sq->whereNotNull('completed_at');
+        $query = Customer::where(function ($q) {
+            $q->whereHas('resourceUpgradations', function ($sq) {
+                $sq->whereHas('task', function ($ssq) {
+                    $ssq->whereNotNull('completed_at');
+                });
+            })->orWhereHas('resourceDowngradations', function ($sq) {
+                $sq->whereHas('task', function ($ssq) {
+                    $ssq->whereNotNull('completed_at');
+                });
             });
-        })->orWhereHas('resourceDowngradations', function ($q) {
-            $q->whereHas('task', function ($sq) {
-                $sq->whereNotNull('completed_at');
-            });
-        })->with('platform')->get();
+        })->with('platform');
+
+        if ($request->filled('search')) {
+            $query->where('customer_name', 'like', '%' . $request->search . '%');
+        }
+
+        $customers = $query->get();
 
         $userName = str_replace(' ', '_', Auth::user()->name);
         $dateTime = now()->format('Ymd_His');

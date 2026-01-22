@@ -11,7 +11,7 @@
     <title>Mir Cloud</title>
 
     <!-- Scripts -->
-    @vite(['resources/css/app.css', 'resources/css/custom-login.css', 'resources/css/custom-dashboard.css', 'resources/css/custom-add-customer.css','resources/js/app.js', 'resources/js/custom-js-styles.js', 'resources/css/custom-nav.css', 'resources/css/custom-customer-index.css', 'resources/css/custom-resource-allocation.css'])
+    @vite(['resources/css/app.css', 'resources/css/custom-login.css', 'resources/css/custom-dashboard.css', 'resources/css/custom-add-customer.css', 'resources/js/app.js', 'resources/js/custom-js-styles.js', 'resources/css/custom-nav.css', 'resources/css/custom-customer-index.css', 'resources/css/custom-resource-allocation.css'])
     @stack('styles')
     <!-- Flatpickr CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">

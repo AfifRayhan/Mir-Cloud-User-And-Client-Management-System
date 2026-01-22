@@ -61,8 +61,14 @@
                                         <span class="input-group-text bg-white border-end-0">
                                             <i class="fas fa-search text-muted"></i>
                                         </span>
-                                        <input type="text" name="search" class="form-control border-start-0 ps-0" 
-                                               placeholder="Search by name..." value="{{ request('search') }}">
+                                        <input type="text" name="search" class="form-control border-start-0 ps-0"
+                                            placeholder="Search by name..." value="{{ request('search') }}"
+                                            list="customerList" autocomplete="off">
+                                        <datalist id="customerList">
+                                            @foreach($allCustomers as $customerOption)
+                                            <option value="{{ $customerOption->customer_name }}">
+                                                @endforeach
+                                        </datalist>
                                     </div>
                                 </div>
 
@@ -72,9 +78,9 @@
                                     <select name="platform_id" class="form-select" onchange="this.form.submit()">
                                         <option value="">All Platforms</option>
                                         @foreach($platforms as $platform)
-                                            <option value="{{ $platform->id }}" {{ request('platform_id') == $platform->id ? 'selected' : '' }}>
-                                                {{ $platform->platform_name }}
-                                            </option>
+                                        <option value="{{ $platform->id }}" {{ request('platform_id') == $platform->id ? 'selected' : '' }}>
+                                            {{ $platform->platform_name }}
+                                        </option>
                                         @endforeach
                                     </select>
                                 </div>
@@ -95,9 +101,9 @@
                                         <i class="fas fa-filter me-1"></i> Filter
                                     </button>
                                     @if(request()->anyFilled(['search', 'platform_id', 'status']))
-                                        <a href="{{ route('customers.index') }}" class="btn btn-outline-secondary" title="Clear All">
-                                            <i class="fas fa-times"></i>
-                                        </a>
+                                    <a href="{{ route('customers.index') }}" class="btn btn-outline-secondary" title="Clear All">
+                                        <i class="fas fa-times"></i>
+                                    </a>
                                     @endif
                                 </div>
                             </div>
@@ -282,10 +288,10 @@
                                                 </a>
                                                 @if(Auth::user()->isAdmin() || Auth::user()->isManagement())
                                                 <button type="button"
-                                                        class="btn btn-sm custom-customer-index-action-btn custom-customer-index-delete-btn"
-                                                        data-bs-toggle="modal" 
-                                                        data-bs-target="#deleteCustomerModal{{ $customer->id }}"
-                                                        title="Delete Customer">
+                                                    class="btn btn-sm custom-customer-index-action-btn custom-customer-index-delete-btn"
+                                                    data-bs-toggle="modal"
+                                                    data-bs-target="#deleteCustomerModal{{ $customer->id }}"
+                                                    title="Delete Customer">
                                                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
                                                         <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z" />
                                                         <path d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z" />

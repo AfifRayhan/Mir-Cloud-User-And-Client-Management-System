@@ -27,7 +27,7 @@ class CustomerController extends Controller
 
         // Search by customer name
         if ($request->filled('search')) {
-            $query->where('customer_name', 'like', '%'.$request->search.'%');
+            $query->where('customer_name', 'like', '%' . $request->search . '%');
         }
 
         // Filter by platform
@@ -50,8 +50,9 @@ class CustomerController extends Controller
 
         $customers = $query->latest()->paginate(10);
         $platforms = Platform::orderBy('platform_name')->get();
+        $allCustomers = Customer::accessibleBy(Auth::user())->orderBy('customer_name')->get();
 
-        return view('customers.index', compact('customers', 'platforms'));
+        return view('customers.index', compact('customers', 'platforms', 'allCustomers'));
     }
 
     /**
@@ -272,21 +273,21 @@ class CustomerController extends Controller
         if ($safePoNumber) {
             $fileName = "{$originalName}_{$safePoNumber}.{$extension}";
         } else {
-            $fileName = "{$originalName}_".time().".{$extension}";
+            $fileName = "{$originalName}_" . time() . ".{$extension}";
         }
 
         // Ensure uniqueness by checking if file exists, appending counter if necessary
         $directory = 'customer_po_sheets';
-        $finalPath = $directory.'/'.$fileName;
+        $finalPath = $directory . '/' . $fileName;
         $counter = 1;
 
         while (Storage::disk('public')->exists($finalPath)) {
             if ($safePoNumber) {
                 $fileName = "{$originalName}_{$safePoNumber}_{$counter}.{$extension}";
             } else {
-                $fileName = "{$originalName}_".time()."_{$counter}.{$extension}";
+                $fileName = "{$originalName}_" . time() . "_{$counter}.{$extension}";
             }
-            $finalPath = $directory.'/'.$fileName;
+            $finalPath = $directory . '/' . $fileName;
             $counter++;
         }
 
@@ -359,8 +360,7 @@ class CustomerController extends Controller
     {
         // Get all summaries (current resources) for the customer
         // We need to fetch services belonging to the OLD platform to get correct current usage
-        // Note: The Summary model links to Service. Even if we changed platform_id on customer,
-        // the existing summary rows still point to the old service_ids.
+        // Note: The Summary model links to Service. Even if we changed platform_id on customer, the existing summary rows still point to the old service_ids.
         $summaries = Summary::where('customer_id', $customer->id)
             ->where(function ($q) {
                 $q->where('test_quantity', '>', 0)

@@ -146,7 +146,7 @@ class ResourceAllocationController extends Controller
 
         // Determine default Activation Date
         // If Customer Activation Date is in the past -> Default to Current Date.
-        // If Customer Activation Date is in the future -> Default to Customer Activation Date.
+        // If in the future -> Default to Customer Activation Date.
         $customerActivationDate = $customer->customer_activation_date;
         $defaultActivationDate = $customerActivationDate->isFuture()
             ? $customerActivationDate->format('Y-m-d')

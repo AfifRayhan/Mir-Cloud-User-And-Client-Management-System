@@ -51,6 +51,20 @@ class TaskManagementController extends Controller
             $query->where('assigned_to', $request->assigned_to);
         }
 
+        // Filter by Inserted By (KAM/Pro-KAM who created the resource request)
+        if ($request->filled('inserted_by')) {
+            $insertedBy = $request->inserted_by;
+            $query->where(function ($q) use ($insertedBy) {
+                $q->whereHas('resourceUpgradation', function ($sq) use ($insertedBy) {
+                    $sq->where('inserted_by', $insertedBy);
+                })->orWhereHas('resourceDowngradation', function ($sq) use ($insertedBy) {
+                    $sq->where('inserted_by', $insertedBy);
+                })->orWhereHas('resourceTransfer', function ($sq) use ($insertedBy) {
+                    $sq->where('inserted_by', $insertedBy);
+                });
+            });
+        }
+
         if ($request->filled('completion_status')) {
             if ($request->completion_status === 'completed') {
                 $query->whereNotNull('completed_at');
@@ -59,15 +73,27 @@ class TaskManagementController extends Controller
             }
         }
 
+        if ($request->filled('search')) {
+            $query->whereHas('customer', function ($q) use ($request) {
+                $q->where('customer_name', 'like', '%' . $request->search . '%');
+            });
+        }
+
         $tasks = $query->paginate(10)->appends($request->query());
 
         // Get all users for assignment dropdown (Tech, Pro-Tech, and Admin)
-        // Management can assign to Tech/Pro-Tech but can't be assigned to (Standard logic: Tech/ProTech exec tasks)
         $users = User::whereHas('role', function ($q) {
             $q->whereIn('role_name', ['tech', 'pro-tech', 'admin']);
         })->orderBy('name')->get();
 
-        return view('task-management.index', compact('tasks', 'users'));
+        // Get KAMs for 'Inserted By' filter
+        $kams = User::whereHas('role', function ($q) {
+            $q->whereIn('role_name', ['kam', 'pro-kam']);
+        })->orderBy('name')->get();
+
+        $allCustomers = \App\Models\Customer::accessibleBy(Auth::user())->orderBy('customer_name')->get();
+
+        return view('task-management.index', compact('tasks', 'users', 'kams', 'allCustomers'));
     }
 
     public function getDetails(Task $task)
@@ -106,7 +132,7 @@ class TaskManagementController extends Controller
             // Check if task was assigned by another request while we were waiting
             if ($lockedTask->assigned_to) {
                 // Prevent "surprise" overwrites if the task is already assigned
-                return back()->with('error', 'Task was already assigned to '.($lockedTask->assignedTo->name ?? 'someone else').'. Please refresh.');
+                return back()->with('error', 'Task was already assigned to ' . ($lockedTask->assignedTo->name ?? 'someone else') . '. Please refresh.');
             }
 
             // Verify the assigned user is Tech or Pro-Tech
@@ -132,10 +158,10 @@ class TaskManagementController extends Controller
                     ->send(new \App\Mail\TaskAssignmentEmail($lockedTask, $sender, $actionType));
             } catch (\Exception $e) {
                 // Log error but don't stop execution
-                \Illuminate\Support\Facades\Log::error('Failed to send assignment email: '.$e->getMessage());
+                \Illuminate\Support\Facades\Log::error('Failed to send assignment email: ' . $e->getMessage());
             }
 
-            return back()->with('success', 'Task assigned successfully to '.$assignedUser->name);
+            return back()->with('success', 'Task assigned successfully to ' . $assignedUser->name);
         });
     }
 }

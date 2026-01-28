@@ -93,7 +93,7 @@
                                     <span>Last Updated: <strong>{{ $customer->updated_at->format('M d, Y H:i') }}</strong></span>
                                 </div>
                             </div>
-                            
+
                             @if($customer->po_project_sheets && count($customer->po_project_sheets) > 0)
                             <div class="col-12 mt-4 pt-3 border-top border-light">
                                 <h6 class="fw-bold mb-3 small text-dark">
@@ -101,18 +101,21 @@
                                 </h6>
                                 <div class="d-flex flex-wrap gap-2">
                                     @foreach($customer->po_project_sheets as $sheet)
-                                        <div class="d-flex align-items-center p-2 bg-light rounded border border-light-subtle transition-all hover-shadow-sm"
-                                             style="min-width: 200px; border-left: 3px solid #dc3545 !important; cursor: pointer;"
-                                             onclick="previewPdf('{{ asset('storage/' . $sheet['path']) }}', '{{ addslashes($sheet['name']) }}', '{{ round($sheet['size'] / 1024, 2) }} KB')">
-                                            <i class="fas fa-file-pdf text-danger me-2 fa-lg"></i>
-                                            <div class="overflow-hidden flex-grow-1">
-                                                <div class="text-truncate small fw-bold text-dark" title="{{ $sheet['name'] }}">{{ $sheet['name'] }}</div>
-                                                <div class="x-small text-muted" style="font-size: 0.7rem;">{{ round($sheet['size'] / 1024, 2) }} KB</div>
-                                            </div>
-                                            <div class="ms-2 text-muted small opacity-50">
-                                                <i class="fas fa-eye"></i>
-                                            </div>
+                                    <div class="d-flex align-items-center p-2 bg-light rounded border border-light-subtle transition-all hover-shadow-sm"
+                                        style="min-width: 200px; border-left: 3px solid #dc3545 !important; cursor: pointer;"
+                                        data-url="{{ asset('storage/' . $sheet['path']) }}"
+                                        data-name="{{ $sheet['name'] }}"
+                                        data-size="{{ round($sheet['size'] / 1024, 2) }} KB"
+                                        onclick="previewPdf(this.dataset.url, this.dataset.name, this.dataset.size)">
+                                        <i class="fas fa-file-pdf text-danger me-2 fa-lg"></i>
+                                        <div class="overflow-hidden flex-grow-1">
+                                            <div class="text-truncate small fw-bold text-dark" title="{{ $sheet['name'] }}">{{ $sheet['name'] }}</div>
+                                            <div class="x-small text-muted" style="font-size: 0.7rem;">{{ round($sheet['size'] / 1024, 2) }} KB</div>
                                         </div>
+                                        <div class="ms-2 text-muted small opacity-50">
+                                            <i class="fas fa-eye"></i>
+                                        </div>
+                                    </div>
                                     @endforeach
                                 </div>
                             </div>
@@ -136,18 +139,18 @@
                                     <h6 class="fw-bold mb-0">Commercial Contact</h6>
                                 </div>
                                 @if($customer->commercial_contact_name)
-                                    <div class="mb-2 fw-bold text-dark">{{ $customer->commercial_contact_name }}</div>
-                                    <div class="small text-muted mb-3">{{ $customer->commercial_contact_designation ?: 'N/A' }}</div>
-                                    <div class="d-flex align-items-center mb-2 small">
-                                        <i class="fas fa-envelope me-2 text-muted" style="width: 16px;"></i>
-                                        <a href="mailto:{{ $customer->commercial_contact_email }}" class="text-decoration-none text-primary">{{ $customer->commercial_contact_email ?: 'N/A' }}</a>
-                                    </div>
-                                    <div class="d-flex align-items-center small">
-                                        <i class="fas fa-phone me-2 text-muted" style="width: 16px;"></i>
-                                        <span>{{ $customer->commercial_contact_phone ?: 'N/A' }}</span>
-                                    </div>
+                                <div class="mb-2 fw-bold text-dark">{{ $customer->commercial_contact_name }}</div>
+                                <div class="small text-muted mb-3">{{ $customer->commercial_contact_designation ?: 'N/A' }}</div>
+                                <div class="d-flex align-items-center mb-2 small">
+                                    <i class="fas fa-envelope me-2 text-muted" style="width: 16px;"></i>
+                                    <a href="mailto:{{ $customer->commercial_contact_email }}" class="text-decoration-none text-primary">{{ $customer->commercial_contact_email ?: 'N/A' }}</a>
+                                </div>
+                                <div class="d-flex align-items-center small">
+                                    <i class="fas fa-phone me-2 text-muted" style="width: 16px;"></i>
+                                    <span>{{ $customer->commercial_contact_phone ?: 'N/A' }}</span>
+                                </div>
                                 @else
-                                    <div class="text-muted small italic">No commercial contact specified</div>
+                                <div class="text-muted small italic">No commercial contact specified</div>
                                 @endif
                             </div>
                         </div>
@@ -164,25 +167,25 @@
                                     <h6 class="fw-bold mb-0">Technical Contact</h6>
                                 </div>
                                 @if($customer->technical_contact_name)
-                                    <div class="mb-2 fw-bold text-dark">{{ $customer->technical_contact_name }}</div>
-                                    <div class="small text-muted mb-3">{{ $customer->technical_contact_designation ?: 'N/A' }}</div>
-                                    <div class="d-flex align-items-center mb-2 small">
-                                        <i class="fas fa-envelope me-2 text-muted" style="width: 16px;"></i>
-                                        <a href="mailto:{{ $customer->technical_contact_email }}" class="text-decoration-none text-success">{{ $customer->technical_contact_email ?: 'N/A' }}</a>
-                                    </div>
-                                    <div class="d-flex align-items-center small">
-                                        <i class="fas fa-phone me-2 text-muted" style="width: 16px;"></i>
-                                        <span>{{ $customer->technical_contact_phone ?: 'N/A' }}</span>
-                                    </div>
+                                <div class="mb-2 fw-bold text-dark">{{ $customer->technical_contact_name }}</div>
+                                <div class="small text-muted mb-3">{{ $customer->technical_contact_designation ?: 'N/A' }}</div>
+                                <div class="d-flex align-items-center mb-2 small">
+                                    <i class="fas fa-envelope me-2 text-muted" style="width: 16px;"></i>
+                                    <a href="mailto:{{ $customer->technical_contact_email }}" class="text-decoration-none text-success">{{ $customer->technical_contact_email ?: 'N/A' }}</a>
+                                </div>
+                                <div class="d-flex align-items-center small">
+                                    <i class="fas fa-phone me-2 text-muted" style="width: 16px;"></i>
+                                    <span>{{ $customer->technical_contact_phone ?: 'N/A' }}</span>
+                                </div>
                                 @else
-                                    <div class="text-muted small italic">No technical contact specified</div>
+                                <div class="text-muted small italic">No technical contact specified</div>
                                 @endif
                             </div>
                         </div>
                     </div>
 
                     <!-- Optional Contact -->
-                    
+
                     <div class="col-12">
                         <div class="card custom-customer-index-card border-0 shadow-lg border-start border-4 border-info">
                             <div class="card-body p-4">
@@ -205,7 +208,7 @@
                             </div>
                         </div>
                     </div>
-                    
+
                 </div>
             </div>
         </div>
@@ -239,30 +242,5 @@
         </div>
     </div>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const pdfPreviewModal = document.getElementById('pdfPreviewModal');
-            const pdfPreviewFrame = document.getElementById('pdfPreviewFrame');
-            const pdfPreviewModalLabel = document.getElementById('pdfPreviewModalLabel');
-            const pdfPreviewModalSublabel = document.getElementById('pdfPreviewModalSublabel');
-            const pdfDownloadBtn = document.getElementById('pdfDownloadBtn');
-
-            // Handle preview button click
-            window.previewPdf = function(url, name, size) {
-                pdfPreviewModalLabel.textContent = name;
-                pdfPreviewModalSublabel.textContent = `File size: ${size}`;
-                pdfDownloadBtn.href = url;
-                pdfDownloadBtn.setAttribute('download', name); // Force download with specific name
-                pdfPreviewFrame.src = url;
-                
-                const modal = new bootstrap.Modal(pdfPreviewModal);
-                modal.show();
-            };
-
-            // Clear iframe src when modal is hidden to free memory
-            pdfPreviewModal.addEventListener('hidden.bs.modal', function () {
-                pdfPreviewFrame.src = '';
-            });
-        });
-    </script>
+    @vite(['resources/views/customers/customer-show.js'])
 </x-app-layout>

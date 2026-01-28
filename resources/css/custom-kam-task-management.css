@@ -254,6 +254,28 @@
     transform: translateY(-1px);
 }
 
+.custom-kam-task-management-approve-btn {
+    background: var(--custom-kam-task-management-primary-light);
+    color: var(--custom-kam-task-management-primary);
+}
+
+.custom-kam-task-management-undo-btn {
+    background: var(--custom-kam-task-management-danger-light);
+    color: var(--custom-kam-task-management-danger);
+}
+
+.custom-kam-task-management-approve-btn:hover {
+    background: var(--custom-kam-task-management-primary);
+    color: white;
+    transform: translateY(-1px);
+}
+
+.custom-kam-task-management-undo-btn:hover {
+    background: var(--custom-kam-task-management-danger);
+    color: white;
+    transform: translateY(-1px);
+}
+
 /* Badges */
 .custom-kam-task-management-badge {
     display: inline-block;

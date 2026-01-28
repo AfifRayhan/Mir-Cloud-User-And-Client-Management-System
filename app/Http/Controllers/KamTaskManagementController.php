@@ -5,10 +5,14 @@ namespace App\Http\Controllers;
 use App\Exports\KamCustomerSummaryExport;
 use App\Exports\KamTasksExport;
 use App\Mail\RecommendationSubmissionEmail;
+use App\Mail\TaskAssignmentEmail;
+use App\Mail\TaskCompletionEmail;
 use App\Mail\TaskUpdatedEmail;
 use App\Models\Customer;
 use App\Models\CustomerStatus;
+use App\Models\ResourceDowngradation;
 use App\Models\ResourceDowngradationDetail;
+use App\Models\ResourceUpgradation;
 use App\Models\ResourceUpgradationDetail;
 use App\Models\Service;
 use App\Models\Summary;
@@ -30,8 +34,11 @@ class KamTaskManagementController extends Controller
      */
     public function index(Request $request)
     {
+        /** @var User $user */
+        $user = Auth::user();
+
         // Check authorization
-        if (! Auth::user()->isAdmin() && ! Auth::user()->isProKam() && ! Auth::user()->isKam()) {
+        if (! $user->isAdmin() && ! $user->isProKam() && ! $user->isKam()) {
             abort(403, 'Unauthorized access.');
         }
 
@@ -48,9 +55,9 @@ class KamTaskManagementController extends Controller
         }
 
         // Filter tasks for KAMs to show only those related to accessible customers
-        if (! Auth::user()->isAdmin() && ! Auth::user()->isProKam()) {
-            $query->whereHas('customer', function ($q) {
-                $q->accessibleBy(Auth::user());
+        if (! $user->isAdmin() && ! $user->isProKam()) {
+            $query->whereHas('customer', function ($q) use ($user) {
+                $q->accessibleBy($user);
             });
         }
 
@@ -96,7 +103,7 @@ class KamTaskManagementController extends Controller
         })->orderBy('name')->get();
 
         $services = Service::all();
-        $allCustomers = Customer::accessibleBy(Auth::user())->orderBy('customer_name')->get();
+        $allCustomers = Customer::accessibleBy($user)->orderBy('customer_name')->get();
 
         return view('task-management.kam-index', compact('tasks', 'services', 'allCustomers', 'techs'));
     }
@@ -106,8 +113,11 @@ class KamTaskManagementController extends Controller
      */
     public function export(Request $request)
     {
+        /** @var User $user */
+        $user = Auth::user();
+
         // Check authorization
-        if (! Auth::user()->isAdmin() && ! Auth::user()->isProKam() && ! Auth::user()->isKam()) {
+        if (! $user->isAdmin() && ! $user->isProKam() && ! $user->isKam()) {
             abort(403, 'Unauthorized access.');
         }
 
@@ -119,9 +129,9 @@ class KamTaskManagementController extends Controller
             ->orderByRaw('COALESCE(resource_upgradations.created_at, resource_downgradations.created_at, resource_transfers.created_at) ASC');
 
         // Filter tasks for KAMs to show only those related to accessible customers
-        if (! Auth::user()->isAdmin() && ! Auth::user()->isProKam()) {
-            $query->whereHas('customer', function ($q) {
-                $q->accessibleBy(Auth::user());
+        if (! $user->isAdmin() && ! $user->isProKam()) {
+            $query->whereHas('customer', function ($q) use ($user) {
+                $q->accessibleBy($user);
             });
         }
 
@@ -159,9 +169,9 @@ class KamTaskManagementController extends Controller
 
         $tasks = $query->select('tasks.*')->get();
 
-        $userName = str_replace(' ', '_', Auth::user()->name);
+        $userName = str_replace(' ', '_', $user->name);
         $dateTime = now()->format('Ymd_His');
-        $prefix = Auth::user()->isProKam() ? 'Pro-KAM' : 'KAM';
+        $prefix = $user->isProKam() ? 'Pro-KAM' : 'KAM';
         $fileName = "{$prefix}_Task_Summary_{$userName}-{$dateTime}.xlsx";
 
         return Excel::download(new KamTasksExport($tasks), $fileName);
@@ -172,8 +182,11 @@ class KamTaskManagementController extends Controller
      */
     public function exportCustomers(Request $request)
     {
+        /** @var User $user */
+        $user = Auth::user();
+
         // Check authorization
-        if (! Auth::user()->isAdmin() && ! Auth::user()->isProKam() && ! Auth::user()->isKam()) {
+        if (! $user->isAdmin() && ! $user->isProKam() && ! $user->isKam()) {
             abort(403, 'Unauthorized access.');
         }
 
@@ -190,8 +203,8 @@ class KamTaskManagementController extends Controller
         })->with(['platform']);
 
         // Filter customers for KAMs to show only those they have access to
-        if (! Auth::user()->isAdmin() && ! Auth::user()->isProKam()) {
-            $query->accessibleBy(Auth::user());
+        if (! $user->isAdmin() && ! $user->isProKam()) {
+            $query->accessibleBy($user);
         }
 
         if ($request->filled('search')) {
@@ -200,9 +213,9 @@ class KamTaskManagementController extends Controller
 
         $customers = $query->get();
 
-        $userName = str_replace(' ', '_', Auth::user()->name);
+        $userName = str_replace(' ', '_', $user->name);
         $dateTime = now()->format('Ymd_His');
-        $prefix = Auth::user()->isProKam() ? 'Pro-KAM' : 'KAM';
+        $prefix = $user->isProKam() ? 'Pro-KAM' : 'KAM';
         $fileName = "{$prefix}_Customer_Summary_{$userName}-{$dateTime}.xlsx";
 
         return Excel::download(new KamCustomerSummaryExport($customers), $fileName);
@@ -213,13 +226,16 @@ class KamTaskManagementController extends Controller
      */
     public function getDetails(Task $task)
     {
+        /** @var User $user */
+        $user = Auth::user();
+
         // Check authorization
-        if (! Auth::user()->isAdmin() && ! Auth::user()->isProKam() && ! Auth::user()->isKam()) {
+        if (! $user->isAdmin() && ! $user->isProKam() && ! $user->isKam()) {
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 
         // Check if task belongs to an accessible customer
-        if (! Customer::accessibleBy(Auth::user())->where('id', $task->customer_id)->exists()) {
+        if (! Customer::accessibleBy($user)->where('id', $task->customer_id)->exists()) {
             return response()->json(['error' => 'Unauthorized access to customer details.'], 403);
         }
 
@@ -260,7 +276,202 @@ class KamTaskManagementController extends Controller
         return response()->json([
             'task' => $task,
             'resourceDetails' => $completeResourceDetails,
+            'is_approvable' => ($task->completed_at && !$task->approved_at && ($user->isAdmin() || $user->isProKam() || $task->assigned_by == $user->id)),
+            'is_approved' => $task->approved_at !== null,
         ]);
+    }
+
+    /**
+     * Approve a task and notify management.
+     */
+    public function approve(Task $task)
+    {
+        /** @var User $user */
+        $user = Auth::user();
+
+        // Check authorization
+        if (! $user->isAdmin() && ! $user->isProKam() && ! $user->isKam()) {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+
+        // Check if task belongs to an accessible customer
+        if (! Customer::accessibleBy($user)->where('id', $task->customer_id)->exists()) {
+            return response()->json(['error' => 'Unauthorized access to customer details.'], 403);
+        }
+
+        // Ensure only the assigner or admin can approve
+        if (!$user->isAdmin() && !$user->isProKam() && $task->assigned_by != $user->id) {
+            return response()->json(['error' => 'Only the KAM who assigned this task can approve it.'], 403);
+        }
+
+        if (!$task->completed_at) {
+            return response()->json(['error' => 'This task has not been completed yet.'], 422);
+        }
+
+        if ($task->approved_at) {
+            return response()->json(['error' => 'This task has already been approved.'], 422);
+        }
+
+        return DB::transaction(function () use ($task) {
+            $task->update(['approved_at' => now()]);
+
+            // Send email to management as if from the Tech user
+            $techUser = $task->assignedTo;
+            $kam = $task->assignedBy;
+
+            if ($techUser) {
+                $managementUsers = User::whereHas('role', function ($q) {
+                    $q->where('role_name', 'management');
+                })->get();
+
+                $actionType = $task->allocation_type ?? 'allocation';
+                $ccUsers = $kam ? [$kam->email] : [];
+
+                $task->load(['customer', 'customer.platform', 'resourceUpgradation.details.service', 'resourceDowngradation.details.service', 'assignedBy', 'vdc', 'assignedBy.role']);
+
+                foreach ($managementUsers as $manager) {
+                    try {
+                        $mail = Mail::to($manager->email);
+                        if (! empty($ccUsers)) {
+                            $mail->cc($ccUsers);
+                        }
+                        $mail->send(new TaskCompletionEmail($task, $techUser, $actionType));
+                    } catch (\Exception $e) {
+                        Log::error('Failed to send completion email to ' . $manager->email . ' during KAM approval: ' . $e->getMessage());
+                    }
+                }
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Task approved successfully.'
+            ]);
+        });
+    }
+
+    /**
+     * Undo a task and create a reverse task for tech.
+     */
+    public function undo(Task $task)
+    {
+        /** @var User $user */
+        $user = Auth::user();
+
+        // Check authorization
+        if (! $user->isAdmin() && ! $user->isProKam() && ! $user->isKam()) {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+
+        // Check if task belongs to an accessible customer
+        if (! Customer::accessibleBy($user)->where('id', $task->customer_id)->exists()) {
+            return response()->json(['error' => 'Unauthorized access to customer details.'], 403);
+        }
+
+        // Ensure only the assigner or admin can undo
+        if (!$user->isAdmin() && !$user->isProKam() && $task->assigned_by != $user->id) {
+            return response()->json(['error' => 'Only the KAM who assigned this task can undo it.'], 403);
+        }
+
+        if (!$task->completed_at) {
+            return response()->json(['error' => 'This task has not been completed yet.'], 422);
+        }
+
+        return DB::transaction(function () use ($task, $user) {
+            $originalType = $task->allocation_type;
+            // Reuse logic from TaskActionController
+            $newType = ($originalType === 'upgrade') ? 'downgrade' : 'upgrade';
+            $customer = $task->customer;
+            $techUser = $task->assignedTo;
+            $kam = $user;
+
+            if (!$techUser) {
+                return response()->json(['error' => 'Missing technician information.'], 422);
+            }
+
+            // 1. Create reverse allocation
+            $newResourceId = null;
+            $now = now();
+
+            if ($newType === 'upgrade') {
+                $upgradation = ResourceUpgradation::create([
+                    'customer_id' => $customer->id,
+                    'status_id' => $task->status_id,
+                    'activation_date' => $now,
+                    'inactivation_date' => '3000-01-01',
+                    'task_status_id' => 1, // Assigned
+                    'inserted_by' => $kam->id,
+                    'assignment_datetime' => $now,
+                ]);
+                $newResourceId = $upgradation->id;
+
+                $originalDetails = \App\Models\ResourceDowngradationDetail::where('resource_downgradation_id', $task->resource_downgradation_id)->get();
+                foreach ($originalDetails as $detail) {
+                    $amount = $detail->downgrade_amount;
+                    \App\Models\ResourceUpgradationDetail::create([
+                        'resource_upgradation_id' => $upgradation->id,
+                        'service_id' => $detail->service_id,
+                        'quantity' => $detail->quantity + $amount,
+                        'upgrade_amount' => $amount,
+                    ]);
+                }
+            } else {
+                $downgradation = ResourceDowngradation::create([
+                    'customer_id' => $customer->id,
+                    'status_id' => $task->status_id,
+                    'activation_date' => $now,
+                    'inactivation_date' => '3000-01-01',
+                    'task_status_id' => 1, // Assigned
+                    'inserted_by' => $kam->id,
+                    'assignment_datetime' => $now,
+                ]);
+                $newResourceId = $downgradation->id;
+
+                $originalDetails = \App\Models\ResourceUpgradationDetail::where('resource_upgradation_id', $task->resource_upgradation_id)->get();
+                foreach ($originalDetails as $detail) {
+                    $amount = $detail->upgrade_amount;
+                    \App\Models\ResourceDowngradationDetail::create([
+                        'resource_downgradation_id' => $downgradation->id,
+                        'service_id' => $detail->service_id,
+                        'quantity' => max(0, $detail->quantity - $amount),
+                        'downgrade_amount' => $amount,
+                    ]);
+                }
+            }
+
+            // 2. Create new Task
+            $newTask = Task::create([
+                'customer_id' => $customer->id,
+                'status_id' => $task->status_id,
+                'allocation_type' => $newType,
+                'resource_upgradation_id' => ($newType === 'upgrade') ? $newResourceId : null,
+                'resource_downgradation_id' => ($newType === 'downgrade') ? $newResourceId : null,
+                'assigned_to' => $techUser->id,
+                'assigned_by' => $kam->id,
+                'task_status_id' => 1, // Assigned
+                'activation_date' => $now,
+                'assignment_datetime' => $now,
+                'completed_at' => null,
+                'vdc_id' => $task->vdc_id,
+            ]);
+
+            // 3. Mark current task as "Undone" by setting approved_at (to hide buttons)
+            // but maybe we should use a different way?
+            // Actually, once undone, it shouldn't be approvable anymore.
+            $task->update(['approved_at' => now()]);
+
+            // 4. Send TaskAssignmentEmail to Tech
+            try {
+                $newTask->load('customer');
+                Mail::to($techUser->email)->send(new TaskAssignmentEmail($newTask, $kam, $newType));
+            } catch (\Exception $e) {
+                Log::error('Failed to send assignment email to ' . $techUser->email . ' during KAM undo: ' . $e->getMessage());
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Task undone successfully. A reverse task has been assigned to ' . $techUser->name . '.'
+            ]);
+        });
     }
 
     /**
@@ -268,13 +479,16 @@ class KamTaskManagementController extends Controller
      */
     public function update(Request $request, Task $task)
     {
+        /** @var User $user */
+        $user = Auth::user();
+
         // Check authorization
-        if (! Auth::user()->isAdmin() && ! Auth::user()->isProKam() && ! Auth::user()->isKam()) {
+        if (! $user->isAdmin() && ! $user->isProKam() && ! $user->isKam()) {
             abort(403, 'Unauthorized access.');
         }
 
         // Check if task belongs to an accessible customer
-        if (! Customer::accessibleBy(Auth::user())->where('id', $task->customer_id)->exists()) {
+        if (! Customer::accessibleBy($user)->where('id', $task->customer_id)->exists()) {
             abort(403, 'Unauthorized access to customer task.');
         }
 
@@ -289,7 +503,7 @@ class KamTaskManagementController extends Controller
             'services.*' => 'required|integer|min:0',
         ]);
 
-        return DB::transaction(function () use ($task, $validated) {
+        return DB::transaction(function () use ($task, $validated, $user) {
             $customerId = $task->customer_id;
             $affectedServiceIds = [];
 
@@ -381,7 +595,7 @@ class KamTaskManagementController extends Controller
             }
 
             // Send updated recommendation email
-            $sender = Auth::user();
+            $sender = $user;
 
             // Recipient list: Pro-Techs and Assigned Tech
             $recipients = User::whereHas('role', function ($q) {
@@ -413,13 +627,16 @@ class KamTaskManagementController extends Controller
      */
     public function destroy(Task $task)
     {
+        /** @var User $user */
+        $user = Auth::user();
+
         // Check authorization
-        if (! Auth::user()->isAdmin() && ! Auth::user()->isProKam() && ! Auth::user()->isKam()) {
+        if (! $user->isAdmin() && ! $user->isProKam() && ! $user->isKam()) {
             abort(403, 'Unauthorized access.');
         }
 
         // Check if task belongs to an accessible customer
-        if (! Customer::accessibleBy(Auth::user())->where('id', $task->customer_id)->exists()) {
+        if (! Customer::accessibleBy($user)->where('id', $task->customer_id)->exists()) {
             abort(403, 'Unauthorized access to customer task.');
         }
 

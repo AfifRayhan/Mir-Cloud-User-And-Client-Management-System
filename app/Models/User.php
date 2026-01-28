@@ -15,10 +15,13 @@ use Illuminate\Notifications\Notifiable;
  * @mixin \Eloquent
  *
  * @method bool isAdmin()
+ * @method bool isProKam()
+ * @method bool isKam()
  * @method bool isProTech()
  * @method bool isTech()
  * @method bool isProTechOrTech()
  * @method bool isManagement()
+ * @method bool isBill()
  */
 class User extends Authenticatable
 {

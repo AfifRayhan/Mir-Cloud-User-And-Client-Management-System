@@ -285,6 +285,7 @@ return new class extends Migration
             $table->timestamp('assigned_at')->nullable()->index();
             $table->timestamp('completed_at')->nullable()->index();
             $table->timestamp('billed_at')->nullable();
+            $table->timestamp('approved_at')->nullable();
 
             $table->timestamps();
         });
@@ -301,7 +302,6 @@ return new class extends Migration
             // Unique constraint: one summary record per customer-service pair
             $table->unique(['customer_id', 'service_id']);
         });
-
     }
 
     /**

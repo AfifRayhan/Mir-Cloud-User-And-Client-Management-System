@@ -105,6 +105,8 @@ Route::middleware('auth')->group(function () {
         Route::get('kam-task-management/{task}/details', [KamTaskManagementController::class, 'getDetails'])->name('kam-task-management.details');
         Route::put('kam-task-management/{task}', [KamTaskManagementController::class, 'update'])->name('kam-task-management.update');
         Route::delete('kam-task-management/{task}', [KamTaskManagementController::class, 'destroy'])->name('kam-task-management.destroy');
+        Route::post('kam-task-management/{task}/approve', [KamTaskManagementController::class, 'approve'])->name('kam-task-management.approve');
+        Route::post('kam-task-management/{task}/undo', [KamTaskManagementController::class, 'undo'])->name('kam-task-management.undo');
     });
 
     // Billing Task Management (Admin, Bill)
@@ -132,4 +134,4 @@ Route::middleware('auth')->group(function () {
     Route::get('tasks/{task}/undo', [TaskActionController::class, 'undo'])->name('tasks.undo');
 });
 
-require __DIR__.'/auth.php';
+require __DIR__ . '/auth.php';

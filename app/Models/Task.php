@@ -25,6 +25,7 @@ class Task extends Model
         'assignment_datetime',
         'deadline_datetime',
         'billed_at',
+        'approved_at',
     ];
 
     protected static function booted()
@@ -78,6 +79,7 @@ class Task extends Model
         'assignment_datetime' => 'datetime',
         'deadline_datetime' => 'datetime',
         'billed_at' => 'datetime',
+        'approved_at' => 'datetime',
     ];
 
     public function customer()

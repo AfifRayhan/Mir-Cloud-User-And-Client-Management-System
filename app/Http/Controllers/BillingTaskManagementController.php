@@ -18,8 +18,11 @@ class BillingTaskManagementController extends Controller
      */
     public function index(Request $request)
     {
+        /** @var User $user */
+        $user = Auth::user();
+
         // Check authorization
-        if (! Auth::user()->isAdmin() && ! Auth::user()->isBill()) {
+        if (! $user->isAdmin() && ! $user->isBill()) {
             abort(403, 'Unauthorized access.');
         }
 
@@ -79,15 +82,18 @@ class BillingTaskManagementController extends Controller
         })->orderBy('name')->get();
 
         $statuses = \App\Models\CustomerStatus::all();
-        $allCustomers = Customer::accessibleBy(Auth::user())->orderBy('customer_name')->get();
+        $allCustomers = Customer::accessibleBy($user)->orderBy('customer_name')->get();
 
         return view('task-management.billing-index', compact('tasks', 'kams', 'techs', 'statuses', 'allCustomers'));
     }
 
     public function getDetails(Task $task)
     {
+        /** @var User $user */
+        $user = Auth::user();
+
         // Check authorization
-        if (! Auth::user()->isAdmin() && ! Auth::user()->isBill()) {
+        if (! $user->isAdmin() && ! $user->isBill()) {
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 
@@ -104,8 +110,11 @@ class BillingTaskManagementController extends Controller
      */
     public function export(Request $request)
     {
+        /** @var User $user */
+        $user = Auth::user();
+
         // Check authorization
-        if (! Auth::user()->isAdmin() && ! Auth::user()->isBill()) {
+        if (! $user->isAdmin() && ! $user->isBill()) {
             abort(403, 'Unauthorized access.');
         }
 
@@ -142,9 +151,9 @@ class BillingTaskManagementController extends Controller
 
         $tasks = $query->get();
 
-        $userName = str_replace(' ', '_', Auth::user()->name);
+        $userName = str_replace(' ', '_', $user->name);
         $dateTime = now()->format('Ymd_His');
-        $prefix = Auth::user()->isBill() ? 'Billing' : 'Admin';
+        $prefix = $user->isBill() ? 'Billing' : 'Admin';
         $fileName = "{$prefix}_Task_Summary_{$userName}-{$dateTime}.xlsx";
 
         return Excel::download(new KamTasksExport($tasks), $fileName);
@@ -155,8 +164,11 @@ class BillingTaskManagementController extends Controller
      */
     public function exportCustomers(Request $request)
     {
+        /** @var User $user */
+        $user = Auth::user();
+
         // Check authorization
-        if (! Auth::user()->isAdmin() && ! Auth::user()->isBill()) {
+        if (! $user->isAdmin() && ! $user->isBill()) {
             abort(403, 'Unauthorized access.');
         }
 
@@ -179,9 +191,9 @@ class BillingTaskManagementController extends Controller
 
         $customers = $query->get();
 
-        $userName = str_replace(' ', '_', Auth::user()->name);
+        $userName = str_replace(' ', '_', $user->name);
         $dateTime = now()->format('Ymd_His');
-        $prefix = Auth::user()->isBill() ? 'Billing' : 'Admin';
+        $prefix = $user->isBill() ? 'Billing' : 'Admin';
         $fileName = "{$prefix}_Customer_Summary_{$userName}-{$dateTime}.xlsx";
 
         return Excel::download(new KamCustomerSummaryExport($customers), $fileName);
@@ -192,8 +204,11 @@ class BillingTaskManagementController extends Controller
      */
     public function bill(Task $task)
     {
+        /** @var User $user */
+        $user = Auth::user();
+
         // Check authorization
-        if (! Auth::user()->isAdmin() && ! Auth::user()->isBill()) {
+        if (! $user->isAdmin() && ! $user->isBill()) {
             abort(403, 'Unauthorized access.');
         }
 

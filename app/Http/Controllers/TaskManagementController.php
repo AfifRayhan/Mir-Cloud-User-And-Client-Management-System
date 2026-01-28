@@ -14,8 +14,11 @@ class TaskManagementController extends Controller
      */
     public function index(Request $request)
     {
+        /** @var User $user */
+        $user = Auth::user();
+
         // Check authorization
-        if (! Auth::user()->isAdmin() && ! Auth::user()->isProTech() && ! Auth::user()->isManagement()) {
+        if (! $user->isAdmin() && ! $user->isProTech() && ! $user->isManagement()) {
             abort(403, 'Unauthorized access.');
         }
 
@@ -98,8 +101,11 @@ class TaskManagementController extends Controller
 
     public function getDetails(Task $task)
     {
+        /** @var User $user */
+        $user = Auth::user();
+
         // Check authorization
-        if (! Auth::user()->isAdmin() && ! Auth::user()->isProTech() && ! Auth::user()->isManagement()) {
+        if (! $user->isAdmin() && ! $user->isProTech() && ! $user->isManagement()) {
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 
@@ -116,8 +122,11 @@ class TaskManagementController extends Controller
      */
     public function assign(Request $request, Task $task)
     {
+        /** @var User $user */
+        $user = Auth::user();
+
         // Check authorization
-        if (! Auth::user()->isAdmin() && ! Auth::user()->isProTech() && ! Auth::user()->isManagement()) {
+        if (! $user->isAdmin() && ! $user->isProTech() && ! $user->isManagement()) {
             abort(403, 'Unauthorized access.');
         }
 

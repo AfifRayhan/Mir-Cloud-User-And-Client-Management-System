@@ -29,12 +29,15 @@ class TaskActionController extends Controller
 
         // Ensure user is logged in
         if (! Auth::check()) {
-            return redirect()->route('login')->with('info', 'Please log in to approve this task.');
+            return redirect()->route('login');
         }
 
-        // Ensure the logged-in user is the one who assigned the task (the KAM)
-        if (Auth::user()->id !== $task->assigned_by) {
-            abort(403, 'Only the KAM who assigned this task can approve it.');
+        /** @var User $user */
+        $user = Auth::user();
+
+        // Must be the KAM who assigned the task OR admin
+        if ($task->assigned_by != $user->id && ! $user->isAdmin() && ! $user->isProKam()) {
+            abort(403, 'Unauthorized access.');
         }
 
         // The task is completed by Tech and waiting for KAM approval
@@ -74,13 +77,13 @@ class TaskActionController extends Controller
                 }
                 $mail->send(new TaskCompletionEmail($lockedTask, $techUser, $actionType));
             } catch (\Exception $e) {
-                Log::error('Failed to send completion email to '.$manager->email.' during approval: '.$e->getMessage());
+                Log::error('Failed to send completion email to ' . $manager->email . ' during approval: ' . $e->getMessage());
             }
         }
 
         return view('tasks.action-result', [
             'success' => true,
-            'message' => 'Task approved successfully. Management has been notified.',
+            'message' => 'Task approved successfully.',
         ]);
     }
 
@@ -198,12 +201,12 @@ class TaskActionController extends Controller
                 $newTask->load('customer');
                 Mail::to($techUser->email)->send(new TaskAssignmentEmail($newTask, $kam, $newType));
             } catch (\Exception $e) {
-                Log::error('Failed to send assignment email to '.$techUser->email.' during undo: '.$e->getMessage());
+                Log::error('Failed to send assignment email to ' . $techUser->email . ' during undo: ' . $e->getMessage());
             }
 
             return view('tasks.action-result', [
                 'success' => true,
-                'message' => 'Task undone successfully. A reverse task has been assigned to '.$techUser->name.'.',
+                'message' => 'Task undone successfully. A reverse task has been assigned to ' . $techUser->name . '.',
             ]);
         });
     }
